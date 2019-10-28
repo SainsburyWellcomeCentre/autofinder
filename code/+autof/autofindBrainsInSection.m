@@ -79,7 +79,7 @@ function varargout=autofindBrainsInSection(im, varargin)
 
     % Optionally set data points outside of the restricted ROI to zero
     if isempty(ROIrestrict)
-        [stats,H] = getBrainInImage(im,pixelSize,tThresh,doPlot);
+        stats = getBrainInImage(im,pixelSize,tThresh);
     else
         imOrig = im; % Keep a backup
         ROIrestrict = validateROIrestrict(ROIrestrict,imOrig);
@@ -203,6 +203,9 @@ function varargout=autofindBrainsInSection(im, varargin)
 
 
     function stats = getBrainInImage(im,pixelSize,tThresh)
+        % Main workhorse function. This one uses a defined threshold
+        % to draw a box with a boundary around the brain. 
+
 
         % Binarize and clean
         BW = im>tThresh;
