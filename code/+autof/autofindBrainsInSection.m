@@ -105,11 +105,11 @@ function varargout=autofindBrainsInSection(im, varargin)
             end
             if any(clippedEdges=='W')
                 ROIrestrict(1) = ROIrestrict(1)-tileSizeInPixels;
-            end                  
+            end
 
             ROIrestrict = validateROIrestrict(ROIrestrict,imOrig);
             im = imOrig(ROIrestrict(2):ROIrestrict(2)+ROIrestrict(4),ROIrestrict(1):ROIrestrict(1)+ROIrestrict(3));
-
+            %cla,imagesc(im),drawnow,pause
 
             stats = getBrainInImage(im,pixelSize,tThresh);
             clippedEdges = findROIEdgeClipping(im,stats);
@@ -120,9 +120,8 @@ function varargout=autofindBrainsInSection(im, varargin)
                 break
             end
         end
+        stats.ROIrestrict=ROIrestrict;
     end
-
-
 
 
     % Optionally display image with overlayed borders 
@@ -148,6 +147,7 @@ function varargout=autofindBrainsInSection(im, varargin)
 
 
 
+    % Internal functions follow
     function ROIrestrict = validateROIrestrict(ROIrestrict,im)
         % Ensure coordinates of ROIrestrict will not produce invalid values that are outside of the imaged area
         verbose=false;
@@ -244,6 +244,14 @@ function varargout=autofindBrainsInSection(im, varargin)
             stats.boundaries = L;
             stats.enclosingBoxes = autof.region2EnclosingBox(L);
 
+            % Determine the size of the overall box that would include all boxes
+            if length(stats.enclosingBoxes)==1
+                stats.globalBox = stats.enclosingBoxes{1};
+            elseif length(stats.enclosingBoxes)>1
+                tmp = cell2mat(stats.enclosingBoxes');
+                stats.globalBox = [min(tmp(:,1:2)), max(t(:,1)+t(:,3)), max(t(:,2)+t(:,4))];                
+            end
+
             backgroundPix = im(find(~BW));
             stats.meanBackground = mean(backgroundPix(:));
             stats.stdBackground = std(backgroundPix(:));
@@ -253,6 +261,7 @@ function varargout=autofindBrainsInSection(im, varargin)
             stats.meanForeground = mean(foregroundPix(:));
             stats.stdForeground = std(foregroundPix(:));
             stats.nForegroundPix = sum(BW(:));
+            stats.ROIrestrict=[]; % Main function fills in if the analysis was performed on a smaller ROI
 
             stats.tThresh = tThresh;
 
