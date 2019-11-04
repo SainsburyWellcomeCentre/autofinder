@@ -1,11 +1,15 @@
-function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy)
+function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy,micsPix)
 
 
     if nargin<2 || isempty(noPlot)
         noPlot=false;
     end
-    if nargin<3
+    if nargin<3 || isempty(resizeStackBy)
         resizeStackBy=1;
+    end
+
+    if nargin<4 || isempty(micsPix)
+        micsPix = 10;
     end
 
     if resizeStackBy~=1
@@ -14,7 +18,7 @@ function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy)
 
 
     tileSizeInMicrons=1000; 
-    micsPix = 10;
+
 
     L={};
     minEnclosingBoxCoords=cell(1,size(im,3));
@@ -54,14 +58,14 @@ function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy)
 
         for kk = 1:length(lastEncBoxes)
             tL = lastEncBoxes{kk};
-            xEnd=tL(3)+tL(1);
+            xEnd = tL(3)+tL(1);
             xP = [tL(1),xEnd];
             yEnd = tL(4)+tL(2);
             yP = [tL(2),yEnd];
 
             x=[xP(1), xP(2), xP(2), xP(1), xP(1)];
             y=[yP(1), yP(1), yP(2), yP(2), yP(1)];
-            minEnclosingBoxCoords{ii}(kk)={[y',x']}; %For volView
+            minEnclosingBoxCoords{ii}(kk) = {[y',x']}; %For volView
 
             %Plot in green the border of the previous section before extending 
             %to cope with tiling
@@ -75,11 +79,11 @@ function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy)
 
             % Overlay the box corresponding to what we would image if we have tiles.
             % This should be larger than the preceeding box in most cases
-            tileEncBox=autof.region2EnclosingBox(stats(ii-1).boundaries(kk),micsPix,tileSizeInMicrons);
+            tileEncBox = autof.region2EnclosingBox(stats(ii-1).boundaries(kk),micsPix,tileSizeInMicrons);
             tB = tileEncBox{1};
             x=[tB(1), tB(1)+tB(3), tB(1)+tB(3), tB(1), tB(1)];
             y=[tB(2), tB(2), tB(2)+tB(4), tB(2)+tB(4), tB(2)];
-            tileBoxCoords{ii}(kk)={[y',x']};%For volView
+            tileBoxCoords{ii}(kk)={[y',x']}; %For volView
 
             % Plot this
             if ~noPlot

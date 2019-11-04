@@ -53,6 +53,9 @@ function varargout=autofindBrainsInSection(im, varargin)
     tThresh = params.Results.tThresh;
     ROIrestrict = params.Results.ROIrestrict;
 
+    if isempty(ROIrestrict)
+        ROIrestrict=[0,0,size(im)];
+    end
 
     if ~isnumeric(im)
         fprintf('%s - First input argument must be an image\n',mfilename)
@@ -82,8 +85,8 @@ function varargout=autofindBrainsInSection(im, varargin)
         stats = getBrainInImage(im,pixelSize,tThresh);
     else
         imOrig = im; % Keep a backup
-        ROIrestrict = validateROIrestrict(ROIrestrict,imOrig);
-        im = imOrig(ROIrestrict(2):ROIrestrict(2)+ROIrestrict(4),ROIrestrict(1):ROIrestrict(1)+ROIrestrict(3));
+        tROI = validateROIrestrict(ROIrestrict,imOrig);
+        im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
         stats = getBrainInImage(im,pixelSize,tThresh);
         clippedEdges = findROIEdgeClipping(im,stats);
         tileSizeInPixels = round(tileSize/pixelSize);
@@ -95,20 +98,20 @@ function varargout=autofindBrainsInSection(im, varargin)
             n=n+1;
 
             if any(clippedEdges=='N')
-                ROIrestrict(2) = ROIrestrict(2)-tileSizeInPixels;
+                tROI(2) = tROI(2)-tileSizeInPixels;
             end
             if any(clippedEdges=='S')
-                ROIrestrict(4) = ROIrestrict(4)+tileSizeInPixels;
+                tROI(4) = tROI(4)+tileSizeInPixels;
             end
             if any(clippedEdges=='E')
-                ROIrestrict(3) = ROIrestrict(3)+tileSizeInPixels;
+                tROI(3) = tROI(3)+tileSizeInPixels;
             end
             if any(clippedEdges=='W')
-                ROIrestrict(1) = ROIrestrict(1)-tileSizeInPixels;
+                tROI(1) = tROI(1)-tileSizeInPixels;
             end
 
-            ROIrestrict = validateROIrestrict(ROIrestrict,imOrig);
-            im = imOrig(ROIrestrict(2):ROIrestrict(2)+ROIrestrict(4),ROIrestrict(1):ROIrestrict(1)+ROIrestrict(3));
+            tROI = validateROIrestrict(tROI,imOrig);
+            im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
             %cla,imagesc(im),drawnow,pause
 
             stats = getBrainInImage(im,pixelSize,tThresh);
@@ -120,15 +123,27 @@ function varargout=autofindBrainsInSection(im, varargin)
                 break
             end
         end
-        stats.ROIrestrict=ROIrestrict;
+
+        % Log the current FOV ROI and and ensure that all ROI boxes we have drawn in the 
+        % units of the original image. 
+        stats.ROIrestrict=tROI;
     end
+
+
+    %Return coordinates in full image space
+    for ii=1:length(stats.enclosingBoxes)
+        stats.enclosingBoxes{ii}(1:2) = stats.enclosingBoxes{ii}(1:2) + stats.ROIrestrict(1:2);
+        stats.boundaries{ii}(:,1) = stats.boundaries{ii}(:,1) + stats.ROIrestrict(2);
+        stats.boundaries{ii}(:,2) = stats.boundaries{ii}(:,2) + stats.ROIrestrict(1);
+    end
+    stats.globalBox(1:2) = stats.globalBox(1:2) + stats.ROIrestrict(1:2);
+
 
 
     % Optionally display image with overlayed borders 
     if doPlot
         H=autof.plotSectionAndBorders(im,stats);
     end
-
 
 
     % Optionally return coords of each box
@@ -199,6 +214,7 @@ function varargout=autofindBrainsInSection(im, varargin)
                 clippedEdges(end+1)='S';
             end
         end
+
         clippedEdges = char(unique(clippedEdges));
 
 
@@ -219,7 +235,7 @@ function varargout=autofindBrainsInSection(im, varargin)
 
 
         % Add a border around the brain
-        SE = strel('square',round(275/pixelSize));
+        SE = strel('square',round(200/pixelSize));
         BW = imdilate(BW,SE);
 
 
@@ -249,7 +265,7 @@ function varargout=autofindBrainsInSection(im, varargin)
                 stats.globalBox = stats.enclosingBoxes{1};
             elseif length(stats.enclosingBoxes)>1
                 tmp = cell2mat(stats.enclosingBoxes');
-                stats.globalBox = [min(tmp(:,1:2)), max(t(:,1)+t(:,3)), max(t(:,2)+t(:,4))];                
+                stats.globalBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];                
             end
 
             backgroundPix = im(find(~BW));
