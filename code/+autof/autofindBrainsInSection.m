@@ -136,6 +136,8 @@ function varargout=autofindBrainsInSection(im, varargin)
     %Return coordinates in full image space
     for ii=1:length(stats.enclosingBoxes)
         stats.enclosingBoxes{ii}(1:2) = stats.enclosingBoxes{ii}(1:2) + stats.ROIrestrict(1:2);
+    end
+    for ii=1:length(stats.boundaries)
         stats.boundaries{ii}(:,1) = stats.boundaries{ii}(:,1) + stats.ROIrestrict(2);
         stats.boundaries{ii}(:,2) = stats.boundaries{ii}(:,2) + stats.ROIrestrict(1);
     end
