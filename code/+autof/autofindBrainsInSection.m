@@ -67,6 +67,9 @@ function varargout=autofindBrainsInSection(im, varargin)
     end
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
+
+    im = medfilt2(im,[5,5]);
+
     im = single(im);
     im = medfilt2(im,[5,5]);
 
