@@ -31,16 +31,10 @@ function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy,micsPix)
         else
             % Use a threshold determined from the last image
             thresh = stats(end).meanBackground + stats(end).stdBackground*4; 
-            % TODO: add an input argument to restrict the autofind to a particular region <-- WE AREN'T USING THE LAST IMAGE!!!!
+
             [stats(ii),H] = autof.autofindBrainsInSection(im(:,:,ii), 'pixelSize',micsPix, 'tThresh',thresh,...
-                            'doPlot',~noPlot, 'tileSize',tileSizeInMicrons);
-            if ~isempty(tB)
-                if ~isempty(stats(ii-1).ROIrestrict)
-                    tB(1:2) = tB(1:2) + stats(ii-1).ROIrestrict(1:2);
-                end
-                [stats(ii),H] = autof.autofindBrainsInSection(im(:,:,ii), 'pixelSize',micsPix, 'tThresh',thresh,...
-                                'doPlot',~noPlot, 'ROIrestrict',tB, 'tileSize',tileSizeInMicrons);
-            end
+                            'doPlot',~noPlot, 'ROIrestrict',tB, 'tileSize',tileSizeInMicrons);
+
         end
 
         if ii==1
