@@ -87,8 +87,10 @@ function varargout=autofindBrainsInSection(im, varargin)
         stats = getBrainInImage(im,pixelSize,tThresh);
     else
         imOrig = im; % Keep a backup
+
         tROI = validateROIrestrict(ROIrestrict,imOrig);
         im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
+
         stats = getBrainInImage(im,pixelSize,tThresh);
         clippedEdges = findROIEdgeClipping(im,stats);
         tileSizeInPixels = round(tileSize/pixelSize);
@@ -114,8 +116,8 @@ function varargout=autofindBrainsInSection(im, varargin)
 
             tROI = validateROIrestrict(tROI,imOrig);
             im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
-            %cla,imagesc(im),drawnow,pause
 
+            %cla,imagesc(im),drawnow
             stats = getBrainInImage(im,pixelSize,tThresh);
             clippedEdges = findROIEdgeClipping(im,stats);
 
@@ -125,6 +127,14 @@ function varargout=autofindBrainsInSection(im, varargin)
                 fprintf('%s\n',msg)
                 stats.notes=[stats.notes,msg];
                 break
+            end
+
+            %HACK to avoid looping in cases where the brain is up against the edge of the FOV
+            if (size(imOrig,1)-tROI(4)-tROI(2))<=1 && any(clippedEdges=='S')
+                %fprintf('Removing south ROI clip\n')
+                %clippedEdges
+                clippedEdges(clippedEdges=='S')=[];
+                %clippedEdges
             end
 
         end
@@ -276,6 +286,7 @@ function varargout=autofindBrainsInSection(im, varargin)
                 stats.globalBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];                
             end
 
+            % Store statistics in output structure
             backgroundPix = im(find(~BW));
             stats.meanBackground = mean(backgroundPix(:));
             stats.medianBackground = median(backgroundPix(:));
