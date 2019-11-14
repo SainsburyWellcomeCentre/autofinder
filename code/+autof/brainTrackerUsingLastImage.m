@@ -29,9 +29,13 @@ function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy,micsPix)
             stats = autof.autofindBrainsInSection(im(:,:,ii), 'pixelSize',micsPix, 'doPlot',~noPlot, ...
                 'tileSize',tileSizeInMicrons);
         else
-            % Use a threshold determined from the last image
-            thresh = stats(end).meanBackground + stats(end).stdBackground*4; 
-
+            % Use a threshold determined from the last nImages
+            nImages=5;
+            if ii<=nImages
+                thresh = median( [stats.meanBackground] + [stats.stdBackground]*4);
+            else
+                thresh = median( [stats(end-nImages+1:end).meanBackground] + [stats(end-nImages+1:end).stdBackground]*4);
+            end
             [stats(ii),H] = autof.autofindBrainsInSection(im(:,:,ii), 'pixelSize',micsPix, 'tThresh',thresh,...
                             'doPlot',~noPlot, 'ROIrestrict',tB, 'tileSize',tileSizeInMicrons);
 
