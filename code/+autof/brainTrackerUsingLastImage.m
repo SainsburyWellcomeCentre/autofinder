@@ -1,23 +1,44 @@
-function varargout=brainTrackerUsingLastImage(im,noPlot)
+function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy,micsPix)
 
 
-    if nargin<2
+    if nargin<2 || isempty(noPlot)
         noPlot=false;
     end
+    if nargin<3 || isempty(resizeStackBy)
+        resizeStackBy=1;
+    end
+
+    if nargin<4 || isempty(micsPix)
+        micsPix = 10;
+    end
+
+    if resizeStackBy~=1
+        im=imresize3(im, resizeStackBy);
+    end
+
+
     tileSizeInMicrons=1000; 
-    micsPix = 7;
+
 
     L={};
     minEnclosingBoxCoords=cell(1,size(im,3));
     tileBoxCoords=cell(1,size(im,3));
+    tB=[];
     for ii=1:size(im,3)
         if ii==1
-            stats = autof.autofindBrainsInSection(im(:,:,ii),'pixelSize',micsPix,'doPlot',~noPlot);
+            stats = autof.autofindBrainsInSection(im(:,:,ii), 'pixelSize',micsPix, 'doPlot',~noPlot, ...
+                'tileSize',tileSizeInMicrons);
         else
-            % Use a threshold determined from the last image
-            thresh = stats(end).meanBackground + stats(end).stdBackground*4; 
-            % TODO: add an input argument to restrict the autofind to a particular region <-- WE AREN'T USING THE LAST IMAGE!!!!
-            [stats(ii),H] = autof.autofindBrainsInSection(im(:,:,ii),'pixelSize',micsPix,'tThresh',thresh,'doPlot',~noPlot);
+            % Use a threshold determined from the last nImages
+            nImages=5;
+            if ii<=nImages
+                thresh = median( [stats.medianBackground] + [stats.stdBackground]*4);
+            else
+                thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*4);
+            end
+            [stats(ii),H] = autof.autofindBrainsInSection(im(:,:,ii), 'pixelSize',micsPix, 'tThresh',thresh,...
+                            'doPlot',~noPlot, 'ROIrestrict',tB, 'tileSize',tileSizeInMicrons);
+
         end
 
         if ii==1
@@ -35,14 +56,14 @@ function varargout=brainTrackerUsingLastImage(im,noPlot)
 
         for kk = 1:length(lastEncBoxes)
             tL = lastEncBoxes{kk};
-            xEnd=tL(3)+tL(1);
+            xEnd = tL(3)+tL(1);
             xP = [tL(1),xEnd];
             yEnd = tL(4)+tL(2);
             yP = [tL(2),yEnd];
 
             x=[xP(1), xP(2), xP(2), xP(1), xP(1)];
             y=[yP(1), yP(1), yP(2), yP(2), yP(1)];
-            minEnclosingBoxCoords{ii}(kk)={[y',x']}; %For volView
+            minEnclosingBoxCoords{ii}(kk) = {[y',x']}; %For volView
 
             %Plot in green the border of the previous section before extending 
             %to cope with tiling
@@ -56,11 +77,12 @@ function varargout=brainTrackerUsingLastImage(im,noPlot)
 
             % Overlay the box corresponding to what we would image if we have tiles.
             % This should be larger than the preceeding box in most cases
-            tileEncBox=autof.region2EnclosingBox(stats(ii-1).boundaries(kk),micsPix,tileSizeInMicrons);
+            tileEncBox = autof.region2EnclosingBox(stats(ii-1).boundaries(kk),micsPix,tileSizeInMicrons);
             tB = tileEncBox{1};
             x=[tB(1), tB(1)+tB(3), tB(1)+tB(3), tB(1), tB(1)];
             y=[tB(2), tB(2), tB(2)+tB(4), tB(2)+tB(4), tB(2)];
-            tileBoxCoords{ii}(kk)={[y',x']};%For volView
+            tileBoxCoords{ii}(kk)={[y',x']}; %For volView
+
             % Plot this
             if ~noPlot
                 plot(x, y, '--g', 'LineWidth',5, 'Parent', H.hAx_brainBorder);
@@ -73,7 +95,6 @@ function varargout=brainTrackerUsingLastImage(im,noPlot)
             % This means we will add quite small increaases. 
 
             % TODO: generate warning if this will still miss brain
-
         end
 
         if ~noPlot

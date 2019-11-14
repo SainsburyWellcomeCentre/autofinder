@@ -33,8 +33,10 @@ hold(hAx_intensityHistogram,'off')
 
 hAx_brainBorder=axes('Position', [0.025, 0.145, 0.95, 0.85], ...
     'Parent',hFig);
+tROI = stats.ROIrestrict;
 
-imagesc(im,'Parent',hAx_brainBorder)
+pcolor(tROI(1):tROI(3)+tROI(1), tROI(2):tROI(4)+tROI(2), im, 'Parent',hAx_brainBorder)
+shading flat
 hold(hAx_brainBorder,'on')
 
 colormap gray
@@ -43,7 +45,6 @@ colormap gray
 % Overlay boundaries and enclosing boxes
 for ii=1:length(stats.boundaries)
     tB = stats.boundaries{ii};
-
     % Plot the boundary around the brain
     hBorders(ii) = plot(tB(:,2),tB(:,1), '--', 'color', [0.5, 0.5, 1]);
 end
@@ -58,7 +59,7 @@ for ii=1:length(stats.enclosingBoxes)
 end
 
 hold(hAx_brainBorder,'off')
-axis equal off
+axis ij equal tight
 caxis([0,stats.tThresh*5])
 
 
