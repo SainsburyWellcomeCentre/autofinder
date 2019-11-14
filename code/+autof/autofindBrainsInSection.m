@@ -121,9 +121,12 @@ function varargout=autofindBrainsInSection(im, varargin)
 
             % Choose some arbitrary largish number and break if we still haven't expanded to the full field by this point
             if n>20
-                fprintf('HARD-BREAK FROM FOV EXPANSION LOOP\n')
+                msg = 'HARD-BREAK FROM FOV EXPANSION LOOP ';
+                fprintf('%s\n',msg)
+                stats.notes=[stats.notes,msg];
                 break
             end
+
         end
 
         % Log the current FOV ROI and and ensure that all ROI boxes we have drawn in the 
@@ -231,8 +234,7 @@ function varargout=autofindBrainsInSection(im, varargin)
 
         % Binarize and clean
         BW = im>tThresh;
-        BW = medfilt2(BW,[2,2]);
-
+        BW = medfilt2(BW,[3,3]);
 
         % Remove crap using spatial filtering
         SE = strel('disk',round(50/pixelSize));
@@ -259,7 +261,7 @@ function varargout=autofindBrainsInSection(im, varargin)
 
         H=[]; % Empty plot handle variable in case no brains were found
         if isempty(L)
-            fprintf('No brains found!\n')
+            fprintf('autofindBrainsInSection.getBrainInImage found no sample! BAD!\n')
             stats=[];
         else
             % Generate all relevant stats and so forth
@@ -284,7 +286,7 @@ function varargout=autofindBrainsInSection(im, varargin)
             stats.stdForeground = std(foregroundPix(:));
             stats.nForegroundPix = sum(BW(:));
             stats.ROIrestrict=[]; % Main function fills in if the analysis was performed on a smaller ROI
-
+            stats.notes=''; %Anything odd can go in here
             stats.tThresh = tThresh;
 
         end
