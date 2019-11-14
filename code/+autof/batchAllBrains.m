@@ -22,8 +22,8 @@ function OUT=handleBrainsInDir(tDir)
 
         try
             borders=autof.brainTrackerUsingLastImage(pStack,true);
-        catch
-            borders=nan;
+        catch ME
+            borders=ME.message;
         end
 
         OUT(ii).fname=fname;

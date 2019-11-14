@@ -71,7 +71,6 @@ function varargout=autofindBrainsInSection(im, varargin)
     im = medfilt2(im,[5,5]);
 
     im = single(im);
-    im = medfilt2(im,[5,5]);
 
 
     if isempty(tThresh)
@@ -148,6 +147,8 @@ function varargout=autofindBrainsInSection(im, varargin)
     % Optionally display image with overlayed borders 
     if doPlot
         H=autof.plotSectionAndBorders(im,stats);
+    else
+        H=[];        
     end
 
 
