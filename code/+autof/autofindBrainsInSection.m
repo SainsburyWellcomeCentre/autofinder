@@ -278,11 +278,13 @@ function varargout=autofindBrainsInSection(im, varargin)
 
             backgroundPix = im(find(~BW));
             stats.meanBackground = mean(backgroundPix(:));
+            stats.medianBackground = median(backgroundPix(:));
             stats.stdBackground = std(backgroundPix(:));
             stats.nBackgroundPix = sum(~BW(:));
 
             foregroundPix = im(find(BW));
             stats.meanForeground = mean(foregroundPix(:));
+            stats.medianForeground = median(foregroundPix(:));
             stats.stdForeground = std(foregroundPix(:));
             stats.nForegroundPix = sum(BW(:));
             stats.ROIrestrict=[]; % Main function fills in if the analysis was performed on a smaller ROI
