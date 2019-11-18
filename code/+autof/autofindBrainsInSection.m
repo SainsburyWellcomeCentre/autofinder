@@ -78,7 +78,7 @@ function varargout=autofindBrainsInSection(im, varargin)
         b=5;
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
-        tThresh = mean(borderPix) + std(borderPix)*4;
+        tThresh = median(borderPix) + std(borderPix)*4;
     end
 
 

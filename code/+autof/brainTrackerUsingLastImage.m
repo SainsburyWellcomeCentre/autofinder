@@ -1,19 +1,11 @@
-function varargout=brainTrackerUsingLastImage(im,noPlot,resizeStackBy,micsPix)
+function varargout=brainTrackerUsingLastImage(im,noPlot,micsPix)
 
 
     if nargin<2 || isempty(noPlot)
         noPlot=false;
     end
-    if nargin<3 || isempty(resizeStackBy)
-        resizeStackBy=1;
-    end
-
-    if nargin<4 || isempty(micsPix)
+    if nargin<3 || isempty(micsPix)
         micsPix = 10;
-    end
-
-    if resizeStackBy~=1
-        im=imresize3(im, resizeStackBy);
     end
 
 
