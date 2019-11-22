@@ -83,11 +83,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Optionally set data points outside of the restricted ROI to zero
     if isempty(ROIrestrict)
-        stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
+        stats = boundingBoxesFromLastSection.image2boundingBoxes(im,pixelSize,tThresh);
     else
         imOrig = im; % Keep a backup
 
-        tROI = boundingBoxesFromLastSection.validateROIrestrict(ROIrestrict,imOrig);
+        tROI = boundingBoxesFromLastSection.image2boundingBoxes(ROIrestrict,imOrig);
         im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
 
         stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
@@ -113,7 +113,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
                 tROI(1) = tROI(1)-tileSizeInPixels;
             end
 
-            tROI = boundingBoxesFromLastSection.validateROIrestrict(tROI,imOrig);
+            tROI = boundingBoxesFromLastSection.image2boundingBoxes(tROI,imOrig);
             im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
 
             %cla,imagesc(im),drawnow
@@ -145,8 +145,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     %Return coordinates in full image space
-    for ii=1:length(stats.boundingBoxes)
-        stats.boundingBoxes{ii}(1:2) = stats.boundingBoxes{ii}(1:2) + stats.ROIrestrict(1:2);
+    for ii=1:length(stats.BoundingBox)
+        stats.BoundingBox{ii}(1:2) = stats.BoundingBox{ii}(1:2) + stats.ROIrestrict(1:2);
     end
     for ii=1:length(stats.boundaries)
         stats.boundaries{ii}(:,1) = stats.boundaries{ii}(:,1) + stats.ROIrestrict(2);
@@ -177,7 +177,3 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         varargout{3}=im;
     end
 
-
-
-
- 
