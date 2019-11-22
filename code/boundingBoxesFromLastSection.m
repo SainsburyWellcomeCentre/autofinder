@@ -23,7 +23,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     %               The function will use only the supplied ROI (sub region of the 
     %               while image) then attempt to grow the image if needed to 
     %               capture the whole brain. 
-    %
+    % borderPixSize - number of pixels from border to user for background calc. 5 by default
     %
     % Outputs
     % stats - borders and so forth
@@ -44,6 +44,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
     params.addParameter('ROIrestrict',[], @(x) isnumeric(x) )
+    params.addParameter('borderPix',5, @(x) isnumeric(x) )
 
 
     params.parse(varargin{:})
@@ -52,6 +53,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     doPlot = params.Results.doPlot;
     tThresh = params.Results.tThresh;
     ROIrestrict = params.Results.ROIrestrict;
+    borderPix = params.Results.borderPix;
+
 
     if isempty(ROIrestrict)
         ROIrestrict=[0,0,size(im)];
@@ -66,12 +69,12 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     im = medfilt2(im,[5,5]);
 
-    im = single(im);
+    %im = single(im);
 
 
     if isempty(tThresh)
         %Find pixels within b pixels of the border
-        b=5;
+        b=borderPixSize;
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*4;

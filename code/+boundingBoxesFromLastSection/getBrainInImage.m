@@ -2,6 +2,8 @@ function stats = getBrainInImage(im,pixelSize,tThresh)
     % Main workhorse function. This one uses a defined threshold
     % to draw a box with a boundary around the brain. 
 
+    im=single(im);
+
 
     % Binarize and clean
     BW = im>tThresh;
@@ -22,7 +24,9 @@ function stats = getBrainInImage(im,pixelSize,tThresh)
     minSize=0.015;
     nBrains=1;
     sizeThresh = prod(size(im)) * (minSize / nBrains);
+
     [L,indexedBW]=bwboundaries(BW,'noholes');
+
     for ii=length(L):-1:1
         thisN = length(find(indexedBW == ii));
         if thisN < sizeThresh
