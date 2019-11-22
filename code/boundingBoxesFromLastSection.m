@@ -1,7 +1,7 @@
-function varargout=tilesFromLastSection(im, varargin)
-    % autofindBrains
+function varargout=boundingBoxesFromLastSection(im, varargin)
+    % boundingBoxesFromLastSection
     %
-    % function varargout=tilesFromLastSection(im,pixelSize,doPlot,threshold)
+    % function varargout=boundingBoxesFromLastSection(im,pixelSize,doPlot,threshold)
     % 
     % Purpose
     % Automatically detect brain and calculate minimum enclosing box.
@@ -80,15 +80,15 @@ function varargout=tilesFromLastSection(im, varargin)
 
     % Optionally set data points outside of the restricted ROI to zero
     if isempty(ROIrestrict)
-        stats = tilesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
+        stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
     else
         imOrig = im; % Keep a backup
 
-        tROI = tilesFromLastSection.validateROIrestrict(ROIrestrict,imOrig);
+        tROI = boundingBoxesFromLastSection.validateROIrestrict(ROIrestrict,imOrig);
         im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
 
-        stats = tilesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
-        clippedEdges = tilesFromLastSection.findROIEdgeClipping(im,stats);
+        stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
+        clippedEdges = boundingBoxesFromLastSection.findROIEdgeClipping(im,stats);
         tileSizeInPixels = round(tileSize/pixelSize);
 
         % Keep looping until we have a full image
@@ -110,12 +110,12 @@ function varargout=tilesFromLastSection(im, varargin)
                 tROI(1) = tROI(1)-tileSizeInPixels;
             end
 
-            tROI = tilesFromLastSection.validateROIrestrict(tROI,imOrig);
+            tROI = boundingBoxesFromLastSection.validateROIrestrict(tROI,imOrig);
             im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
 
             %cla,imagesc(im),drawnow
-            stats = tilesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
-            clippedEdges = tilesFromLastSection.findROIEdgeClipping(im,stats);
+            stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
+            clippedEdges = boundingBoxesFromLastSection.findROIEdgeClipping(im,stats);
 
             % Choose some arbitrary largish number and break if we still haven't expanded to the full field by this point
             if n>20
@@ -142,8 +142,8 @@ function varargout=tilesFromLastSection(im, varargin)
 
 
     %Return coordinates in full image space
-    for ii=1:length(stats.enclosingBoxes)
-        stats.enclosingBoxes{ii}(1:2) = stats.enclosingBoxes{ii}(1:2) + stats.ROIrestrict(1:2);
+    for ii=1:length(stats.boundingBoxes)
+        stats.boundingBoxes{ii}(1:2) = stats.boundingBoxes{ii}(1:2) + stats.ROIrestrict(1:2);
     end
     for ii=1:length(stats.boundaries)
         stats.boundaries{ii}(:,1) = stats.boundaries{ii}(:,1) + stats.ROIrestrict(2);

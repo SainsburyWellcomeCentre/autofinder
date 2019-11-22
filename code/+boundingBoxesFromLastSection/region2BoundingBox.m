@@ -1,5 +1,5 @@
-function enclosingBox = region2EnclosingBox(region,pixelSize,tileSizeInMicrons)
-%    function enclosingBox = region2EnclosingBox(region,pixelSize,tileSizeInMicrons)
+function boundingBox = region2boundingBox(region,pixelSize,tileSizeInMicrons)
+%    function boundingBox = region2boundingBox(region,pixelSize,tileSizeInMicrons)
 %
 % Purpose
 % Calculate the smallest enclosing rectangle for one or more
@@ -18,7 +18,7 @@ function enclosingBox = region2EnclosingBox(region,pixelSize,tileSizeInMicrons)
 % tileSizeInMicrons - the length of a side of a (square) tile in microns.
 % 
 % Outputs
-% enclosingBox - a cell array of minimum enclosing rectangles
+% boundingBox - a cell array of minimum enclosing rectangles
 %             This is in the format: [x_corner, y_corner, x_width, y_width]
 %
 %
@@ -46,18 +46,18 @@ maxY=zeros(1,length(region));
 maxX=zeros(1,length(region));
 
 for ii=1:length(region)
-    [enclosingBox{ii}, maxX(ii),maxY(ii)] = boundary2encBox(region{ii});
+    [boundingBox{ii}, maxX(ii),maxY(ii)] = boundary2encBox(region{ii});
 end
 
 
 % ------
-% Consolidate enclosing boxes that overlap a reasonable amount so long as doing so
+% Consolidate bounding boxes that overlap a reasonable amount so long as doing so
 % Is not going to result in a large increase in the area being imaged.
 tmpIm = zeros([max(maxY)+5,max(maxX)+5,length(region)]);
 
 % Fill in the "image" with the areas that are ROIs
 for ii=1:length(region)
-    eb = enclosingBox{ii};
+    eb = boundingBox{ii};
     tmpIm(eb(2):eb(2)+eb(4), eb(1):eb(1)+eb(3),ii) = 1;
 end
 
@@ -90,10 +90,10 @@ end
 
 
 % Convert to vectors
-enclosingBox = cell(1,size(tmpIm,3));
+boundingBox = cell(1,size(tmpIm,3));
 for ii=1:size(tmpIm,3)
     b = bwboundaries(tmpIm(:,:,ii));
-    enclosingBox{ii} = boundary2encBox(b{1});
+    boundingBox{ii} = boundary2encBox(b{1});
 end
 
 
@@ -113,10 +113,10 @@ if ~calcTileBox
     return
 end
 
-for ii=1:length(enclosingBox)
+for ii=1:length(boundingBox)
     % Calculate the bounding box built from tiles of a size defined by the user.
 
-    eb = enclosingBox{ii};
+    eb = boundingBox{ii};
     xP = [eb(1), eb(3)+eb(1)];
     yP = [eb(2), eb(4)+eb(2)];
 
@@ -134,7 +134,7 @@ for ii=1:length(enclosingBox)
     xP = [mean(xP)-(xTilesPix/2), mean(xP)+(xTilesPix/2) ];
     yP = [mean(yP)-(yTilesPix/2), mean(yP)+(yTilesPix/2) ];
 
-    enclosingBox{ii} = round([xP(1), ...
+    boundingBox{ii} = round([xP(1), ...
                         yP(1), ...
                         xP(2)-xP(1), ...
                         yP(2)-yP(1)]);
@@ -143,8 +143,8 @@ end
 
 
 function [eb,maxX,maxY] = boundary2encBox(b)
-    % Get the minimum enclosing box for a single bwboundaries area
-    % also return the maximum positions of the box in x and y.
+    % Get the bounding box for a single bwboundaries area also return the maximum 
+    % positions of the box in x and y.
     xP = [min(b(:,2)), max(b(:,2))];
     yP = [min(b(:,1)), max(b(:,1))];
 
