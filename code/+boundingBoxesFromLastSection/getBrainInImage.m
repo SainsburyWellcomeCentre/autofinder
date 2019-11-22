@@ -45,7 +45,7 @@ function stats = image2boundingBoxes(im,pixelSize,tThresh)
 
 
     %Partially overlapping merge
-    stats=mergeOverlapping(stats);
+    stats=mergeOverlapping(stats,size(BW));
     return
 
     % Generate all relevant stats and so forth
@@ -78,20 +78,13 @@ function stats = image2boundingBoxes(im,pixelSize,tThresh)
 
 
 
-function stats = mergeOverlapping(stats)
+function stats = mergeOverlapping(stats,imSize)
     % Consolidate bounding boxes that overlap a reasonable amount so long as doing so
     % Is not going to result in a large increase in the area being imaged.
 
 
-    % Keep track of the maximum x and y positions of the boxes so we can test later 
-    % for overlap
-    allExtrema=cat(1,stats(:).Extrema);
-
-    maxX=ceil(max(allExtrema(:,1))+5);
-    maxY=ceil(max(allExtrema(:,2))+5);
-
     % Generate an empty image that will accomodate all the boxes
-    tmpIm = zeros([maxY, maxX,length(stats)]);
+    tmpIm = zeros([imSize,length(stats)]);
 
     % Fill in the blank "image" with the areas that are ROIs
     for ii=1:length(stats)
