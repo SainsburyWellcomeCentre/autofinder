@@ -1,14 +1,51 @@
-function stats = image2boundingBoxes(im,pixelSize,tThresh)
+function out = image2boundingBoxes(im,pixelSize,varargin)
     % Main workhorse function. This one uses a defined threshold
     % to draw a box with a boundary around the brain. 
+    %
+    % Inputs
+    % im - 2D image c
+    
 
- 
-    im=single(im);
+
+    % TODO - add determine bounding box based on a particular tile size. 
+    % This is important as it will have implications on how bounding boxes merge.
+
+
+    % Parse input arguments
+    params = inputParser;
+    params.CaseSensitive = false;
+    params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
+    params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('borderPixSize',5, @(x) isnumeric(x) )
+    params.addParameter('tileSize', 1000, @(x) isnumeric(x) && isscalar(x))
+
+
+    params.parse(varargin{:})
+    doPlot = params.Results.doPlot;
+    tThresh = params.Results.tThresh;
+    borderPixSize = params.Results.borderPixSize;
+    tileSize = params.Results.tileSize;
+
+
+
+
+    % Median filter the image first. This is necessary, otherwise downstream steps may not work.
+    im = medfilt2(im,[5,5]);
+    im = single(im);
+
+
+    if isempty(tThresh)
+        %Find pixels within b pixels of the border
+        b=borderPixSize;
+        borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
+        borderPix = borderPix(:);
+        tThresh = median(borderPix) + std(borderPix)*4;
+    end
 
 
     % Binarize and clean
     BW = im>tThresh;
-    BW = medfilt2(BW,[3,3]);
+    BW = medfilt2(BW,[5,5]);
 
     % Remove crap using spatial filtering
     SE = strel('disk',round(50/pixelSize));
@@ -18,9 +55,8 @@ function stats = image2boundingBoxes(im,pixelSize,tThresh)
     SE = strel('square',round(200/pixelSize));
     BW = imdilate(BW,SE);
 
-
     % Find bounding boxes
-    stats = regionprops(BW,'boundingbox', 'area', 'extrema')
+    stats = regionprops(BW,'boundingbox', 'area', 'extrema');
 
     if isempty(stats)
         fprintf('autofindBrainsInSection.getBrainInImage found no sample! BAD!\n')
@@ -33,7 +69,7 @@ function stats = image2boundingBoxes(im,pixelSize,tThresh)
     sizeThresh = minSizeInSqMicrons * pixelSize;
 
     for ii=length(stats):-1:1
-        stats(ii).BoundingBox
+        round(stats(ii).BoundingBox)
         if stats(ii).Area < sizeThresh;
             stats(ii)=[];
         end
@@ -46,34 +82,47 @@ function stats = image2boundingBoxes(im,pixelSize,tThresh)
 
     %Partially overlapping merge
     stats=mergeOverlapping(stats,size(BW));
-    return
 
-    % Generate all relevant stats and so forth
-    stats.enclosingBoxes = autof.region2EnclosingBox(L);
 
-        % Determine the size of the overall box that would include all boxes
-        if length(stats.enclosingBoxes)==1
-            stats.globalBox = stats.enclosingBoxes{1};
-        elseif length(stats.enclosingBoxes)>1
-            tmp = cell2mat(stats.enclosingBoxes');
-            stats.globalBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];                
+    if doPlot
+        imagesc(im)
+        colormap gray
+        axis equal tight
+        for ii=1:length(stats)
+            boundingBoxesFromLastSection.plotting.overlayBoundingBox(stats(ii).BoundingBox)
         end
 
-        % Store statistics in output structure
-        backgroundPix = im(find(~BW));
-        stats.meanBackground = mean(backgroundPix(:));
-        stats.medianBackground = median(backgroundPix(:));
-        stats.stdBackground = std(backgroundPix(:));
-        stats.nBackgroundPix = sum(~BW(:));
+    end
 
-        foregroundPix = im(find(BW));
-        stats.meanForeground = mean(foregroundPix(:));
-        stats.medianForeground = median(foregroundPix(:));
-        stats.stdForeground = std(foregroundPix(:));
-        stats.nForegroundPix = sum(BW(:));
-        stats.ROIrestrict=[]; % Main function fills in if the analysis was performed on a smaller ROI
-        stats.notes=''; %Anything odd can go in here
-        stats.tThresh = tThresh;
+
+
+
+    % Generate all relevant stats and so forth
+    out.BoundingBoxes = {stats.BoundingBox};
+
+    % Determine the size of the overall box that would include all boxes
+    if length(out.BoundingBoxes)==1
+        out.globalBoundingBox = out.BoundingBoxes{1};
+    elseif length(out.BoundingBoxes)>1
+        tmp = cell2mat(out.BoundingBoxes');
+        out.globalBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
+    end
+
+    % Store statistics in output structure
+    backgroundPix = im(find(~BW));
+    out.meanBackground = mean(backgroundPix(:));
+    out.medianBackground = median(backgroundPix(:));
+    out.stdBackground = std(backgroundPix(:));
+    out.nBackgroundPix = sum(~BW(:));
+
+    foregroundPix = im(find(BW));
+    out.meanForeground = mean(foregroundPix(:));
+    out.medianForeground = median(foregroundPix(:));
+    out.stdForeground = std(foregroundPix(:));
+    out.nForegroundPix = sum(BW(:));
+    out.ROIrestrict=[]; % Main function fills in if the analysis was performed on a smaller ROI
+    out.notes=''; %Anything odd can go in here
+    out.tThresh = tThresh;
 
 
 
@@ -152,9 +201,16 @@ function stats = mergeOverlapping(stats,imSize)
     end
 
 
-    %Finally, calculate all bounding boxes
-    stats = regionprops(sum(tmpIm)>0,'BoundingBox','Image');
-    
+    % Round to nearest pixel
+    stats = regionprops(sum(tmpIm,3)>0,'BoundingBox','Image');
+    for ii=1:length(stats)
+        stats(ii).BoundingBox = round(stats(ii).BoundingBox);
+    end
+    fprintf('Found %d regions\n', size(tmpIm,3))
+
+
+
+
 
 
 
