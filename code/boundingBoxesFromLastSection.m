@@ -22,13 +22,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % tileSize - 1000 (microns/pixel) by default. Size of tile FOV in microns.
     % tThresh - Threshold for brain/no brain. By default this is auto-calculated
     % doPlot - if true, display image and overlay boxes. false by default
-    % ROIrestrict - By default the whole image is used. If this argument is 
-    %               present it should be a vector of length 4 in the same format
-    %               as the enclosing boxes returned by region2EnclosingBox:
-    %               This is in the format: [x_corner, y_corner, x_width, y_width] 
-    %               The function will use only the supplied ROI (sub region of the 
-    %               while image) then attempt to grow the image if needed to 
-    %               capture the whole brain. 
+    % ROIstats - By default the whole image is used. If this argument is 
+    %               present it should be the output of image2boundingBoxes from a
+    %               previous sectionl
     % borderPixSize - number of pixels from border to user for background calc. 5 by default
     %
     % Outputs
@@ -49,7 +45,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('tileSize', 1000, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
-    params.addParameter('ROIrestrict',[], @(x) isnumeric(x) )
+    params.addParameter('ROIstats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPix',5, @(x) isnumeric(x) ) %TODO -- DOES NOTHING RIGHT NO
 
 
@@ -58,13 +54,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     tileSize = params.Results.tileSize;
     doPlot = params.Results.doPlot;
     tThresh = params.Results.tThresh;
-    ROIrestrict = params.Results.ROIrestrict;
     borderPix = params.Results.borderPix;
+    ROIstats = params.Results.ROIstats;
 
-
-    if isempty(ROIrestrict)
-        ROIrestrict=[0,0,size(im)];
-    end
 
     if ~isnumeric(im)
         fprintf('%s - First input argument must be an image\n',mfilename)
@@ -74,10 +66,15 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     %TODO: make it possible to feed boundingBoxesFromLastSection.image2boundingBoxes ROIs from last image
 
 
+    % TODO: I think we need totally refactor: move image2boundingBoxes into here. 
+
     % Optionally set data points outside of the restricted ROI to zero
-    if isempty(ROIrestrict)
-        stats = boundingBoxesFromLastSection.image2boundingBoxes(im,pixelSize;
-    else
+    stats = boundingBoxesFromLastSection.image2boundingBoxes(im,pixelSize);
+
+
+    doExpansion=false;
+    if doExpansion
+        % FOLLOWING IS NOT FINISHED AND/OR TOTALLY WRONG
         imOrig = im; % Keep a backup
 
         % TODO - we will get rid of these lines as they go into image2boundingBoxes 
