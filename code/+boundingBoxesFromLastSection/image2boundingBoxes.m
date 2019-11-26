@@ -164,7 +164,7 @@ function stats = mergeOverlapping(stats,imSize)
     end
 
     % Keep looping until all are merged
-
+    diagnositicPlots=false;
     while containsOverlaps(tmpIm)
         combosToTest = nchoosek(1:size(tmpIm,3),2);  %The unique combinations to test
         overlapProp = zeros(1,length(combosToTest)); %Pre-allocate a variable in which to store results
@@ -173,29 +173,56 @@ function stats = mergeOverlapping(stats,imSize)
         for ii=1:size(combosToTest,1)
             % Make a new plane that is the sum of two we are testing
             tCombo = sum( tmpIm(:,:,[combosToTest(ii,1),combosToTest(ii,2)]), 3); 
-            overlapProp = length(find(tCombo(:)==2)) / length(find(tCombo(:)>=1));
+            overlapProp(ii) = length(find(tCombo(:)==2)) / length(find(tCombo(:)>=1));
+            if diagnositicPlots
+                clf
+                subplot(1,2,1)
+                imagesc(tmpIm(:,:,combosToTest(ii,1)))
+                title(sprintf('Plane %d', combosToTest(ii,1)))
+                subplot(1,2,2)
+                imagesc(tmpIm(:,:,combosToTest(ii,2)))
+                title(sprintf('Plane %d Prop overlap: %0.3f', combosToTest(ii,2), overlapProp(ii)))
+                pause
+            end
         end
 
         %Make a new area composed of only 1s and 0s which merges the two bounding boxes which 
         %overlap the most and ignore the rest (maybe this a bad idea, but let's go with it for now)
         [~,ind] = max(overlapProp);
-        tCombo = sum( tmpIm(:,:,[combosToTest(ii,1),combosToTest(ii,2)]), 3); 
+        tCombo = sum( tmpIm(:,:,[combosToTest(ind,1),combosToTest(ind,2)]), 3); 
         tCombo(tCombo>0) = 1; %We now have a new ROI that incorporates the two
 
 
         % Determine by how much we will increase the total imaged area if we merge these ROIs
-        areaOfROI1=sum( tmpIm(:,:,combosToTest(ii,1)), 'all');
-        areaOfROI2=sum( tmpIm(:,:,combosToTest(ii,2)), 'all');
+        areaOfROI1=sum( tmpIm(:,:,combosToTest(ind,1)), 'all');
+        areaOfROI2=sum( tmpIm(:,:,combosToTest(ind,2)), 'all');
         areaOfMergedROI=boundingBoxAreaFromImage(tCombo);
         proportionIncrease = areaOfMergedROI/(areaOfROI1+areaOfROI2);
 
+        if diagnositicPlots
+            clf
+            imagesc(tCombo)
+            title(sprintf('AreaA %d. AreaB %d. Imaging area increase prop:%0.3f',...
+                areaOfROI1, ...
+                areaOfROI2, ...
+                proportionIncrease))
+            pause
+        end
+
         % Merge if less than 10%
-        if proportionIncrease<1.1
-            tmpIm(:,:,combosToTest(combosToTest(ind,1))) = tCombo;
-            tmpIm(:,:,combosToTest(combosToTest(ind,2))) = [];
+        if proportionIncrease<1.3
+            if diagnositicPlots
+                fprintf('Merging into plane %d and then deleting plane %d\n', ...
+                    combosToTest(ind,1), combosToTest(ind,2))
+            end
+            tmpIm(:,:,combosToTest(ind,1)) = tCombo;
+            tmpIm(:,:,combosToTest(ind,2)) = [];
         else
             % Otherwise remove the overlap between these two areas
-            tmpIm(:,:,combosToTest(ii,1)) =  tmpIm(:,:,combosToTest(ii,1)) - tmpIm(:,:,combosToTest(ii,2));
+            if diagnositicPlots
+                fprintf('Not merging\n')
+            end
+            tmpIm(:,:,combosToTest(ii,1)) =  tmpIm(:,:,combosToTest(ind,1)) - tmpIm(:,:,combosToTest(ind,2));
             tmpIm(tmpIm<0)=0;
         end
 
@@ -249,7 +276,8 @@ function BW = binarizeImage(im,pixelSize,tThresh)
 
     % Remove crap using spatial filtering
     SE = strel('disk',round(50/pixelSize));
-    BW = imerode(BW,SE);    BW = imdilate(BW,SE);
+    BW = imerode(BW,SE);    
+    BW = imdilate(BW,SE);
 
     % Add a border around the brain
     SE = strel('square',round(200/pixelSize));
@@ -257,7 +285,7 @@ function BW = binarizeImage(im,pixelSize,tThresh)
 
 
 
-function stats = getBoundingBoxes(BW)
+function stats = getBoundingBoxes(BW,pixelSize)
     % Find bounding boxes, removing very small ones and 
     stats = regionprops(BW,'boundingbox', 'area', 'extrema');
 
@@ -271,8 +299,8 @@ function stats = getBoundingBoxes(BW)
     sizeThresh = minSizeInSqMicrons * pixelSize;
 
     for ii=length(stats):-1:1
-        round(stats(ii).BoundingBox)
         if stats(ii).Area < sizeThresh;
+            fprintf('Removing small ROI of size %d\n', stats(ii).Area)
             stats(ii)=[];
         end
     end
