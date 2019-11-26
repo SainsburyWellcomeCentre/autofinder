@@ -1,11 +1,8 @@
 function BoundingBox = validateROIrestrict(BoundingBox,imSize)
     % Ensure bounding box is valid before proceeding. 
     %
-    % imSize can be the image in question or the size of the the image
+    % imSize is the output of size(im) from the image where the bounding box was determined. 
 
-    if ~isequal(size(imSize),[1,2])
-        imSize = size(imSize);
-    end
 
     verbose=false;
 

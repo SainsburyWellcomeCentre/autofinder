@@ -58,32 +58,31 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
         stats = mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
     else
         % Run within each ROI then afterwards consolidate results
-        for ii = 1:length(ROIstats.BoundingBox)
-            tIm        = getSubImageUsingBoundingBox(im,ROIstats.BoundingBox{ii}); % Pull out just this sub-region
+        for ii = 1:length(ROIstats.BoundingBoxes)
+            fprintf('Analysing ROI %d for sub-ROIs\n', ii)
+            tIm        = getSubImageUsingBoundingBox(im,ROIstats.BoundingBoxes{ii}); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,pixelSize);
-            tStats{ii} = mergeOverlapping(tempStats(ii),size(tIm));
+            tStats{ii} = mergeOverlapping(tStats{ii},size(tIm));
         end
 
         % The ROIs are currently in relative coordinates. We want to place them in 
         % absolute coordinates with respect to the image as a whole. Then they can
         % be positioned correctly in this coordinate space.
 
+        n=1;
         for ii = 1:length(tStats)
-            for jj = 1:length(tStats{ii}.BoundingBox)
-                tStats{ii}(jj).BoundingBox(1:2) = tStats{ii}(jj).BoundingBox(1:2) + ROIstats.BoundingBox{ii}(1:2);
+            for jj = 1:length(tStats{ii})
+                tStats{ii}(jj).BoundingBox(1:2) = tStats{ii}(jj).BoundingBox(1:2) + ROIstats.BoundingBoxes{ii}(1:2);
+                stats(n).BoundingBox = tStats{ii}(jj).BoundingBox; %collate into one structure
+                n=n+1;
             end
         end
 
-        % Now all bounding boxes are in absolute coordinates. We can therefore place them into a 
-        % a structure similar to that where there were no ROIs supplied to this function.
-        stats.BoundingBox={};
-        for ii = 1:length(tStats)
-            stats.BoundingBox = [stats.BoundingBox; tStats(ii).BoundingBox];
-        end
 
         % Final merge. This is in case some sample ROIs are now so close together that
         % they ought to be merged. This would not have been possible to do until this point. 
+        % TODO -- possibly we can do only the final merge?
         stats = mergeOverlapping(stats,size(im));
 
     end
@@ -326,7 +325,7 @@ function stats = getBoundingBoxes(BW,pixelSize)
 
 function subIm = getSubImageUsingBoundingBox(im,BoundingBox)
     % Pull out a sub-region of the image based on a bounding box.
-    BoundingBox = boundingBoxesFromLastSection.validateBoundingBox(BoundingBox);
+    BoundingBox = boundingBoxesFromLastSection.validateBoundingBox(BoundingBox,size(im));
     subIm = im(BoundingBox(2):BoundingBox(2)+BoundingBox(4), ...
                BoundingBox(1):BoundingBox(1)+BoundingBox(3));
 
