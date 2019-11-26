@@ -16,7 +16,8 @@ function pStack = genGroundTruthBorders(pStack,threshSTD)
 % pStack is the output of stackToGroundTruth
 % threshSTD can be left empty. Optional.
 %
-%
+% Outputs
+% pStack - Same as input structure but now with added results.
 
 
 

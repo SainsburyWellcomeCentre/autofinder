@@ -1,6 +1,18 @@
 function varargout=runOnStackStruct(pStack,noPlot)
     % Run the brain-finding algorithm on a stack processed by genGrounTruthBorders
     % 
+    % Purpose
+    % Simulate the behavior of an imaging system seeking to image only
+    % the tissue without benefit of a low res preview scan of the area.
+    % This function will be used for tweaking algorithms, benchmarking,
+    % and testing. It must simulate the steps the actual microscope will
+    % take and so can't "cheat" and must only use "past" data to derive
+    % future behavior.
+    %
+    % This function just loops through the sample-detection code. It
+    % doesn't implement extra steps for finding the sample. 
+
+
 
 
     if nargin<2 || isempty(noPlot)
@@ -10,20 +22,28 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
 
 
-    % Initial image
+    % Step one: process the initial image (first section) and find the bounding boxes
+    % for tissue within it. This is the only point where we don't use the ROIs from the
+    % previous section to constrain ROI choice on then next section. Hence we are not
+    % in the main for loop yet. 
     stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), ...
             'pixelSize', pStack.voxelSizeInMicrons, ...
             'tileSize', pStack.tileSizeInMicrons, ...
             'doPlot', ~noPlot)
 
 
+    % Pre-allocate various variables
     L={};
-    minBoundlosingBoxCoords=cell(1,size(im,3));
+    minBoundingBoxCoords=cell(1,size(im,3));
     tileBoxCoords=cell(1,size(im,3));
     tB=[];
+
+
+    % Enter main for loop in which we process each section one at a time.
     for ii=2:size(pStack.imStack,3)
 
-        % Use a threshold determined from the last nImages
+        % Use a rolling threshold based on the last nImages to drive brain/background
+        % segmentation in the next image. 
         nImages=5;
         if ii<=nImages
             thresh = median( [stats.medianBackground] + [stats.stdBackground]*4);
@@ -31,12 +51,15 @@ function varargout=runOnStackStruct(pStack,noPlot)
             thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*4);
         end
 
+
+        % boundingBoxesFromLastSection is fed the ROI structure from the previous section. 
+        % It runs the sample-detection code within these ROIs only and returns the results.
         [stats(ii),H] = boundingBoxesFromLastSection(pStack,imStack(:,:,ii), ...
             'pixelSize', pStack.voxelSizeInMicrons,...
             'tileSize',pStack.tileSizeInMicrons, ...
             'tThresh',thresh,...
             'doPlot',~noPlot, ...
-            'ROIrestrict',tB) 
+            'ROIrestrict',stats(ii-1)) 
 
 
 
@@ -58,7 +81,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
             x=[xP(1), xP(2), xP(2), xP(1), xP(1)];
             y=[yP(1), yP(1), yP(2), yP(2), yP(1)];
-            minBoundlosingBoxCoords{ii}(kk) = {[y',x']}; %For volView
+            minBoundingBoxCoords{ii}(kk) = {[y',x']}; %For volView
 
             %Plot in green the border of the previous section before extending 
             %to cope with tiling
@@ -72,6 +95,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
             % Overlay the box corresponding to what we would image if we have tiles.
             % This should be larger than the preceeding box in most cases
+            %TODO: THIS FOLLOWING WILL GO INTO boundingBoxesFromLastSection
             tileBoundBox = boundingBoxesFromLastSection.region2BoundingBox(stats(ii-1).boundaries(kk),micsPix,tileSizeInMicrons);
             tB = tileBoundBox{1};
             x=[tB(1), tB(1)+tB(3), tB(1)+tB(3), tB(1), tB(1)];
@@ -106,7 +130,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     if nargout>0
         %For volView
         boundariesForPlotting.border{1} = {stats(:).boundaries};
-        boundariesForPlotting.minBoundlosingBoxCoords{1} = minBoundlosingBoxCoords;
+        boundariesForPlotting.minBoundingBoxCoords{1} = minBoundingBoxCoords;
         boundariesForPlotting.tileBoxCoords{1} = tileBoxCoords;
         varargout{1}=boundariesForPlotting;
     end
