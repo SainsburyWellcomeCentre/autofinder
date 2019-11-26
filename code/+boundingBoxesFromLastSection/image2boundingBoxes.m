@@ -49,45 +49,13 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     end
 
 
-    % Binarize and clean
-    BW = im>tThresh;
-    BW = medfilt2(BW,[5,5]);
-
-    % Remove crap using spatial filtering
-    SE = strel('disk',round(50/pixelSize));
-    BW = imerode(BW,SE);    BW = imdilate(BW,SE);
-
-    % Add a border around the brain
-    SE = strel('square',round(200/pixelSize));
-    BW = imdilate(BW,SE);
-
+    % Binarize and clean image. Add a border before returning
+    BW = binarizeImage(im,tThresh);
 
     % Find bounding boxes
-    stats = regionprops(BW,'boundingbox', 'area', 'extrema');
+    stats = getBoundingBoxes(BW);
 
-    if isempty(stats)
-        fprintf('autofindBrainsInSection.getBrainInImage found no sample! BAD!\n')
-        return
-    end
-
-
-    % Delete very small objects
-    minSizeInSqMicrons=50;
-    sizeThresh = minSizeInSqMicrons * pixelSize;
-
-    for ii=length(stats):-1:1
-        round(stats(ii).BoundingBox)
-        if stats(ii).Area < sizeThresh;
-            stats(ii)=[];
-        end
-    end
-
-    %Sort in ascending size order
-    [~,ind]=sort([stats.Area]);
-    stats = stats(ind);
-
-
-    %Partially overlapping merge
+    % Merge partially overlapping ROIs
     stats=mergeOverlapping(stats,size(BW));
 
 
@@ -104,7 +72,8 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
 
 
 
-    % Generate all relevant stats and so forth
+
+    % Finish up: generate all relevant stats to return as an output argument
     out.BoundingBoxes = {stats.BoundingBox};
 
     % Determine the size of the overall box that would include all boxes
@@ -133,6 +102,9 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
 
 
 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+%% Internal functions follow
 
 function stats = mergeOverlapping(stats,imSize)
     % Consolidate bounding boxes that overlap a reasonable amount so long as doing so
@@ -218,8 +190,6 @@ function stats = mergeOverlapping(stats,imSize)
 
 
 
-
-
 function im = boundingBox2Image(imSizeRows, imSizeCols, BoundingBox)
     % Create an image of zeros of size imSizeRows and imSizeCols which contains within it
     % a bounding box filled within 1s. The box is defined the way regionprops does it:
@@ -240,3 +210,44 @@ function tArea = boundingBoxAreaFromImage(im)
     a = find(sum(tmp,1)>1);
     b = find(sum(tmp,2)>1);
     tArea = length(min(a):max(a)) * length(min(b):max(b));
+
+
+
+function BW = binarizeImage(im,tThresh)
+    % Binarise and clean image. Adding a border before returning
+    BW = im>tThresh;
+    BW = medfilt2(BW,[5,5]);
+
+    % Remove crap using spatial filtering
+    SE = strel('disk',round(50/pixelSize));
+    BW = imerode(BW,SE);    BW = imdilate(BW,SE);
+
+    % Add a border around the brain
+    SE = strel('square',round(200/pixelSize));
+    BW = imdilate(BW,SE);
+
+
+
+function stats = getBoundingBoxes(BW)
+    % Find bounding boxes, removing very small ones and 
+    stats = regionprops(BW,'boundingbox', 'area', 'extrema');
+
+    if isempty(stats)
+        fprintf('autofindBrainsInSection.image2boundingBoxes found no sample in ROI! BAD!\n')
+        return
+    end
+
+    % Delete very small objects
+    minSizeInSqMicrons=50;
+    sizeThresh = minSizeInSqMicrons * pixelSize;
+
+    for ii=length(stats):-1:1
+        round(stats(ii).BoundingBox)
+        if stats(ii).Area < sizeThresh;
+            stats(ii)=[];
+        end
+    end
+
+    %Sort in ascending size order
+    [~,ind]=sort([stats.Area]);
+    stats = stats(ind);
