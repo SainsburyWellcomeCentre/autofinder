@@ -40,24 +40,54 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     im = single(im);
 
 
+    % If no threshold for segregating sample from background was supplied then calculate one
+    % based on the pixels around the image border.
     if isempty(tThresh)
         %Find pixels within b pixels of the border
-        b=borderPixSize;
+        b = borderPixSize;
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*4;
     end
 
 
-    % Binarize and clean image. Add a border before returning
-    BW = binarizeImage(im,tThresh);
+    if isempty(ROIstats)
+        % We run on the whole image
+        BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
+        stats = getBoundingBoxes(BW);  % Find bounding boxes
+        stats = mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
+    else
+        % Run within each ROI then afterwards consolidate results
+        for ii = 1:length(ROIstats.BoundingBox)
+            tIm        = getSubImageUsingBoundingBox(im,ROIstats.BoundingBox{ii}); % Pull out just this sub-region
+            BW         = binarizeImage(tIm,pixelSize,tThresh);
+            tStats(ii) = getBoundingBoxes(BW);
+            tStats(ii) = mergeOverlapping(tempStats(ii),size(tIm));
+        end
 
-    % Find bounding boxes
-    stats = getBoundingBoxes(BW);
+        % The ROIs are currently in relative coordinates. We want to place them in 
+        % absolute coordinates with respect to the image as a whole. Then they can
+        % be positioned correctly in this coordinate space.
 
-    % Merge partially overlapping ROIs
-    stats=mergeOverlapping(stats,size(BW));
+        for ii = 1:length(tStats)
+            for jj = 1:length(tStats(ii).BoundingBox)
+                tStats(ii).BoundingBox{jj}(1:2) = tStats(ii).BoundingBox{jj}(1:2) + ROIstats.BoundingBox{ii}(1:2);
+            end
+        end
 
+        % Now all bounding boxes are in absolute coordinates. We can therefore place them into a 
+        % a structure similar to that where there were no ROIs supplied to this function.
+        stats.BoundingBox={};
+        for ii = 1:length(tStats)
+            stats.BoundingBox = [stats.BoundingBox; tStats(ii).BoundingBox];
+        end
+
+        % Final merge. This is in case some sample ROIs are now so close together that
+        % they ought to be merged. This would not have been possible to do until this point. 
+        stats = mergeOverlapping(stats,size(im));
+
+    end
+    
 
     if doPlot
         imagesc(im)
@@ -96,7 +126,7 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     out.medianForeground = median(foregroundPix(:));
     out.stdForeground = std(foregroundPix(:));
     out.nForegroundPix = sum(BW(:));
-    out.ROIrestrict=[]; % Main function fills in if the analysis was performed on a smaller ROI
+    out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
     out.notes=''; %Anything odd can go in here
     out.tThresh = tThresh;
 
@@ -213,7 +243,7 @@ function tArea = boundingBoxAreaFromImage(im)
 
 
 
-function BW = binarizeImage(im,tThresh)
+function BW = binarizeImage(im,pixelSize,tThresh)
     % Binarise and clean image. Adding a border before returning
     BW = im>tThresh;
     BW = medfilt2(BW,[5,5]);
@@ -251,3 +281,16 @@ function stats = getBoundingBoxes(BW)
     %Sort in ascending size order
     [~,ind]=sort([stats.Area]);
     stats = stats(ind);
+
+
+
+function subIm = getSubImageUsingBoundingBox(im,BoundingBox)
+    % Pull out a sub-region of the image based on a bounding box.
+    BoundingBox = boundingBoxesFromLastSection.validateBoundingBox(BoundingBox);
+    subIm = im(BoundingBox(2):BoundingBox(2)+BoundingBox(4), ...
+               BoundingBox(1):BoundingBox(1)+BoundingBox(3));
+
+
+
+ 
+

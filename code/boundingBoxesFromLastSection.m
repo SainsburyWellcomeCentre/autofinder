@@ -80,11 +80,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     else
         imOrig = im; % Keep a backup
 
-        % TODO - Ideally we get rid of these lines 
+        % TODO - we will get rid of these lines as they go into image2boundingBoxes 
         tROI = boundingBoxesFromLastSection.validateROIrestrict(ROIrestrict,imOrig);
         im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
 
-        stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize);
+        stats = boundingBoxesFromLastSection.image2boundingBoxes(im,pixelSize);
         clippedEdges = boundingBoxesFromLastSection.findROIEdgeClipping(im,stats);
         tileSizeInPixels = round(tileSize/pixelSize);
 
