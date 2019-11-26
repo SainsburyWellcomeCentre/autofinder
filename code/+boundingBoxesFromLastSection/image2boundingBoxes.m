@@ -3,8 +3,12 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     % to draw a box with a boundary around the brain. 
     %
     % Inputs
-    % im - 2D image c
-    
+    % im - 2D image 
+    % pixelSize
+    %
+    % Inputs (optioanal param/val pairs)
+    % ROIstats - To allow image2boundingBoxes to run only within sub-regions of the image.
+    %            This simulates the behavior of 
 
 
     % TODO - add determine bounding box based on a particular tile size. 
@@ -16,6 +20,7 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     params.CaseSensitive = false;
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('ROIstats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',5, @(x) isnumeric(x) )
     params.addParameter('tileSize', 1000, @(x) isnumeric(x) && isscalar(x))
 
@@ -25,6 +30,7 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     tThresh = params.Results.tThresh;
     borderPixSize = params.Results.borderPixSize;
     tileSize = params.Results.tileSize;
+    ROIstats = params.Results.ROIstats;
 
 
 
@@ -54,6 +60,7 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     % Add a border around the brain
     SE = strel('square',round(200/pixelSize));
     BW = imdilate(BW,SE);
+
 
     % Find bounding boxes
     stats = regionprops(BW,'boundingbox', 'area', 'extrema');
@@ -213,9 +220,6 @@ function stats = mergeOverlapping(stats,imSize)
 
 
 
-
-
-
 function im = boundingBox2Image(imSizeRows, imSizeCols, BoundingBox)
     % Create an image of zeros of size imSizeRows and imSizeCols which contains within it
     % a bounding box filled within 1s. The box is defined the way regionprops does it:
@@ -224,6 +228,8 @@ function im = boundingBox2Image(imSizeRows, imSizeCols, BoundingBox)
     im = zeros(imSizeRows,imSizeCols);
     BoundingBox = [floor(BoundingBox(1:2)), ceil(BoundingBox(3:4))];        
     im(BoundingBox(2):BoundingBox(2)+BoundingBox(4), BoundingBox(1):BoundingBox(1)+BoundingBox(3)) = 1;
+
+
 
 
 function tArea = boundingBoxAreaFromImage(im)

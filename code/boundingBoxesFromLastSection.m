@@ -1,10 +1,16 @@
 function varargout=boundingBoxesFromLastSection(im, varargin)
     % boundingBoxesFromLastSection
     %
-    % function varargout=boundingBoxesFromLastSection(im,pixelSize,doPlot,threshold)
+    % function varargout=boundingBoxesFromLastSection(im, 'param',val, ... )
     % 
     % Purpose
-    % Automatically detect brain and calculate minimum enclosing box.
+    % Automatically detect regions in the current section where there is
+    % sample and find a tile-based bounding box that surrounds it. This function
+    % can also be fed a bounding box list in order to use these ROIs as a guide
+    % for finding the next set of boxes in the next xection. This mimics the 
+    % behavior under the microscope. 
+    % See: boundingBoxesFromLastSection.text.runOnStackStruct
+    %
     % Return results in a structure.
     %
     % 
@@ -44,7 +50,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
     params.addParameter('ROIrestrict',[], @(x) isnumeric(x) )
-    params.addParameter('borderPix',5, @(x) isnumeric(x) )
+    params.addParameter('borderPix',5, @(x) isnumeric(x) ) %TODO -- DOES NOTHING RIGHT NO
 
 
     params.parse(varargin{:})
@@ -65,34 +71,26 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         return
     end
 
-    % Median filter the image first. This is necessary, otherwise downstream steps may not work.
-
-    im = medfilt2(im,[5,5]);
-
-    %im = single(im);
-
-
-    if isempty(tThresh)
-        %Find pixels within b pixels of the border
-        b=borderPixSize;
-        borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
-        borderPix = borderPix(:);
-        tThresh = median(borderPix) + std(borderPix)*4;
-    end
+    %TODO: make it possible to feed boundingBoxesFromLastSection.image2boundingBoxes ROIs from last image
 
 
     % Optionally set data points outside of the restricted ROI to zero
     if isempty(ROIrestrict)
-        stats = boundingBoxesFromLastSection.image2boundingBoxes(im,pixelSize,tThresh);
+        stats = boundingBoxesFromLastSection.image2boundingBoxes(im,pixelSize;
     else
         imOrig = im; % Keep a backup
 
-        tROI = boundingBoxesFromLastSection.image2boundingBoxes(ROIrestrict,imOrig);
+        % TODO - Ideally we get rid of these lines 
+        tROI = boundingBoxesFromLastSection.validateROIrestrict(ROIrestrict,imOrig);
         im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
 
-        stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize,tThresh);
+        stats = boundingBoxesFromLastSection.getBrainInImage(im,pixelSize);
         clippedEdges = boundingBoxesFromLastSection.findROIEdgeClipping(im,stats);
         tileSizeInPixels = round(tileSize/pixelSize);
+
+        % TODO: the following should be optional and part of a separate function. 
+        % At this point we should have in our ROI structure the tile-based 
+        % bounding boxes of the current. 
 
         % Keep looping until we have a full image
         n=1;
@@ -113,7 +111,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
                 tROI(1) = tROI(1)-tileSizeInPixels;
             end
 
-            tROI = boundingBoxesFromLastSection.image2boundingBoxes(tROI,imOrig);
+            tROI = boundingBoxesFromLastSection.validateROIrestrict(tROI,imOrig);
             im = imOrig(tROI(2):tROI(2)+tROI(4),tROI(1):tROI(1)+tROI(3));
 
             %cla,imagesc(im),drawnow
@@ -160,7 +158,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     if doPlot
         H=autof.plotSectionAndBorders(im,stats);
     else
-        H=[];        
+        H=[];
     end
 
 
