@@ -1,8 +1,16 @@
-function BoundingBox = validateROIrestrict(BoundingBox,im)
-     % Ensure bounding box is valid before proceeding. 
+function BoundingBox = validateROIrestrict(BoundingBox,imSize)
+    % Ensure bounding box is valid before proceeding. 
+    %
+    % imSize can be the image in question or the size of the the image
 
-     % Ensure bounding box is valid before proceeding. 
+    if ~isequal(size(imSize),[1,2])
+        imSize = size(imSize);
+    end
+
     verbose=false;
+
+    BoundingBox = [floor(BoundingBox(1:2)),ceil(BoundingBox(3:4))];
+
     if BoundingBox(1)<1
         if verbose
             fprintf('Capping RR1 from %d to 1\n',BoundingBox(1))
@@ -16,16 +24,16 @@ function BoundingBox = validateROIrestrict(BoundingBox,im)
         BoundingBox(2)=1;
     end
 
-    if (BoundingBox(3)+BoundingBox(1)) > size(im,2)
+    if (BoundingBox(3)+BoundingBox(1)) > imSize(2)
         if verbose
             disp('Capping RR3')
         end
-        BoundingBox(3) = size(im,2)-BoundingBox(1);
+        BoundingBox(3) = imSize(2)-BoundingBox(1);
     end
 
-    if (BoundingBox(4)+BoundingBox(2)) > size(im,1)
+    if (BoundingBox(4)+BoundingBox(2)) > imSize(1)
         if verbose
-            fprintf('Capping RR4 from %d to %d\n', BoundingBox(4),size(im,1)-BoundingBox(2))
+            fprintf('Capping RR4 from %d to %d\n', BoundingBox(4),imSize(1)-BoundingBox(2))
         end
-        BoundingBox(4) = size(im,1)-BoundingBox(2);
+        BoundingBox(4) = imSize(1)-BoundingBox(2);
     end

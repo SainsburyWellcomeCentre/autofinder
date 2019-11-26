@@ -54,15 +54,15 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     if isempty(ROIstats)
         % We run on the whole image
         BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
-        stats = getBoundingBoxes(BW);  % Find bounding boxes
+        stats = getBoundingBoxes(BW,pixelSize);  % Find bounding boxes
         stats = mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
     else
         % Run within each ROI then afterwards consolidate results
         for ii = 1:length(ROIstats.BoundingBox)
             tIm        = getSubImageUsingBoundingBox(im,ROIstats.BoundingBox{ii}); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
-            tStats(ii) = getBoundingBoxes(BW);
-            tStats(ii) = mergeOverlapping(tempStats(ii),size(tIm));
+            tStats{ii} = getBoundingBoxes(BW,pixelSize);
+            tStats{ii} = mergeOverlapping(tempStats(ii),size(tIm));
         end
 
         % The ROIs are currently in relative coordinates. We want to place them in 
@@ -70,8 +70,8 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
         % be positioned correctly in this coordinate space.
 
         for ii = 1:length(tStats)
-            for jj = 1:length(tStats(ii).BoundingBox)
-                tStats(ii).BoundingBox{jj}(1:2) = tStats(ii).BoundingBox{jj}(1:2) + ROIstats.BoundingBox{ii}(1:2);
+            for jj = 1:length(tStats{ii}.BoundingBox)
+                tStats{ii}(jj).BoundingBox(1:2) = tStats{ii}(jj).BoundingBox(1:2) + ROIstats.BoundingBox{ii}(1:2);
             end
         end
 
@@ -146,8 +146,7 @@ function stats = mergeOverlapping(stats,imSize)
 
     % Fill in the blank "image" with the areas that are ROIs
     for ii=1:length(stats)
-        eb = stats(ii).BoundingBox;
-        eb = [floor(eb(1:2)), ceil(eb(3:4))];   
+        eb = boundingBoxesFromLastSection.validateBoundingBox(stats(ii).BoundingBox, imSize);
         tmpIm(eb(2):eb(2)+eb(4), eb(1):eb(1)+eb(3),ii) = 1;
         %tmpIm(:,:,ii) = boundingBox2Image(maxY,maxX, stats(ii).BoundingBox);
     end
