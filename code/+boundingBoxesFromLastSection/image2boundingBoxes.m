@@ -139,7 +139,14 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
 function stats = mergeOverlapping(stats,imSize)
     % Consolidate bounding boxes that overlap a reasonable amount so long as doing so
     % Is not going to result in a large increase in the area being imaged.
+    diagnositicPlots=false;
 
+    if length(stats)==1 
+        if diagnositicPlots
+            fprintf('Only one ROI, no merge possible by mergeOverlapping\n')
+        end
+        return
+    end
 
     % Generate an empty image that will accomodate all the boxes
     tmpIm = zeros([imSize,length(stats)]);
@@ -152,19 +159,25 @@ function stats = mergeOverlapping(stats,imSize)
     end
 
 
+
     % If areas do not overlap the sum of tmpIm along dim 3 will contain only 1 and 0.
     % Therefore the following anonymous function will return true when there are overlaps.
     containsOverlaps = @(x) ~isequal(unique(sum(x,3)),[0;1]);
     if ~containsOverlaps(tmpIm)
+        if diagnositicPlots
+            fprintf('No overlapping ROIs\n')
+        end
         return
     end
 
     if size(tmpIm,3)>1
-        fprintf('Attempting to merge %d ROIs\n',size(tmpIm,3));
+        if diagnositicPlots
+            fprintf('Attempting to merge %d ROIs\n',size(tmpIm,3));
+        end
     end
 
     % Keep looping until all are merged
-    diagnositicPlots=false;
+
     while containsOverlaps(tmpIm)
         combosToTest = nchoosek(1:size(tmpIm,3),2);  %The unique combinations to test
         overlapProp = zeros(1,length(combosToTest)); %Pre-allocate a variable in which to store results
