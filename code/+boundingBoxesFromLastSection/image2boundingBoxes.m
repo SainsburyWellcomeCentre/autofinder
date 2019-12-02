@@ -54,7 +54,7 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
     if isempty(ROIstats)
         % We run on the whole image
         BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
-        stats = getBoundingBoxes(BW,pixelSize);  % Find bounding boxes
+        stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         stats = mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
     else
         % Run within each ROI then afterwards consolidate results
@@ -62,7 +62,7 @@ function out = image2boundingBoxes(im,pixelSize,varargin)
             fprintf('Analysing ROI %d for sub-ROIs\n', ii)
             tIm        = getSubImageUsingBoundingBox(im,ROIstats.BoundingBoxes{ii}); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
-            tStats{ii} = getBoundingBoxes(BW,pixelSize);
+            tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
             tStats{ii} = mergeOverlapping(tStats{ii},size(tIm));
         end
 
@@ -297,7 +297,7 @@ function BW = binarizeImage(im,pixelSize,tThresh)
 
 
 
-function stats = getBoundingBoxes(BW,pixelSize)
+function stats = getBoundingBoxes(BW,im,pixelSize)
     % Find bounding boxes, removing very small ones and 
     stats = regionprops(BW,'boundingbox', 'area', 'extrema');
 
@@ -315,6 +315,27 @@ function stats = getBoundingBoxes(BW,pixelSize)
             fprintf('Removing small ROI of size %d\n', stats(ii).Area)
             stats(ii)=[];
         end
+    end
+
+    %Look for ROIs smaller than 2 by 2 mm and ask whether they are the un-imaged corner tile.
+    %If so delete. TODO: longer term we want to get rid of the problem at acquisition. 
+    for ii=length(stats):-1:1
+        boxArea = prod(stats(ii).BoundingBox(3:4)*pixelSize*1E-3);
+        if boxArea>2
+            % TODO: could use the actual tile size
+            continue
+        end
+
+        % Are most pixels the median value?
+        tmp=getSubImageUsingBoundingBox(im,stats(ii).BoundingBox);
+        tMed=median(tmp(:));
+        propMedPix=length(find(tmp==tMed)) / length(tmp(:));
+        if propMedPix>0.5
+            %Then delete the ROI
+            fprintf('Removing corner ROI\n')
+            stats(ii)=[];
+        end
+
     end
 
     %Sort in ascending size order
