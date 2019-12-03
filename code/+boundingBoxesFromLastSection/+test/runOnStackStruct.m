@@ -1,6 +1,6 @@
 function varargout=runOnStackStruct(pStack,noPlot)
     % Run the brain-finding algorithm on a stack processed by genGroundTruthBorders
-    % 
+    %
     % Purpose
     % Simulate the behavior of an imaging system seeking to image only
     % the tissue without benefit of a low res preview scan of the area.
@@ -61,7 +61,8 @@ function varargout=runOnStackStruct(pStack,noPlot)
             'lastSectionStats',stats(ii-1));
 
         lastBoundBoxes = stats(ii-1).BoundingBoxes;
-
+    drawnow
+    continue
         if noPlot
             if mod(ii,5)==0, fprintf('.'), end
         else

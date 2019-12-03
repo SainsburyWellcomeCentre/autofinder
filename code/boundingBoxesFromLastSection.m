@@ -46,7 +46,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params = inputParser;
     params.CaseSensitive = false;
 
-    params.addParameter('pixelSize', 5, @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('pixelSize', 7, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('tileSize', 1000, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
@@ -82,11 +82,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         tThresh = median(borderPixSize) + std(borderPixSize)*4;
     end
 
-
     if isempty(lastSectionStats)
         % We run on the whole image
         BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
+        %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
         stats = mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
     else
         % Run within each ROI then afterwards consolidate results
@@ -95,6 +95,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii}); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
+            %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
             tStats{ii} = mergeOverlapping(tStats{ii},size(tIm));
         end
 
@@ -120,11 +121,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
     
 
-
-    doExpansion=false;
-    if doExpansion
-        %boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,pixelSize,tileSize);
-    end
 
 
 

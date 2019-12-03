@@ -1,12 +1,16 @@
-function BoundingBox = growBoundingBoxIfSampleClipped(im,pixelSize,tileSize)
+function BoundingBox = growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize)
 % Enlarge bounding box by full tile increments if the sample is clipped
 % This function will be run *after* the new sample images are acquired
 % so growth by full tiles is the only option
 %
-% im must be the 
+% Inputs-
+% im - must be a filtered 2D image
+% stats - output of getBoundingBoxes from boundingBoxFromLastSection.m
+%         stats is a structure which can have a length>1 for cases with multiple ROIs
+% pixelSize - in microns per pixel (for im)
+% tileSize - imaging system tile size in microns
 
-%TODO -- NOT WORKING
-disp('NOT WORKING')
+disp('NOT FINISHED')
 clippedEdges = boundingBoxesFromLastSection.findROIEdgeClipping(im,stats);
 tileSizeInPixels = round(tileSize/pixelSize);
 
