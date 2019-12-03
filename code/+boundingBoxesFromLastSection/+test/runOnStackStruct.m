@@ -1,5 +1,5 @@
 function varargout=runOnStackStruct(pStack,noPlot)
-    % Run the brain-finding algorithm on a stack processed by genGrounTruthBorders
+    % Run the brain-finding algorithm on a stack processed by genGroundTruthBorders
     % 
     % Purpose
     % Simulate the behavior of an imaging system seeking to image only
@@ -34,8 +34,8 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
     % Pre-allocate various variables
     L={};
-    minBoundingBoxCoords=cell(1,size(im,3));
-    tileBoxCoords=cell(1,size(im,3));
+    minBoundingBoxCoords=cell(1,size(pStack.imStack,3));
+    tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
 
 
@@ -51,19 +51,16 @@ function varargout=runOnStackStruct(pStack,noPlot)
             thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*4);
         end
 
-
         % boundingBoxesFromLastSection is fed the ROI structure from the previous section. 
         % It runs the sample-detection code within these ROIs only and returns the results.
-        [stats(ii),H] = boundingBoxesFromLastSection(pStack,imStack(:,:,ii), ...
+        [stats(ii),H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
             'pixelSize', pStack.voxelSizeInMicrons,...
             'tileSize',pStack.tileSizeInMicrons, ...
             'tThresh',thresh,...
             'doPlot',~noPlot, ...
-            'ROIrestrict',stats(ii-1)) 
+            'lastSectionStats',stats(ii-1));
 
-
-
-        lastBoundBoxes = stats(ii-1).boundingBoxes;
+        lastBoundBoxes = stats(ii-1).BoundingBoxes;
 
         if noPlot
             if mod(ii,5)==0, fprintf('.'), end

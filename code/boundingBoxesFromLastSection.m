@@ -150,7 +150,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         out.globalBoundingBox = out.BoundingBoxes{1};
     elseif length(out.BoundingBoxes)>1
         tmp = cell2mat(out.BoundingBoxes');
-        out.globalBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
+        out.globalBoundingBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
     end
 
     % Store statistics in output structure
@@ -168,10 +168,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
     out.notes=''; %Anything odd can go in here
     out.tThresh = tThresh;
-
-
-
-
 
 
     % Optionally return coords of each box
