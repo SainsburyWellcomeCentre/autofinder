@@ -1,4 +1,4 @@
-function clippedEdges = findROIEdgeClipping(im,BoundingBox)
+function varargout = findROIEdgeClipping(im,BoundingBox,verbose)
 % Find clipped image edges based on a bounding box
 % 
 % function clippedEdges = findROIEdgeClipping(im,BoundingBox)
@@ -10,15 +10,27 @@ function clippedEdges = findROIEdgeClipping(im,BoundingBox)
 %
 % Inputs
 % im - image in which to look for clipped edges
-% BoundingBox
+% BoundingBox - the bounding box
+% verbose - false by default unless no output arguments assigned, 
+%           in which case it's true.
+
+
+
+if nargin<3 && nargout==0
+	verbose=true;
+elseif nargin<3
+	verbose=false;
+end
+
 
 clippedEdges=[];
 
-if BoundingBox(1)==1
+
+if BoundingBox(1)<=1
     clippedEdges(end+1)='W';
 end
 
-if BoundingBox(2)==1
+if BoundingBox(2)<=1
     clippedEdges(end+1)='N';
 end
 
@@ -31,3 +43,11 @@ if BoundingBox(2)+BoundingBox(4) >= size(im,1)
 end
 
 clippedEdges = char(unique(clippedEdges));
+
+if verbose && ~isempty(clippedEdges)
+	fprintf('The following sides are clipped because the ROI extends all the way to image edge: %s\n', clippedEdges)
+end
+
+if nargout>0
+	varargout{1}=clippedEdges;
+end
