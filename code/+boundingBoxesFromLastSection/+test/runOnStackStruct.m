@@ -25,11 +25,12 @@ function varargout=runOnStackStruct(pStack,noPlot)
     % Step one: process the initial image (first section) and find the bounding boxes
     % for tissue within it. This is the only point where we don't use the ROIs from the
     % previous section to constrain ROI choice on then next section. Hence we are not
-    % in the main for loop yet. 
+    % in the main for loop yet.
+    fprintf('Find bounding box in first section\n')
     stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), ...
             'pixelSize', pStack.voxelSizeInMicrons, ...
             'tileSize', pStack.tileSizeInMicrons, ...
-            'doPlot', ~noPlot)
+            'doPlot', ~noPlot);
 
 
     % Pre-allocate various variables
@@ -41,7 +42,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
     % Enter main for loop in which we process each section one at a time.
     for ii=2:size(pStack.imStack,3)
-
+        fprintf('\nDoing section %d/%d\n', ii, size(pStack.imStack,3))
         % Use a rolling threshold based on the last nImages to drive brain/background
         % segmentation in the next image. 
         nImages=5;
@@ -62,6 +63,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
         lastBoundBoxes = stats(ii-1).BoundingBoxes;
     drawnow
+    %pause
     continue
         if noPlot
             if mod(ii,5)==0, fprintf('.'), end
@@ -120,7 +122,6 @@ function varargout=runOnStackStruct(pStack,noPlot)
             set(H.hFig,'name',sprintf('%d/%d', ii, size(im,3)))
             drawnow
         end
-
     end
 
     if noPlot, fprintf('\n'), end

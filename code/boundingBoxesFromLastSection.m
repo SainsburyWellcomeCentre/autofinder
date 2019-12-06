@@ -91,22 +91,18 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     else
         % Run within each ROI then afterwards consolidate results
         for ii = 1:length(lastSectionStats.BoundingBoxes)
-            fprintf('Analysing ROI %d for sub-ROIs\n', ii)
-            tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii}); % Pull out just this sub-region
+            %fprintf('Analysing ROI %d for sub-ROIs\n', ii)
+            tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
             tStats{ii} = mergeOverlapping(tStats{ii},size(tIm));
         end
 
-        % The ROIs are currently in relative coordinates. We want to place them in 
-        % absolute coordinates with respect to the image as a whole. Then they can
-        % be positioned correctly in this coordinate space.
-
+        % Collate bounding boxes across sub-regions into one "stats" structure.
         n=1;
         for ii = 1:length(tStats)
             for jj = 1:length(tStats{ii})
-                tStats{ii}(jj).BoundingBox(1:2) = tStats{ii}(jj).BoundingBox(1:2) + lastSectionStats.BoundingBoxes{ii}(1:2);
                 stats(n).BoundingBox = tStats{ii}(jj).BoundingBox; %collate into one structure
                 n=n+1;
             end
@@ -313,8 +309,8 @@ function stats = mergeOverlapping(stats,imSize)
 
 
 
-function tArea = boundingBoxAreaFromImage(im)
-    % Determine the area of a bounding  box required to fit all non-zero pixels in a binary image.
+function [tArea,boundingBoxSize] = boundingBoxAreaFromImage(im)
+    % Determine the area of a bounding box required to fit all non-zero pixels in a binary image.
     tmp = im>0;
 
     %Rows and columns that have at least one non-zero pixel
@@ -322,25 +318,41 @@ function tArea = boundingBoxAreaFromImage(im)
     b = find(sum(tmp,2)>1);
     tArea = length(min(a):max(a)) * length(min(b):max(b));
 
+    boundingBoxSize=[length(b),length(a)];
+
 
 
 function BW = binarizeImage(im,pixelSize,tThresh)
     % Binarise and clean image. Adding a border before returning
+    verbose = false;
     BW = im>tThresh;
     BW = medfilt2(BW,[5,5]);
+
+    if verbose
+        fprintf('Binarized size before dilation: %d by %d\n',size(BW));
+    end
 
     % Remove crap using spatial filtering
     SE = strel('disk',round(50/pixelSize));
     BW = imerode(BW,SE);    
     BW = imdilate(BW,SE);
 
+
     % Add a border around the brain
     SE = strel('square',round(200/pixelSize));
     BW = imdilate(BW,SE);
 
+    if verbose
+        fprintf('Binarized size after dilation: %d by %d\n',size(BW));
+        [~,tmp]=boundingBoxAreaFromImage(BW);
+        fprintf('ROI size within binarized image: %d by %d\n',tmp);
+    end
+
 
 
 function stats = getBoundingBoxes(BW,im,pixelSize)
+    % Get bounding boxes in binarized image, BW. 
+
     % Find bounding boxes, removing very small ones and 
     stats = regionprops(BW,'boundingbox', 'area', 'extrema');
 
@@ -360,7 +372,10 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
         end
     end
 
+    % -------------------
+    % TEMP UNTIL WE FIX BAKINGTRAY
     %Look for ROIs smaller than 2 by 2 mm and ask whether they are the un-imaged corner tile.
+    %(BakingTray currently (Dec 2019) produces these tiles and this needs sorting.)
     %If so delete. TODO: longer term we want to get rid of the problem at acquisition. 
     for ii=length(stats):-1:1
         boxArea = prod(stats(ii).BoundingBox(3:4)*pixelSize*1E-3);
@@ -369,7 +384,8 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
             continue
         end
 
-        % Are most pixels the median value?
+
+        % Ask if most pixels the median value.
         tmp=getSubImageUsingBoundingBox(im,stats(ii).BoundingBox);
         tMed=median(tmp(:));
         propMedPix=length(find(tmp==tMed)) / length(tmp(:));
@@ -378,21 +394,45 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
             fprintf('Removing corner ROI\n')
             stats(ii)=[];
         end
-
     end
+    % -------------------
+
 
     %Sort in ascending size order
     [~,ind]=sort([stats.Area]);
     stats = stats(ind);
 
+    %Report clipping of ROI edges
+    for ii=1:length(stats)
+       % boundingBoxesFromLastSection.findROIEdgeClipping(BW,stats(ii).BoundingBox)
+    end
 
 
-function subIm = getSubImageUsingBoundingBox(im,BoundingBox)
+
+function subIm = getSubImageUsingBoundingBox(im,BoundingBox,maintainSize)
     % Pull out a sub-region of the image based on a bounding box.
+    %
+    % Inputs
+    % im - 2d image from which we will extract a sub-region
+    % BoundingBox - in the form: [left corner pos, bottom corner pos, width, height]
+    % maintainSize - false by default. If true, the output (subIM), is the same size as im
+    %                but all pixels outside BoundingBox are zero.
+
+    if nargin<3
+        maintainSize=false;
+    end
+
+
     BoundingBox = boundingBoxesFromLastSection.validateBoundingBox(BoundingBox,size(im));
     subIm = im(BoundingBox(2):BoundingBox(2)+BoundingBox(4), ...
                BoundingBox(1):BoundingBox(1)+BoundingBox(3));
 
+    if maintainSize
+        tmp=zeros(size(im));
+        tmp(BoundingBox(2):BoundingBox(2)+BoundingBox(4), ...
+            BoundingBox(1):BoundingBox(1)+BoundingBox(3)) = subIm;
+        subIm =tmp;
+    end
 
 
  
