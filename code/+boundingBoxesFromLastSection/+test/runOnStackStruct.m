@@ -61,7 +61,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
             'doPlot',~noPlot, ...
             'lastSectionStats',stats(ii-1));
 
-        lastBoundBoxes = stats(ii-1).BoundingBoxes;
+
     drawnow
     %pause
     continue
@@ -72,6 +72,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
         end
 
 
+        lastBoundBoxes = stats(ii-1).BoundingBoxes;
         for kk = 1:length(lastBoundBoxes)
             tL = lastBoundBoxes{kk};
             xEnd = tL(3)+tL(1);
@@ -107,13 +108,6 @@ function varargout=runOnStackStruct(pStack,noPlot)
                 plot(x, y, '--g', 'LineWidth',5, 'Parent', H.hAx_brainBorder);
             end
 
-
-            % TODO: 
-            % Assume that we imaged this area and then check if there is tissue extending
-            % up to the border. If so, we add tiles to areas where this is happening. 
-            % This means we will add quite small increases. 
-
-            % TODO: generate warning if this will still miss brain
         end
 
         if ~noPlot
@@ -127,11 +121,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     if noPlot, fprintf('\n'), end
 
     if nargout>0
-        %For volView
-        boundariesForPlotting.border{1} = {stats(:).boundaries};
-        boundariesForPlotting.minBoundingBoxCoords{1} = minBoundingBoxCoords;
-        boundariesForPlotting.tileBoxCoords{1} = tileBoxCoords;
-        varargout{1}=boundariesForPlotting;
+        varargout{1}=stats;
     end
     if nargout>1
         varargout{2} = stats;

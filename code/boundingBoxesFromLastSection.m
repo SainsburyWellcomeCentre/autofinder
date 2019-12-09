@@ -99,7 +99,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             tStats{ii} = mergeOverlapping(tStats{ii},size(tIm));
         end
 
-        % Collate bounding boxes across sub-regions into one "stats" structure.
+        % Collate bounding boxes across sub-regions into one "stats" structure. 
         n=1;
         for ii = 1:length(tStats)
             for jj = 1:length(tStats{ii})
@@ -117,8 +117,26 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
     
 
+    doTiledRoi=true;
+    if doTiledRoi
+        %Convert to a tiled ROI size 
+        for ii=1:length(stats)
+            stats(ii).BoundingBox = ...
+            boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
+                pixelSize, tileSize, 0.1);
 
+        end
+        [stats,dRoi] = mergeOverlapping(stats,size(im));
 
+        if dRoi<0
+            disp('sdfds')
+            for ii=1:length(stats)
+                stats(ii).BoundingBox = ...
+                boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
+                    pixelSize, tileSize, 0.1);
+            end % for 
+        end %if dRoi
+    end % if doTiledRoi
 
 
     if doPlot
@@ -128,7 +146,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         for ii=1:length(stats)
             H(ii)=boundingBoxesFromLastSection.plotting.overlayBoundingBox(stats(ii).BoundingBox);
         end
-
+    else
+        H=[];
     end
 
 
@@ -176,33 +195,27 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
 
 
-
-
-
-
-
-
-
-
-
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 %% Internal functions follow
 
-function stats = mergeOverlapping(stats,imSize)
+function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
     % Consolidate bounding boxes that overlap a reasonable amount so long as doing so
     % Is not going to result in a large increase in the area being imaged.
+    %
+    % Returns the updated stats struct and the difference in ROI number after running.
     diagnositicPlots=false;
 
     if length(stats)==1 
         if diagnositicPlots
             fprintf('Only one ROI, no merge possible by mergeOverlapping\n')
         end
+        nRoiChange=0;
         return
     end
 
     % Generate an empty image that will accomodate all the boxes
     tmpIm = zeros([imSize,length(stats)]);
-
+    initialRoiNum=length(stats);
     % Fill in the blank "image" with the areas that are ROIs
     for ii=1:length(stats)
         eb = boundingBoxesFromLastSection.validateBoundingBox(stats(ii).BoundingBox, imSize);
@@ -307,6 +320,7 @@ function stats = mergeOverlapping(stats,imSize)
     end
     fprintf('Found %d regions\n', size(tmpIm,3))
 
+    nRoiChange = length(stats)-initialRoiNum;
 
 
 function [tArea,boundingBoxSize] = boundingBoxAreaFromImage(im)
@@ -361,15 +375,18 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
         return
     end
 
-    % Delete very small objects
+    % Delete very small objects and ensure we have no non-integers
     minSizeInSqMicrons=50;
     sizeThresh = minSizeInSqMicrons * pixelSize;
 
+
     for ii=length(stats):-1:1
+        stats(ii).BoundingBox(1:2) = round(stats(ii).BoundingBox(1:2));
         if stats(ii).Area < sizeThresh;
             fprintf('Removing small ROI of size %d\n', stats(ii).Area)
             stats(ii)=[];
         end
+
     end
 
     % -------------------

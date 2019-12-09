@@ -15,19 +15,18 @@ function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSiz
     % Calculate the bounding box built from tiles of a size defined by the user.
     tileSizeInMicrons = tileSizeInMicrons * (1 - tileOverlapProportion);
 
-    eb = boundingBox{ii};
-    xP = [eb(1), eb(3)+eb(1)];
-    yP = [eb(2), eb(4)+eb(2)];
+    xP = [BoundingBox(1), BoundingBox(3)+BoundingBox(1)];
+    yP = [BoundingBox(2), BoundingBox(4)+BoundingBox(2)];
 
-    xSizeInMicrons = diff(xP) * pixelSize;
-    ySizeInMicrons = diff(yP) * pixelSize;
+    xSizeInMicrons = diff(xP) * pixelSizeInMicrons;
+    ySizeInMicrons = diff(yP) * pixelSizeInMicrons;
 
     n_xTiles = ceil(xSizeInMicrons / tileSizeInMicrons);
     n_yTiles = ceil(ySizeInMicrons / tileSizeInMicrons);
 
     %Size of tiled area to image 
-    xTilesPix = (n_xTiles * tileSizeInMicrons)/pixelSize; 
-    yTilesPix = (n_yTiles * tileSizeInMicrons)/pixelSize; 
+    xTilesPix = (n_xTiles * tileSizeInMicrons)/pixelSizeInMicrons; 
+    yTilesPix = (n_yTiles * tileSizeInMicrons)/pixelSizeInMicrons; 
 
     % Correctly position this area, over-writing previous xP and yP vectors
     xP = [mean(xP)-(xTilesPix/2), mean(xP)+(xTilesPix/2) ];
