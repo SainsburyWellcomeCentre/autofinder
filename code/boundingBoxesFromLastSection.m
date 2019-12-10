@@ -129,7 +129,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         [stats,dRoi] = mergeOverlapping(stats,size(im));
 
         if dRoi<0
-            disp('sdfds')
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
                 boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
@@ -231,6 +230,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
         if diagnositicPlots
             fprintf('No overlapping ROIs\n')
         end
+        nRoiChange=0;
         return
     end
 
@@ -317,6 +317,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
     stats = regionprops(sum(tmpIm,3)>0,'BoundingBox','Image');
     for ii=1:length(stats)
         stats(ii).BoundingBox = round(stats(ii).BoundingBox);
+        stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
     end
     fprintf('Found %d regions\n', size(tmpIm,3))
 
@@ -382,6 +383,7 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
 
     for ii=length(stats):-1:1
         stats(ii).BoundingBox(1:2) = round(stats(ii).BoundingBox(1:2));
+        stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
         if stats(ii).Area < sizeThresh;
             fprintf('Removing small ROI of size %d\n', stats(ii).Area)
             stats(ii)=[];
