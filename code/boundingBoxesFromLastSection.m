@@ -18,7 +18,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % im - downsampled 2D image.
     %
     % Inputs (Optional param/val pairs)
-    % pixelSize - 5 (microns/pixel) by default
+    % pixelSize - 7 (microns/pixel) by default
     % tileSize - 1000 (microns/pixel) by default. Size of tile FOV in microns.
     % tThresh - Threshold for brain/no brain. By default this is auto-calculated
     % doPlot - if true, display image and overlay boxes. false by default
@@ -122,7 +122,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         for ii=1:length(stats)
             stats(ii).BoundingBox = ...
             boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
-                pixelSize, tileSize, 0.1);
+                pixelSize, tileSize);
 
         end
 
@@ -132,7 +132,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
                 boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
-                    pixelSize, tileSize, 0.1);
+                    pixelSize, tileSize);
             end % for 
         end %if dRoi
     end % if doTiledRoi
