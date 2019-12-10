@@ -22,6 +22,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % tileSize - 1000 (microns/pixel) by default. Size of tile FOV in microns.
     % tThresh - Threshold for brain/no brain. By default this is auto-calculated
     % doPlot - if true, display image and overlay boxes. false by default
+    % doTiledRoi - if true (default) return the ROI we would have if tile scanning. 
     % lastSectionStats - By default the whole image is used. If this argument is 
     %               present it should be the output of image2boundingBoxes from a
     %               previous sectionl
@@ -49,6 +50,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('pixelSize', 7, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('tileSize', 1000, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
+    params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',5, @(x) isnumeric(x) ) %TODO -- DOES NOTHING RIGHT NO
@@ -58,12 +60,10 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     pixelSize = params.Results.pixelSize;
     tileSize = params.Results.tileSize;
     doPlot = params.Results.doPlot;
+    doTiledRoi=params.Results.doTiledRoi;
     tThresh = params.Results.tThresh;
     borderPixSize = params.Results.borderPixSize;
     lastSectionStats = params.Results.lastSectionStats;
-
-
-
 
 
 
@@ -117,7 +117,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
     
 
-    doTiledRoi=true;
     if doTiledRoi
         %Convert to a tiled ROI size 
         for ii=1:length(stats)
