@@ -39,6 +39,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
 
+    threshSD=7;
 
     % Enter main for loop in which we process each section one at a time.
     for ii=2:size(pStack.imStack,3)
@@ -47,9 +48,9 @@ function varargout=runOnStackStruct(pStack,noPlot)
         % segmentation in the next image. 
         nImages=5;
         if ii<=nImages
-            thresh = median( [stats.medianBackground] + [stats.stdBackground]*4);
+            thresh = median( [stats.medianBackground] + [stats.stdBackground]*threshSD);
         else
-            thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*4);
+            thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*threshSD);
         end
 
         % boundingBoxesFromLastSection is fed the ROI structure from the previous section. 
@@ -61,61 +62,12 @@ function varargout=runOnStackStruct(pStack,noPlot)
             'doPlot',~noPlot, ...
             'lastSectionStats',stats(ii-1));
 
+        drawnow
+    end
 
-    drawnow
-    %pause
-    continue
-        if noPlot
-            if mod(ii,5)==0, fprintf('.'), end
-        else
-            hold(H.hAx_brainBorder,'on')
-        end
-
-
-        lastBoundBoxes = stats(ii-1).BoundingBoxes;
-        for kk = 1:length(lastBoundBoxes)
-            tL = lastBoundBoxes{kk};
-            xEnd = tL(3)+tL(1);
-            xP = [tL(1),xEnd];
-            yEnd = tL(4)+tL(2);
-            yP = [tL(2),yEnd];
-
-            x=[xP(1), xP(2), xP(2), xP(1), xP(1)];
-            y=[yP(1), yP(1), yP(2), yP(2), yP(1)];
-            minBoundingBoxCoords{ii}(kk) = {[y',x']}; %For volView
-
-            %Plot in green the border of the previous section before extending 
-            %to cope with tiling
-            if ~noPlot
-                plot(x, y, ':g', 'LineWidth',3, 'Parent', H.hAx_brainBorder);
-            end
-
-            %TODO: we need to merge bounding boxes of final boxes based on tiles not the minimum boxes. 
-
-
-
-            % Overlay the box corresponding to what we would image if we have tiles.
-            % This should be larger than the preceeding box in most cases
-            %TODO: THIS FOLLOWING WILL GO INTO boundingBoxesFromLastSection
-            tileBoundBox = boundingBoxesFromLastSection.region2BoundingBox(stats(ii-1).boundaries(kk),micsPix,tileSizeInMicrons);
-            tB = tileBoundBox{1};
-            x=[tB(1), tB(1)+tB(3), tB(1)+tB(3), tB(1), tB(1)];
-            y=[tB(2), tB(2), tB(2)+tB(4), tB(2)+tB(4), tB(2)];
-            tileBoxCoords{ii}(kk)={[y',x']}; %For volView
-
-            % Plot this
-            if ~noPlot
-                plot(x, y, '--g', 'LineWidth',5, 'Parent', H.hAx_brainBorder);
-            end
-
-        end
-
-        if ~noPlot
-            hold(H.hAx_brainBorder,'off')
-
-            set(H.hFig,'name',sprintf('%d/%d', ii, size(im,3)))
-            drawnow
-        end
+    %Add the threshSD setting to everything
+    for ii=1:length(stats)
+        stats(ii).threshSD=threshSD;
     end
 
     if noPlot, fprintf('\n'), end

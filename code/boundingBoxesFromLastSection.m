@@ -119,7 +119,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     doTiledRoi=true;
     if doTiledRoi
-        fprintf('Building tiled ROIs\n')
         %Convert to a tiled ROI size 
         for ii=1:length(stats)
             stats(ii).BoundingBox = ...
