@@ -4,10 +4,11 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
     %
     % Returns the updated stats struct and the difference in ROI number after running.
 
+    verbose=false;
     diagnositicPlots=false;
 
     if length(stats)==1 
-        if diagnositicPlots
+        if verbose
             fprintf('Only one ROI, no merge possible by mergeOverlapping\n')
         end
         nRoiChange=0;
@@ -29,7 +30,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
     % Therefore the following anonymous function will return true when there are overlaps.
     containsOverlaps = @(x) ~isequal(unique(sum(x,3)),[0;1]);
     if ~containsOverlaps(tmpIm)
-        if diagnositicPlots
+        if verbose
             fprintf('No overlapping ROIs\n')
         end
         nRoiChange=0;
@@ -37,7 +38,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
     end
 
     if size(tmpIm,3)>1
-        if diagnositicPlots
+        if verbose
             fprintf('Attempting to merge %d ROIs\n',size(tmpIm,3));
         end
     end
@@ -90,7 +91,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
 
         % Merge if less than 10%
         if proportionIncrease<1.3
-            if diagnositicPlots
+            if verbose
                 fprintf('Merging into plane %d and then deleting plane %d\n', ...
                     combosToTest(ind,1), combosToTest(ind,2))
             end
@@ -98,7 +99,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
             tmpIm(:,:,combosToTest(ind,2)) = [];
         else
             % Otherwise remove the overlap between these two areas
-            if diagnositicPlots
+            if verbose
                 fprintf('Not merging\n')
             end
             tmpIm(:,:,combosToTest(ii,1)) =  tmpIm(:,:,combosToTest(ind,1)) - tmpIm(:,:,combosToTest(ind,2));
@@ -121,7 +122,8 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
         stats(ii).BoundingBox = round(stats(ii).BoundingBox);
         stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
     end
-    fprintf('mergeOverlapping Found %d regions\n', size(tmpIm,3))
+
+    fprintf('mergeOverlapping has found %d regions\n', size(tmpIm,3))
 
     nRoiChange = length(stats)-initialRoiNum;
 
