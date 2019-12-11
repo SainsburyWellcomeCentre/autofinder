@@ -17,3 +17,26 @@ We will work with imaging stacks (`imStack`, below) obtained from the BakingTray
 >> nSamples=1;
 >> pStack = boundingBoxesFromLastSection.test.stackToGroundTruth(imStack,'/pathTo/recipeFile',nSamples)
 ```
+
+
+# Evaluating results
+First ensure you have run analyses on all samples: 
+
+```
+>> boundingBoxesFromLastSection.test.runOnAllInDir
+```
+
+You can optionally generate a text file that sumarises the results:
+```
+>> boundingBoxesFromLastSection.test.evaluateDir('tests/191211_1545')
+```
+
+To visualise the outcome of one sample:
+```
+>> load LIC_003_previewStack.mat 
+>> load tests/191211_1545/log_LIC_003_previewStack.mat
+>> b={{testLog.BoundingBoxes},{},{}}
+>> volView(pStack.imStack,[1,200],b)
+```
+
+

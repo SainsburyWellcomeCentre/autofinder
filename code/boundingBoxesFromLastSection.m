@@ -53,7 +53,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
-    params.addParameter('borderPixSize',5, @(x) isnumeric(x) ) %TODO -- DOES NOTHING RIGHT NO
+    params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
 
 
     params.parse(varargin{:})
@@ -77,9 +77,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     if isempty(tThresh)
         %Find pixels within b pixels of the border
         b = borderPixSize;
-        borderPixSize = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
-        borderPixSize = borderPixSize(:);
-        tThresh = median(borderPixSize) + std(borderPixSize)*4;
+        borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
+        borderPix = borderPix(:);
+        tThresh = median(borderPix) + std(borderPix)*4;
     end
 
     if isempty(lastSectionStats)
@@ -163,10 +163,17 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
 
     % Store statistics in output structure
-    backgroundPix = im(find(~BW));
+    inverseBW = ~BW; %Pixels outside of brain
+
+    % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
+    b = borderPixSize;
+    inverseBW(b+1:end-b,b+1:end-b)=0;
+    backgroundPix = im(find(inverseBW));
+
     out.meanBackground = mean(backgroundPix(:));
     out.medianBackground = median(backgroundPix(:));
     out.stdBackground = std(backgroundPix(:));
+
     out.nBackgroundPix = sum(~BW(:));
 
     foregroundPix = im(find(BW));
