@@ -10,7 +10,11 @@ function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSiz
 % tileSizeInMicrons - FOV of microscope (length of tile on a side)
 % tileOverlapProportion - 0.1 means tiles overlap by 10%
 
+    verbose=false;
 
+    if nargin<4
+        tileOverlapProportion=0.1;
+    end
 
     % Calculate the bounding box built from tiles of a size defined by the user.
     tileSizeInMicrons = tileSizeInMicrons * (1 - tileOverlapProportion);
@@ -18,11 +22,20 @@ function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSiz
     xP = [BoundingBox(1), BoundingBox(3)+BoundingBox(1)];
     yP = [BoundingBox(2), BoundingBox(4)+BoundingBox(2)];
 
+
     xSizeInMicrons = diff(xP) * pixelSizeInMicrons;
     ySizeInMicrons = diff(yP) * pixelSizeInMicrons;
 
+
     n_xTiles = ceil(xSizeInMicrons / tileSizeInMicrons);
     n_yTiles = ceil(ySizeInMicrons / tileSizeInMicrons);
+
+
+    if verbose
+        fprintf('Bounding box is %0.2f by %0.2f mm: %d by %d tiles\n', ...
+         xSizeInMicrons/1E3, ySizeInMicrons/1E3, n_xTiles, n_yTiles)
+    end
+
 
     %Size of tiled area to image 
     xTilesPix = (n_xTiles * tileSizeInMicrons)/pixelSizeInMicrons; 

@@ -1,7 +1,7 @@
-function pStack = stackToGroundTruth(imStack,voxelSize,tileSize,nSamples)
-% Wrap an image stack into a "ground truth" structure for testing
+function pStack = stackToGroundTruth(imStack,pathToRecipe,nSamples)
+% Wrap an image stack into a "ground truth" structure (pStack) for testing
 %
-% boundingBoxesFromLastSection.test.stackToGroundTruth(imStack,voxelSize,tileSize,nSamples)
+% boundingBoxesFromLastSection.test.stackToGroundTruth(imStack,pathToRecipe,nSamples)
 %
 % Purpose
 % The "groundTruth" structure will be used for testing the behavior of the brain-finding
@@ -12,8 +12,7 @@ function pStack = stackToGroundTruth(imStack,voxelSize,tileSize,nSamples)
 % 
 % Inputs
 % imStack - The preview image stack produced by previewFilesToTiffStack from BakingTray.
-% voxelSize - size of an x/y voxel in imStack in microns.
-% tileSize - the number of microns on a side for each tile
+% pathToRecipe - Path to this sample's recipe file
 % nSamples - the number of samples (e.g. brains) contained in imStack. Some acquisitions 
 %            have multiple samples. 
 %
@@ -21,19 +20,26 @@ function pStack = stackToGroundTruth(imStack,voxelSize,tileSize,nSamples)
 %
 
 
-if nargin<2 || isempty(voxelSize)
-    voxelSize=10;
-end
-
-if nargin<3 || isempty(tileSize)
-    tileSize=1E3;
-end
-
-if nargin<4 || isempty(nSamples)
+if nargin<3 || isempty(nSamples)
     nSamples=1;
 end
 
+
+% Get the downsampled tile size
+recipe=yaml.ReadYaml(pathToRecipe);
+
+tileSize = recipe.TileStepSize.X * 1E3; %assume square tiles
+
+% TODO (BAD) the following will work on SWC rigs for sure but maybe not elsewhere. 
+% If X/Y are flipped for some reason. 
+% TODO - it also may not be valid once we start to use the auto finder
+imageExtentInY = recipe.NumTiles.Y * tileSize * (1-recipe.mosaic.overlapProportion);
+voxelSize = imageExtentInY / size(imStack,2);
+
+
+
 pStack.imStack = imStack;
+pStack.recipe = recipe;
 pStack.voxelSizeInMicrons = voxelSize;
 pStack.tileSizeInMicrons = tileSize;
 pStack.nSamples = nSamples;
