@@ -71,10 +71,28 @@ function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
     [L,indexedBW]=bwboundaries(BW,'noholes');
 
     for ii=length(L):-1:1
-        thisN = length(find(indexedBW == ii));
+        f=find(indexedBW == ii);
+        thisN = length(f);
+
+        if thisN>500^2
+            %Then it's a HUGE ROI and we don't worry about it
+            continue
+        end
+
         if thisN < sizeThresh
             L(ii)=[]; % Delete small stuff
+            continue
         end
+
+        % Delete non-imaged corner should it exist
+        tmp=im(f(1:5:end));
+        tMed=median(tmp(:));
+        propMedPix=length(find(tmp==tMed)) / length(tmp(:));
+        if propMedPix>0.5
+            %Then delete the ROI
+            L(ii)=[];
+        end
+
     end
 
     BW = indexedBW>0;
