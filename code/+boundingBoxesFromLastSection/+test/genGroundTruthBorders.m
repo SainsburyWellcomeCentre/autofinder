@@ -45,10 +45,14 @@ fprintf('\n')
 function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
 
     % Find pixels within b pixels of a border
-    b=7;
-    borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
+    b=10;
+
+    % CAN EDIT HERE TO CHOOSE THE BEST BORDER
+    %borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
+    %borderPix = im(1:b,:); %% TOP EDGE
+    borderPix = im(:,end-b+1:end); %% RIGHT EDGE
     borderPix = borderPix(:);
-    tThresh = mean(borderPix) + std(borderPix)*threshSTD;
+    tThresh = median(borderPix) + std(borderPix)*threshSTD;
 
     % Binarize
     BW = im>tThresh;

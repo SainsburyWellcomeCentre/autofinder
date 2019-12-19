@@ -51,6 +51,14 @@ for ii=1:length(pStacks)
     tFile = fullfile(runDir,pStacks(ii).name);
     fprintf('Loading %s\n',tFile)
     load(tFile)
+
+    % Do not process if the loaded .mat file does not contain a struct
+    if ~istruct(pStack)
+        fid = fopen(fullfile(testDirThisSession,['NOT_A_STRUCT_',pStacks(ii).name]),'w');
+        fclose(fid)
+        continue
+    end
+
     try
         testLog = boundingBoxesFromLastSection.test.runOnStackStruct(pStack,true);
         save(fullfile(testDirThisSession,['log_',pStacks(ii).name]),'testLog')
