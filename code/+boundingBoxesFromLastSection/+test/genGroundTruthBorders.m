@@ -48,9 +48,10 @@ function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
     b=10;
 
     % CAN EDIT HERE TO CHOOSE THE BEST BORDER
-    %borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
+    %borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)']; %All borders
     %borderPix = im(1:b,:); %% TOP EDGE
-    borderPix = im(:,end-b+1:end); %% RIGHT EDGE
+    borderPix = im(end-b:end,:); %% BOTTOM EDGE
+    %borderPix = im(:,end-b+1:end); %% RIGHT EDGE
     borderPix = borderPix(:);
     tThresh = median(borderPix) + std(borderPix)*threshSTD;
 
