@@ -52,12 +52,18 @@ Correct any issues you see by any means necessary.
 >> OUT=boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
 ```
 
+Visualise it:
+```
+>> b={{OUT.BoundingBoxes},{},{}}
+>> volView(pStack.imStack,[1,200],b)
+```
 
 # Evaluating results
-First ensure you have run analyses on all samples: 
+First ensure you have run analyses on all samples. 
+Run the test script on one directory:
 
 ```
->> boundingBoxesFromLastSection.test.runOnAllInDir
+>> boundingBoxesFromLastSection.test.runOnAllInDir('stacks/singleBrains')
 ```
 
 You can optionally generate a text file that sumarises the results:
@@ -71,4 +77,9 @@ To visualise the outcome of one sample:
 >> load tests/191211_1545/log_LIC_003_previewStack.mat
 >> b={{testLog.BoundingBoxes},{},{}}
 >> volView(pStack.imStack,[1,200],b)
+```
+
+To run on all directories containing sample data within the stacks sub-directory do:
+```
+>> boundingBoxesFromLastSection.test.runOnAllInDir
 ```
