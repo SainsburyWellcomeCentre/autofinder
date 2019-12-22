@@ -1,21 +1,35 @@
-function out=evaluateBoundingBoxes(pStack,stats)
+function out=evaluateBoundingBoxes(stats)
 % Evaluate how well the bounding boxes capture the brain
 %
-%   function out=evaluateBoundingBoxes(pStack,stats)
+%   function out=evaluateBoundingBoxes(stats)
 %
 % Purpose
 % Report accuracy of brain finding. Shows images of failed sections
 % if no outputs were requested. 
 %
+% Inputs
+% The pStackLog file in test directory
+%
 % Example
-% load some_pStack.mat
-% testLog  = boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
-% boundingBoxesFromLastSection.test.evaluateBoundingBoxes(pStack,testLog)
+% testLog  = boundingBoxesFromLastSection.test.runOnStackStruct(testLog)
+% boundingBoxesFromLastSection.test.evaluateBoundingBoxes(testLog)
 %
 % Outputs
 % out - A string describing how well this sample registered. This
 %       is so we can write text files for multiple sumples to summarize
 %       the performance of the algorithm. 
+
+
+% Look for pStack file to load
+
+pStackFname = stats(1).stackFname;
+if ~exist(pStackFname,'file')
+    out = sprintf('No pStack file found at %s\n', pStackFname);
+    fprintf(out)
+    return
+else
+    load(pStackFname)
+end
 
 
 BW=pStack.binarized;
@@ -65,12 +79,24 @@ for ii=1:size(pStack.binarized,3)
         end
         % How many pixels fell outside of the area?
         pixelsInATile = round(pStack.tileSizeInMicrons/pStack.voxelSizeInMicrons)^2;
-        msg = sprintf('Section %03d/%03d, %d ROIs, %d non-imaged pixels; %0.3f tiles; %0.3f sq mm \n', ...
+        nonImagedTiles = nonImagedPixels/pixelsInATile;
+        if nonImagedTiles>1
+            warnStr = ' * ';
+        elseif nonImagedTiles>2
+            warnStr = ' ** ';
+        elseif nonImagedTiles>3
+            warnStr = ' *** ';
+        else
+            warnStr = '';
+        end
+
+        msg = sprintf('%sSection %03d/%03d, %d ROIs, %d non-imaged pixels; %0.3f tiles; %0.3f sq mm \n', ...
+            warnStr, ...
             ii, ...
             size(pStack.binarized,3), ...
             length(stats(ii).BoundingBoxes), ...
             nonImagedPixels, ...
-            nonImagedPixels/pixelsInATile, ...
+            nonImagedTiles, ...
             sqrt(nonImagedPixels) * pStack.voxelSizeInMicrons * 1E-3);
 
         fprintf(msg)
@@ -81,7 +107,7 @@ for ii=1:size(pStack.binarized,3)
 end
 
 if nPlanesWithMissingBrain==0
-    msg='None of the sample has been left unimaged.\n';
+    msg='GOOD -- None of the sample has been left unimaged.\n';
     fprintf(msg)
     out=msg;
 end
