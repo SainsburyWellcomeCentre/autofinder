@@ -45,10 +45,15 @@ fprintf('\n')
 function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
 
     % Find pixels within b pixels of a border
-    b=7;
-    borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
+    b=10;
+
+    % CAN EDIT HERE TO CHOOSE THE BEST BORDER
+    %borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)']; %All borders
+    %borderPix = im(1:b,:); %% TOP EDGE
+    borderPix = im(end-b:end,:); %% BOTTOM EDGE
+    %borderPix = im(:,end-b+1:end); %% RIGHT EDGE
     borderPix = borderPix(:);
-    tThresh = mean(borderPix) + std(borderPix)*threshSTD;
+    tThresh = median(borderPix) + std(borderPix)*threshSTD;
 
     % Binarize
     BW = im>tThresh;
@@ -71,10 +76,28 @@ function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
     [L,indexedBW]=bwboundaries(BW,'noholes');
 
     for ii=length(L):-1:1
-        thisN = length(find(indexedBW == ii));
+        f=find(indexedBW == ii);
+        thisN = length(f);
+
+        if thisN>500^2
+            %Then it's a HUGE ROI and we don't worry about it
+            continue
+        end
+
         if thisN < sizeThresh
             L(ii)=[]; % Delete small stuff
+            continue
         end
+
+        % Delete non-imaged corner should it exist
+        tmp=im(f(1:5:end));
+        tMed=median(tmp(:));
+        propMedPix=length(find(tmp==tMed)) / length(tmp(:));
+        if propMedPix>0.5
+            %Then delete the ROI
+            L(ii)=[];
+        end
+
     end
 
     BW = indexedBW>0;

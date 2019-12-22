@@ -14,8 +14,42 @@ To generate the pStack files do the following
 We will work with imaging stacks (`imStack`, below) obtained from the BakingTray preview stacks. 
 
 ```
->> nSamples=1;
+>> nSamples=2;
 >> pStack = boundingBoxesFromLastSection.test.stackToGroundTruth(imStack,'/pathTo/recipeFile',nSamples)
+
+pStack = 
+
+  struct with fields:
+
+               imStack: [1138x2826x192 int16]
+                recipe: [1x1 struct]
+    voxelSizeInMicrons: 8.1855
+     tileSizeInMicrons: 1.0281e+03
+              nSamples: 2
+             binarized: []
+               borders: {}
+
+```
+
+There are two empty fields (`binarized` and `borders`) in the `pStack` structure. 
+These need to be populated with what we will treat as a proxy for ground truth: which regions actually contain brain.
+The is necessary for subsequent evaluation steps but is not necessary to run the automatic tissue-finding code. 
+This is done with:
+
+```
+pStack=boundingBoxesFromLastSection.test.genGroundTruthBorders(pStack,7)
+```
+
+And the results visualised with:
+```
+>> volView(pStack.imStack,[1,200],pStack.borders)  
+```
+
+Correct any issues you see by any means necessary. 
+
+# Generating bounding boxes from a stack structure
+```
+>> OUT=boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
 ```
 
 
@@ -38,5 +72,3 @@ To visualise the outcome of one sample:
 >> b={{testLog.BoundingBoxes},{},{}}
 >> volView(pStack.imStack,[1,200],b)
 ```
-
-
