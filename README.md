@@ -75,8 +75,8 @@ To visualise the outcome of one sample:
 ```
 >> load LIC_003_previewStack.mat 
 >> load tests/191211_1545/log_LIC_003_previewStack.mat
->> b={{testLog.BoundingBoxes},{},{}}
->> volView(pStack.imStack,[1,200],b)
+>> b={{testLog.BoundingBoxes},{},{}};
+>> volView(pStack.imStack,[1,200],b);
 ```
 
 To run on all directories containing sample data within the stacks sub-directory do:
