@@ -64,7 +64,7 @@ function varargout=brainTrackerUsingLastImage(im,noPlot,micsPix)
                 plot(x, y, ':g', 'LineWidth',3, 'Parent', H.hAx_brainBorder);
             end
 
-            %TODO: we need to merge enclosing boxes of final boxes based on tiles not the minimum boxes. 
+            %TODO: we need to merge enclosing boxes of final boxes based on tiles not the minimum boxes.
 
 
 

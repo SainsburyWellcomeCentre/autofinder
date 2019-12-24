@@ -5,7 +5,8 @@ function out=evaluateBoundingBoxes(stats)
 %
 % Purpose
 % Report accuracy of brain finding. Shows images of failed sections
-% if no outputs were requested. 
+% if no outputs were requested. NOTE: evaluates based on the border
+% defined in pStack.borders and not on the binarised image.
 %
 % Inputs
 % The pStackLog file in test directory
@@ -32,23 +33,34 @@ else
 end
 
 
-BW=pStack.binarized;
+
 nPlanesWithMissingBrain=0;
 
 out = '';
+
+BW = zeros(size(pStack.binarized,[1,2])); 
 for ii=1:size(pStack.binarized,3)
+
+    %Empty image. We will fill with ones all regions where brain was found.
+    tB = pStack.borders{1}{ii};
+    for jj = 1:length(tB)
+        f= sub2ind(size(BW),tB{jj}(:,1),tB{jj}(:,2));
+        BW(f)=1;
+    end
+    BW = imfill(BW);
+
+
 
     for jj=1:length(stats(ii).BoundingBoxes)
         % All pixels that are within the bounding box should be zero
         bb=stats(ii).BoundingBoxes{jj};
 
         bb(bb<=0)=1; %In case boxes have origins outside of the image
-
-        BW(bb(2):bb(2)+bb(4), bb(1):bb(1)+bb(3),ii)=0;
+        BW(bb(2):bb(2)+bb(4), bb(1):bb(1)+bb(3))=0;
     end
 
     % Any non-zero pixels indicate non-imaged sample areas
-    nonImagedPixels = sum(BW(:,:,ii),[1,2]);
+    nonImagedPixels = sum(BW,[1,2]);
 
     if nonImagedPixels>0
         nPlanesWithMissingBrain = nPlanesWithMissingBrain + 1;
@@ -62,7 +74,7 @@ for ii=1:size(pStack.binarized,3)
                 tBorder = pStack.borders{1}{ii}{jj};
                 plot(tBorder(:,2),tBorder(:,1), '--c')
                 plot(tBorder(:,2),tBorder(:,1), ':g','LineWidth',1)
-            end        
+            end
             hold off
 
             % Overlay bounding boxes
@@ -103,7 +115,7 @@ for ii=1:size(pStack.binarized,3)
         out = [out,msg];
 
     end
-
+    BW(:)=0; %Wipe the binary image
 end
 
 if nPlanesWithMissingBrain==0
