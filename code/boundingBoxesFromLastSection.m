@@ -99,23 +99,43 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             tStats{ii} = boundingBoxesFromLastSection.mergeOverlapping(tStats{ii},size(tIm));
         end
 
-        % Collate bounding boxes across sub-regions into one "stats" structure. 
-        n=1;
-        for ii = 1:length(tStats)
-            for jj = 1:length(tStats{ii})
-                stats(n).BoundingBox = tStats{ii}(jj).BoundingBox; %collate into one structure
-                n=n+1;
+        if ~isempty(tStats{1})
+            % Collate bounding boxes across sub-regions into one "stats" structure. 
+            n=1;
+            for ii = 1:length(tStats)
+                for jj = 1:length(tStats{ii})
+                    stats(n).BoundingBox = tStats{ii}(jj).BoundingBox; %collate into one structure
+                    n=n+1;
+                end
             end
+
+
+            % Final merge. This is in case some sample ROIs are now so close together that
+            % they ought to be merged. This would not have been possible to do until this point. 
+            % TODO -- possibly we can do only the final merge?
+            stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+        else
+            % No bounding boxes found
+            fprintf('boundingBoxesFromLastSection found no bounding boxes\n')
+            stats=[];
         end
-
-
-        % Final merge. This is in case some sample ROIs are now so close together that
-        % they ought to be merged. This would not have been possible to do until this point. 
-        % TODO -- possibly we can do only the final merge?
-        stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
 
     end
     
+    % Deal with scenario where nothing was found
+    if isempty(stats)
+        if nargout>0
+            varargout{1}=[];
+        end
+        if nargout>1
+            varargout{2}=[];
+        end
+        if nargout>2
+            varargout{3}=im;
+        end
+        return
+    end
+
 
     if doTiledRoi
         %Convert to a tiled ROI size 

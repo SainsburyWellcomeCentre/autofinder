@@ -55,14 +55,20 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
         % boundingBoxesFromLastSection is fed the ROI structure from the previous section. 
         % It runs the sample-detection code within these ROIs only and returns the results.
-        [stats(ii),H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
+        [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
             'pixelSize', pStack.voxelSizeInMicrons,...
             'tileSize',pStack.tileSizeInMicrons, ...
             'tThresh',thresh,...
             'doPlot',~noPlot, ...
             'lastSectionStats',stats(ii-1));
 
-        drawnow
+        if ~isempty(tmp)
+            stats(ii)=tmp;
+            drawnow
+        else
+            break
+        end
+
     end
 
     %Add the threshSD setting to everything
