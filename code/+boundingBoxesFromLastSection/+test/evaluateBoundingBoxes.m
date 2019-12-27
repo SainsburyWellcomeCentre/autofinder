@@ -1,4 +1,4 @@
-function out=evaluateBoundingBoxes(stats)
+function out=evaluateBoundingBoxes(stats,pStack)
 % Evaluate how well the bounding boxes capture the brain
 %
 %   function out=evaluateBoundingBoxes(stats)
@@ -9,7 +9,12 @@ function out=evaluateBoundingBoxes(stats)
 % defined in pStack.borders and not on the binarised image.
 %
 % Inputs
-% The pStackLog file in test directory
+% The pStackLog file in test directory. The pStack is loaded automatically.
+%
+% Inputs (optional)
+% pStack - if supplied optionally as a second input argument, the pStack
+%          is not loaded from disk.
+%
 %
 % Example
 % testLog  = boundingBoxesFromLastSection.test.runOnStackStruct(testLog)
@@ -22,16 +27,17 @@ function out=evaluateBoundingBoxes(stats)
 
 
 % Look for pStack file to load
-
-pStackFname = stats(1).stackFname;
-if ~exist(pStackFname,'file')
-    out = sprintf('No pStack file found at %s\n', pStackFname);
-    fprintf(out)
-    return
-else
-    load(pStackFname)
+if nargin==1
+    pStackFname = stats(1).stackFname;
+    if ~exist(pStackFname,'file')
+        out = sprintf('No pStack file found at %s\n', pStackFname);
+        fprintf(out)
+        return
+    else
+        fprintf('Loading stack file %s\n',pStackFname)
+        load(pStackFname)
+    end
 end
-
 
 
 nPlanesWithMissingBrain=0;
@@ -39,7 +45,7 @@ nPlanesWithMissingBrain=0;
 out = '';
 
 BW = zeros(size(pStack.binarized,[1,2])); 
-for ii=1:size(pStack.binarized,3)
+for ii=1:length(stats)
 
     %Empty image. We will fill with ones all regions where brain was found.
     tB = pStack.borders{1}{ii};
@@ -48,8 +54,6 @@ for ii=1:size(pStack.binarized,3)
         BW(f)=1;
     end
     BW = imfill(BW);
-
-
 
     for jj=1:length(stats(ii).BoundingBoxes)
         % All pixels that are within the bounding box should be zero
@@ -119,8 +123,16 @@ for ii=1:size(pStack.binarized,3)
 end
 
 if nPlanesWithMissingBrain==0
-    msg='GOOD -- None of the sample has been left unimaged.\n';
+    msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
+        length(stats));
     fprintf(msg)
-    out=msg;
+    out = [out,msg];
+end
+
+if length(stats)~=size(pStack.binarized,3)
+    msg=sprintf('WARNING -- There are %d sections in the image stack but only %d were processed.\n', ...
+        size(pStack.binarized,3), length(stats));
+    fprintf(msg)
+    out = [out,msg];
 end
 
