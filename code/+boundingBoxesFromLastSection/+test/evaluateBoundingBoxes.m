@@ -1,14 +1,20 @@
-function out=evaluateBoundingBoxes(stats)
+function out=evaluateBoundingBoxes(stats,pStack)
 % Evaluate how well the bounding boxes capture the brain
 %
 %   function out=evaluateBoundingBoxes(stats)
 %
 % Purpose
 % Report accuracy of brain finding. Shows images of failed sections
-% if no outputs were requested. 
+% if no outputs were requested. NOTE: evaluates based on the border
+% defined in pStack.borders and not on the binarised image.
 %
 % Inputs
-% The pStackLog file in test directory
+% The pStackLog file in test directory. The pStack is loaded automatically.
+%
+% Inputs (optional)
+% pStack - if supplied optionally as a second input argument, the pStack
+%          is not loaded from disk.
+%
 %
 % Example
 % testLog  = boundingBoxesFromLastSection.test.runOnStackStruct(testLog)
@@ -21,34 +27,44 @@ function out=evaluateBoundingBoxes(stats)
 
 
 % Look for pStack file to load
-
-pStackFname = stats(1).stackFname;
-if ~exist(pStackFname,'file')
-    out = sprintf('No pStack file found at %s\n', pStackFname);
-    fprintf(out)
-    return
-else
-    load(pStackFname)
+if nargin==1
+    pStackFname = stats(1).stackFname;
+    if ~exist(pStackFname,'file')
+        out = sprintf('No pStack file found at %s\n', pStackFname);
+        fprintf(out)
+        return
+    else
+        fprintf('Loading stack file %s\n',pStackFname)
+        load(pStackFname)
+    end
 end
 
 
-BW=pStack.binarized;
 nPlanesWithMissingBrain=0;
 
 out = '';
-for ii=1:size(pStack.binarized,3)
+
+BW = zeros(size(pStack.binarized,[1,2])); 
+for ii=1:length(stats)
+
+    %Empty image. We will fill with ones all regions where brain was found.
+    tB = pStack.borders{1}{ii};
+    for jj = 1:length(tB)
+        f= sub2ind(size(BW),tB{jj}(:,1),tB{jj}(:,2));
+        BW(f)=1;
+    end
+    BW = imfill(BW);
 
     for jj=1:length(stats(ii).BoundingBoxes)
         % All pixels that are within the bounding box should be zero
         bb=stats(ii).BoundingBoxes{jj};
 
         bb(bb<=0)=1; %In case boxes have origins outside of the image
-
-        BW(bb(2):bb(2)+bb(4), bb(1):bb(1)+bb(3),ii)=0;
+        BW(bb(2):bb(2)+bb(4), bb(1):bb(1)+bb(3))=0;
     end
 
     % Any non-zero pixels indicate non-imaged sample areas
-    nonImagedPixels = sum(BW(:,:,ii),[1,2]);
+    nonImagedPixels = sum(BW,[1,2]);
 
     if nonImagedPixels>0
         nPlanesWithMissingBrain = nPlanesWithMissingBrain + 1;
@@ -62,7 +78,7 @@ for ii=1:size(pStack.binarized,3)
                 tBorder = pStack.borders{1}{ii}{jj};
                 plot(tBorder(:,2),tBorder(:,1), '--c')
                 plot(tBorder(:,2),tBorder(:,1), ':g','LineWidth',1)
-            end        
+            end
             hold off
 
             % Overlay bounding boxes
@@ -75,7 +91,6 @@ for ii=1:size(pStack.binarized,3)
             set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.binarized,3)))
             caxis([0,300])
             drawnow
-            pause
         end
         % How many pixels fell outside of the area?
         pixelsInATile = round(pStack.tileSizeInMicrons/pStack.voxelSizeInMicrons)^2;
@@ -103,12 +118,20 @@ for ii=1:size(pStack.binarized,3)
         out = [out,msg];
 
     end
-
+    BW(:)=0; %Wipe the binary image
 end
 
 if nPlanesWithMissingBrain==0
-    msg='GOOD -- None of the sample has been left unimaged.\n';
+    msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
+        length(stats));
     fprintf(msg)
-    out=msg;
+    out = [out,msg];
+end
+
+if length(stats)~=size(pStack.binarized,3)
+    msg=sprintf('WARNING -- There are %d sections in the image stack but only %d were processed.\n', ...
+        size(pStack.binarized,3), length(stats));
+    fprintf(msg)
+    out = [out,msg];
 end
 

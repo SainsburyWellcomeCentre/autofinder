@@ -26,11 +26,18 @@ function varargout=runOnStackStruct(pStack,noPlot)
     % for tissue within it. This is the only point where we don't use the ROIs from the
     % previous section to constrain ROI choice on then next section. Hence we are not
     % in the main for loop yet.
-    fprintf('Find bounding box in first section\n')
-    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), ...
-            'pixelSize', pStack.voxelSizeInMicrons, ...
-            'tileSize', pStack.tileSizeInMicrons, ...
-            'doPlot', ~noPlot);
+    fprintf('Finding bounding box in first section\n')
+    argIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
+             'tileSize', pStack.tileSizeInMicrons, ...
+             'doPlot', ~noPlot};
+    if isfield(pStack,'tThreshSD')
+        argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
+        threshSD = pStack.tThreshSD;
+    else
+        threshSD=7;
+    end
+
+    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
 
 
     % Pre-allocate various variables
@@ -39,7 +46,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
 
-    threshSD=7;
+
 
     % Enter main for loop in which we process each section one at a time.
     for ii=2:size(pStack.imStack,3)
@@ -75,6 +82,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     for ii=1:length(stats)
         stats(ii).threshSD=threshSD;
     end
+    stats(1).runOnStackStructArgs = argIn;
 
     if noPlot, fprintf('\n'), end
 
