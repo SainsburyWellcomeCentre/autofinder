@@ -83,3 +83,6 @@ To run on all directories containing sample data within the stacks sub-directory
 ```
 >> boundingBoxesFromLastSection.test.runOnAllInDir
 ```
+
+## Changelog
+v2 Does well with single brains and multiple brains where the individual brains have bounding boxes that are not going to overlap. Once bounding boxes overlap we begin to get odd and major failures. For instance, whole brains sudenly are excluded. An example of this is `threeBrains/AF_C2_2FPPVs_previewStack.mat` with `tThreshSD=4` -- irrespective of threshold we lose the bottom brain from section 17 to section 18. 
