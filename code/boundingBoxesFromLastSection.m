@@ -52,6 +52,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('tThreshSD',7, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
 
@@ -62,6 +63,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     doPlot = params.Results.doPlot;
     doTiledRoi=params.Results.doTiledRoi;
     tThresh = params.Results.tThresh;
+    tThreshSD = params.Results.tThreshSD;
     borderPixSize = params.Results.borderPixSize;
     lastSectionStats = params.Results.lastSectionStats;
 
@@ -79,7 +81,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         b = borderPixSize;
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
-        tThresh = median(borderPix) + std(borderPix)*4;
+        tThresh = median(borderPix) + std(borderPix)*tThreshSD;
+        fprintf('Choosing a threshold of %0.2f\n', tThresh)
     end
 
     if isempty(lastSectionStats)
@@ -306,6 +309,7 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     [~,ind]=sort([stats.Area]);
     stats = stats(ind);
 
+    fprintf('Found %d BoundingBoxes\n',length(stats))
     %Report clipping of ROI edges
     for ii=1:length(stats)
        % boundingBoxesFromLastSection.findROIEdgeClipping(BW,stats(ii).BoundingBox)

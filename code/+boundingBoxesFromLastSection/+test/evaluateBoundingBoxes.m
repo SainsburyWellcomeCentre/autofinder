@@ -91,7 +91,6 @@ for ii=1:length(stats)
             set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.binarized,3)))
             caxis([0,300])
             drawnow
-            pause
         end
         % How many pixels fell outside of the area?
         pixelsInATile = round(pStack.tileSizeInMicrons/pStack.voxelSizeInMicrons)^2;
