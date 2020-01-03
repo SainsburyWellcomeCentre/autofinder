@@ -94,7 +94,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     else
         % Run within each ROI then afterwards consolidate results
         for ii = 1:length(lastSectionStats.BoundingBoxes)
-            %fprintf('Analysing ROI %d for sub-ROIs\n', ii)
+            fprintf('* Analysing ROI %d for sub-ROIs\n', ii)
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
@@ -255,6 +255,7 @@ function BW = binarizeImage(im,pixelSize,tThresh)
 
 function stats = getBoundingBoxes(BW,im,pixelSize)
     % Get bounding boxes in binarized image, BW. 
+    verbose=true;
 
     % Find bounding boxes, removing very small ones and 
     stats = regionprops(BW,'boundingbox', 'area', 'extrema');
@@ -309,7 +310,19 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     [~,ind]=sort([stats.Area]);
     stats = stats(ind);
 
-    fprintf('Found %d BoundingBoxes\n',length(stats))
+    if verbose==false
+        return
+    end
+
+    if length(stats)==1
+        fprintf('Found 1 Bounding Box\n')
+    elseif length(stats)>1
+        fprintf('Found %d Bounding Boxes\n',length(stats))
+    elseif length(stats)==0
+        fprintf('Found no Bounding Boxes\n')
+    end
+        
+        
     %Report clipping of ROI edges
     for ii=1:length(stats)
        % boundingBoxesFromLastSection.findROIEdgeClipping(BW,stats(ii).BoundingBox)

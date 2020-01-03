@@ -62,6 +62,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
                 subplot(1,2,2)
                 imagesc(tmpIm(:,:,combosToTest(ii,2)))
                 title(sprintf('Plane %d Prop overlap: %0.3f', combosToTest(ii,2), overlapProp(ii)))
+                axis equal tight
                 pause
             end
         end
@@ -123,7 +124,11 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize)
         stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
     end
 
-    fprintf('mergeOverlapping has found %d regions\n', size(tmpIm,3))
+    if size(tmpIm,3)>1
+        fprintf('mergeOverlapping has found %d regions\n', size(tmpIm,3))
+    elseif size(tmpIm,3)==1
+        fprintf('mergeOverlapping has found 1 region\n')
+    end
 
     nRoiChange = length(stats)-initialRoiNum;
 
