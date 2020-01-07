@@ -116,6 +116,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             % Final merge. This is in case some sample ROIs are now so close together that
             % they ought to be merged. This would not have been possible to do until this point. 
             % TODO -- possibly we can do only the final merge?
+
             fprintf('* Doing final merge\n')
             stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
         else
@@ -150,7 +151,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
         end
 
-        [stats,dRoi] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+        fprintf('* Doing merge of tiled bounding boxes\n')
+        [stats,dRoi] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im),im);
 
         if dRoi<0
             for ii=1:length(stats)

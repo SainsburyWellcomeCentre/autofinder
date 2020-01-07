@@ -90,4 +90,5 @@ Once bounding boxes overlap we begin to get odd and major failures.
 For instance, whole brains sudenly are excluded. 
 An example of this is `threeBrains/AF_C2_2FPPVs_previewStack.mat` with `tThreshSD=4` -- irrespective of threshold we lose the bottom brain from section 17 to section 18. 
 The problem lies with `mergeOverlapping`. 
-The bounding boxes are correctly find but the merge step produces a bad result. 
+The bounding boxes are correctly found but the merge step produces a bad result when applied to the tile-corrected output.
+I believe it is losing a ROI when doing the merge comparisons because it's failing to correctly do comparisons with more than 2 ROIs.
