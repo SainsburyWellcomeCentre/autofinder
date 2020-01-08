@@ -92,3 +92,6 @@ An example of this is `threeBrains/AF_C2_2FPPVs_previewStack.mat` with `tThreshS
 The problem lies with `mergeOverlapping`. 
 The bounding boxes are correctly found but the merge step produces a bad result when applied to the tile-corrected output.
 I believe it is losing a ROI when doing the merge comparisons because it's failing to correctly do comparisons with more than 2 ROIs.
+
+v3 Fixed issues relating to multiple sample ROIs. 
+The main problems were that `mergeOverlapping` was deleteing ROIs and that the final bounding-box generation step had a tendency to merge ROIs that should not have been merged. 
