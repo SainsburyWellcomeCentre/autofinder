@@ -168,6 +168,10 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
 
     end % while
 
+    if size(tmpIm,3)==0
+        % Something bad has happened
+        return
+    end
 
     % Round to nearest pixel
     if verbose
