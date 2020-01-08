@@ -152,7 +152,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
         fprintf('* Doing merge of tiled bounding boxes\n')
-        [stats,dRoi] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im),im);
+        [stats,dRoi] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
 
         if dRoi<0
             for ii=1:length(stats)
@@ -165,7 +165,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     if doPlot
+        clf
         H=boundingBoxesFromLastSection.plotting.overlayBoundingBoxes(im,stats);
+        title('Final boxes')
     else
         H=[];
     end

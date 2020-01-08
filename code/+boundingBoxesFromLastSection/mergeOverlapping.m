@@ -12,7 +12,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
         im=[];
     end
 
-    verbose=true; %Report more detailed info to command line
+    verbose=false; %Report more detailed info to command line
 
     if isempty(im)
         diagnositicPlots=false;
@@ -186,6 +186,9 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
     end
 
     for ii=1:length(stats)
+        if verbose
+            fprintf('Rounding pixels in bounding box %d\n',ii)
+        end
         stats(ii).BoundingBox = round(stats(ii).BoundingBox);
         stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
     end
@@ -194,6 +197,13 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
         fprintf('mergeOverlapping has found %d regions\n', size(tmpIm,3))
     elseif size(tmpIm,3)==1
         fprintf('mergeOverlapping has found 1 region\n')
+    end
+    if diagnositicPlots
+        clf
+        montage(tmpIm,'bordersize',1,'BackgroundColor','r')
+        title(sprintf('Final regions: %d',size(tmpIm,3)))
+        drawnow
+        pause
     end
 
     nRoiChange = length(stats)-initialRoiNum;
