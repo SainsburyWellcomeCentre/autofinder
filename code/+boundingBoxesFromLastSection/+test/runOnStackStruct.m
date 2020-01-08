@@ -37,15 +37,24 @@ function varargout=runOnStackStruct(pStack,noPlot)
         threshSD=7;
     end
 
-    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
+    rescaleTo=25;
+    if rescaleTo>1
+        %pStack.imStack = pStack.imStack(:,:,1:3:end);
+        s=size(pStack.imStack);
+        s(1:2) = round( s(1:2) / (rescaleTo/pStack.voxelSizeInMicrons) );
+        pStack.imStack = imresize3(pStack.imStack, s);
+        pStack.origVoxelSize = pStack.voxelSizeInMicrons;
+        pStack.voxelSizeInMicrons = rescaleTo;
+    end
 
+    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
+    stats.rescaleTo = rescaleTo; % Log by how much we re-scaled. 
 
     % Pre-allocate various variables
     L={};
     minBoundingBoxCoords=cell(1,size(pStack.imStack,3));
     tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
-
 
 
     % Enter main for loop in which we process each section one at a time.
@@ -76,6 +85,16 @@ function varargout=runOnStackStruct(pStack,noPlot)
             break
         end
 
+    end
+
+    % If we re-scaled then we need to put the bounding box coords back into the original size
+    if rescaleTo>1
+        for ii=1:length(stats)
+            stats(ii).BoundingBoxes = ...
+                cellfun(@(x) round(x*(rescaleTo/pStack.origVoxelSize)), stats(ii).BoundingBoxes,'UniformOutput',false);
+
+            stats(ii).globalBoundingBox = round((rescaleTo/pStack.origVoxelSize) * stats(ii).globalBoundingBox);
+        end
     end
 
     %Add the threshSD setting to everything
