@@ -155,7 +155,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
             if verbose
                 fprintf('Not merging\n')
             end
-            tmpIm(:,:,combosToTest(ii,1)) =  tmpIm(:,:,combosToTest(ind,1)) - tmpIm(:,:,combosToTest(ind,2));
+            tmpIm(:,:,combosToTest(ind,1)) =  tmpIm(:,:,combosToTest(ind,1)) - tmpIm(:,:,combosToTest(ind,2));
             tmpIm(tmpIm<0)=0;
         end
 
