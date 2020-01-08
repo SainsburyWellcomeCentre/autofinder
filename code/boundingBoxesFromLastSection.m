@@ -94,7 +94,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     else
         % Run within each ROI then afterwards consolidate results
         for ii = 1:length(lastSectionStats.BoundingBoxes)
-            %fprintf('Analysing ROI %d for sub-ROIs\n', ii)
+            fprintf('* Analysing ROI %d for sub-ROIs\n', ii)
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
@@ -116,6 +116,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             % Final merge. This is in case some sample ROIs are now so close together that
             % they ought to be merged. This would not have been possible to do until this point. 
             % TODO -- possibly we can do only the final merge?
+
+            fprintf('* Doing final merge\n')
             stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
         else
             % No bounding boxes found
@@ -124,7 +126,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
     end
-    
+
     % Deal with scenario where nothing was found
     if isempty(stats)
         if nargout>0
@@ -149,6 +151,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
         end
 
+        fprintf('* Doing merge of tiled bounding boxes\n')
         [stats,dRoi] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
 
         if dRoi<0
@@ -162,12 +165,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     if doPlot
-        imagesc(im)
-        colormap gray
-        axis equal tight
-        for ii=1:length(stats)
-            H(ii)=boundingBoxesFromLastSection.plotting.overlayBoundingBox(stats(ii).BoundingBox);
-        end
+        clf
+        H=boundingBoxesFromLastSection.plotting.overlayBoundingBoxes(im,stats);
+        title('Final boxes')
     else
         H=[];
     end
@@ -255,6 +255,7 @@ function BW = binarizeImage(im,pixelSize,tThresh)
 
 function stats = getBoundingBoxes(BW,im,pixelSize)
     % Get bounding boxes in binarized image, BW. 
+    verbose=true;
 
     % Find bounding boxes, removing very small ones and 
     stats = regionprops(BW,'boundingbox', 'area', 'extrema');
@@ -309,7 +310,19 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     [~,ind]=sort([stats.Area]);
     stats = stats(ind);
 
-    fprintf('Found %d BoundingBoxes\n',length(stats))
+    if verbose==false
+        return
+    end
+
+    if length(stats)==1
+        fprintf('Found 1 Bounding Box\n')
+    elseif length(stats)>1
+        fprintf('Found %d Bounding Boxes\n',length(stats))
+    elseif length(stats)==0
+        fprintf('Found no Bounding Boxes\n')
+    end
+
+
     %Report clipping of ROI edges
     for ii=1:length(stats)
        % boundingBoxesFromLastSection.findROIEdgeClipping(BW,stats(ii).BoundingBox)
@@ -342,5 +355,3 @@ function subIm = getSubImageUsingBoundingBox(im,BoundingBox,maintainSize)
         subIm =tmp;
     end
 
-
- 
