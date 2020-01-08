@@ -166,11 +166,25 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
             break
         end
 
-    end
+    end % while
 
 
     % Round to nearest pixel
-    stats = regionprops(sum(tmpIm,3)>0,'BoundingBox','Image');
+    if verbose
+        fprintf('Finished merging with %d bounding boxes\n', length(stats))
+    end
+
+    %Loop through each plane and create a bounding box from it
+    %Can not use the sum of all planes as we risk merging bounding boxes
+    for ii=1:size(tmpIm,3)
+        tmp(ii)=regionprops(tmpIm(:,:,ii),'BoundingBox','Image');
+    end
+    stats=tmp;
+
+    if verbose
+        fprintf('After re-running regionprops we have %d bounding boxes\n', length(stats))
+    end
+
     for ii=1:length(stats)
         stats(ii).BoundingBox = round(stats(ii).BoundingBox);
         stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
