@@ -37,9 +37,9 @@ function varargout=runOnStackStruct(pStack,noPlot)
         threshSD=7;
     end
 
-    rescaleTo=25;
+    rescaleTo=40; %TODO: should be an input argument
     if rescaleTo>1
-        %pStack.imStack = pStack.imStack(:,:,1:3:end);
+        %pStack.imStack = pStack.imStack(:,:,1:2:end);
         s=size(pStack.imStack);
         s(1:2) = round( s(1:2) / (rescaleTo/pStack.voxelSizeInMicrons) );
         pStack.imStack = imresize3(pStack.imStack, s);
@@ -48,7 +48,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     end
 
     stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
-    stats.rescaleTo = rescaleTo; % Log by how much we re-scaled. 
+
 
     % Pre-allocate various variables
     L={};
@@ -56,6 +56,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
 
+    rollingThreshold=false; %If true we base the threshold on the last few slices
 
     % Enter main for loop in which we process each section one at a time.
     for ii=2:size(pStack.imStack,3)
@@ -63,7 +64,9 @@ function varargout=runOnStackStruct(pStack,noPlot)
         % Use a rolling threshold based on the last nImages to drive brain/background
         % segmentation in the next image. 
         nImages=5;
-        if ii<=nImages
+        if rollingThreshold==false
+           thresh = median( [stats(1).medianBackground] + [stats(1).stdBackground]*threshSD);
+        elseif ii<=nImages
             thresh = median( [stats.medianBackground] + [stats.stdBackground]*threshSD);
         else
             thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*threshSD);
@@ -86,6 +89,10 @@ function varargout=runOnStackStruct(pStack,noPlot)
         end
 
     end
+
+    %Log aspects of the run in the first element
+    stats(1).rescaleTo = rescaleTo; % Log by how much we re-scaled. 
+    stats(1).rollingThreshold=rollingThreshold;
 
     % If we re-scaled then we need to put the bounding box coords back into the original size
     if rescaleTo>1
