@@ -141,7 +141,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         return
     end
 
-
+    % We now expand the tight bounding boxes to larger ones that correspond to a tiled acquisition
     if doTiledRoi
         %Convert to a tiled ROI size 
         for ii=1:length(stats)
@@ -151,10 +151,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
         end
 
+        % TODO -- this is the step that can fail with four or more ROIs
         fprintf('* Doing merge of tiled bounding boxes\n')
-        [stats,dRoi] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+        [stats,delta_n_ROI] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im),false);
 
-        if dRoi<0
+        if delta_n_ROI<0 %If the number of ROIs did not change
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
                 boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
@@ -281,7 +282,7 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     end
 
     % -------------------
-    % TEMP UNTIL WE FIX BAKINGTRAY
+    % TEMP UNTIL WE FIX BAKINGTRAY WE MUST REMOVE THE NON-IMAGED CORNER PIXELS
     %Look for ROIs smaller than 2 by 2 mm and ask whether they are the un-imaged corner tile.
     %(BakingTray currently (Dec 2019) produces these tiles and this needs sorting.)
     %If so delete. TODO: longer term we want to get rid of the problem at acquisition. 

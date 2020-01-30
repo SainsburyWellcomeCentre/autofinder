@@ -1,18 +1,24 @@
-function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
+function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
     % Consolidate bounding boxes that overlap a reasonable amount so long as doing so
     % Is not going to result in a large increase in the area being imaged.
     %
     % Returns the updated stats struct and the difference in ROI number after running.
     %
     % If the original image data is optionally supplied, then diagnostic plots are made. 
+    %
+    % If DD is true we apply code that will try to stop expanded boundingboxes from causing
+    % problems: https://github.com/raacampbell/autofinder/issues/14
 
 
+    if nargin<3 || isempty(DD)
+        DD=false;
+    end
     % Handle optional third argument
-    if nargin<3
+    if nargin<4
         im=[];
     end
 
-    verbose=false; %Report more detailed info to command line
+    verbose=true; %Report more detailed info to command line
 
     if isempty(im)
         diagnositicPlots=false;
@@ -60,6 +66,10 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
         combosToTest = nchoosek(1:size(tmpIm,3),2);  %The unique combinations to test
         overlapProp = zeros(1,length(combosToTest)); %Pre-allocate a variable in which to store results
 
+        if DD
+            tmpIm = expandROItoBoundingBox(tmpIm,1.08);
+        end
+
         if diagnositicPlots
             clf
             montage(tmpIm,'bordersize',1,'BackgroundColor','r')
@@ -67,6 +77,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
             drawnow
             pause
         end
+
         % Determine how much each ROI overlaps with every other
         for ii=1:size(combosToTest,1)
 
@@ -93,7 +104,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
                 fprintf('ROI %d / ROI %d - %0.3f%% overlap\n', ...
                     combosToTest(ii,1), ...
                     combosToTest(ii,2), ...
-                    overlapProp(ii))
+                    overlapProp(ii)*100)
             end
         end
 
@@ -202,6 +213,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
     elseif size(tmpIm,3)==1
         fprintf('mergeOverlapping has found 1 region\n')
     end
+
     if diagnositicPlots
         clf
         montage(tmpIm,'bordersize',1,'BackgroundColor','r')
@@ -220,5 +232,70 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,im)
 
     end
 
+
+function BW = expandROItoBoundingBox(BW,expandThresh)
+    % Takes as input a BW image that contains a ROI and finds the minimal bounding box. Then 
+    % replaces the ROI with this bounding box. 
+    %
+    %
+    % Inputs
+    % BW - The binarized image used to find bounding boxes. If BW is a 3-D array, the function 
+    %      processes each plan separately and returns an array of the same size. 
+    % expandThresh - 0 by default. If positive number, the plane is only modified if 
+    %                doing so satisfies (newArea/origArea) > expandThresh
+
+    verbose=false;
+    if verbose
+        initBW=BW;
+    end
+
+
+    if nargin<2 || expandThresh<0 
+        fprintf('expandROItoBoundingBox is setting expandThresh to inf\n')
+        expandThresh=inf;
+    end
+        
+
+    for ii=1:size(BW,3)
+
+        %Get the bounding box and trim it by a pixel to ensure it does
+        %not extend beyond the original bounds if possible. 
+        s = regionprops(BW(:,:,ii));
+        eb = s.BoundingBox;
+        eb(1:2) = eb(1:2)+1;
+        eb(3:4) = eb(3:4)-1;
+        eb = boundingBoxesFromLastSection.validateBoundingBox(eb,size(BW));
+
+
+        % TODO the tmp is not needed since we have the initBW
+        tmp = BW(:,:,ii);
+        tmp(eb(2):eb(2)+eb(4), eb(1):eb(1)+eb(3)) = 1;
+        initialPix=sum(BW(:,:,ii),'all');
+        finalPix=sum(tmp,'all');
+
+        propChange = finalPix/initialPix;
+        if propChange>expandThresh
+
+            BW(:,:,ii)=tmp;
+            if verbose
+
+                msg=sprintf('Initial pix: %d ; Final pix: %d ; prop: %0.2f\n', ...
+                    initialPix, finalPix, propChange);
+                fprintf(msg)
+                clf
+                subplot(1,2,1)
+                imagesc(initBW(:,:,ii))
+                title('Before BB expansion')
+                
+                subplot(1,2,2)
+                imagesc(BW(:,:,ii))
+                title('After BB expansion')
+                drawnow
+                pause
+
+            end
+        end
+
+    end
 
 
