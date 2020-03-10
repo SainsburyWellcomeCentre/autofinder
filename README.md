@@ -112,7 +112,16 @@ Then, as described above, we can run:
  boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
 ```
 
-
+How does `boundingBoxesFromLastSection` actually give us back the bounding boxes when run the first time (i.e. not in a loop over a stack)? 
+It does the following:
+* Median filter the stack with a 2D filter
+* On the first section, derives a threshold between brain and no-brain by using the median plus a few SDs of the border pixels. 
+We can do this because the border pixels will definitely contain no brain the first time around. 
+* On the first section we now binarize the image using the above threshold and do some morphological filtering to tidy it up and to expand the border by 200 microns. This is done by the internal function `binarizeImage`. 
+* This binarized image is now fed to the internal function `getBoundingBoxes`, which calls `regionProps` to return a bounding box. 
+It also: removes very small boxes, provides a hackish fix for the missing corner tile, then sorts the bounding boxes in order of ascending size. 
+* Next we use the external function `boundingBoxesFromLastSection.mergeOverlapping` to merge bounding boxes in cases where the is is appropriate. This function is currently problematic as it exhibits some odd behaviours that can cause very large overlaps between bounding boxes. 
+* Finally, bounding boxes are expanded to the nearest whole tile and the merging is re-done. 
 
 
 
