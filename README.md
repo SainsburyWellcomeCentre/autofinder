@@ -84,6 +84,39 @@ To run on all directories containing sample data within the stacks sub-directory
 >> boundingBoxesFromLastSection.test.runOnAllInDir
 ```
 
+
+## How it works
+The general idea is that bounding boxes around sample(s) are found in the current section (`n`), expanded by about 200 microns, then applied to section `n+1`. 
+When section `n+1` is imaged, the bounding boxes are re-calculated as before.
+This approach takes into account the fact that the imaged area of most samples changes during the acquisition. 
+Because the acquisition is tiled and we round up to the nearest tile, we usually end up with a border of more than 200 microns. 
+In practice, this avoids clipping the sample in cases where it gets larger quickly as we section through it. 
+There is likely no need to search for cases where sample edges are clipped in order to add tiles. 
+We image rectangular bounding boxes rather than oddly shaped tile patterns because in most cases our tile size is large. 
+
+
+### Implementation
+`imStack` is a downsampled stack that originates from the preview images of a BakingTray serial section 2p acquisition. 
+To calculate the bounding boxes for section 11 we would run:
+```
+boundingBoxesFromLastSection(imStack(:,:,10))
+```
+
+The function will return an image of section 10 with the bounding boxes drawn around it. 
+It uses default values for a bunch of important parameters, such as pixel size.
+Of course in reality these bounding boxes will need to be evaluated with respect to section 11. 
+To perform this exploration we can run the algorithm on the whole stack.
+To achieve this we load a "pStack" structure, as produced by `boundingBoxesFromLastSection.test.runOnStackStruct`, above. 
+Then, as described above, we can run:
+```
+ boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
+```
+
+
+
+
+
+
 ## Changelog
 v2 Does well with single brains and multiple brains where the individual brains have bounding boxes that are not going to overlap. 
 Once bounding boxes overlap we begin to get odd and major failures. 
