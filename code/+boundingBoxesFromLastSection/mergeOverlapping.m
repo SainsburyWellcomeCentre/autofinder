@@ -1,18 +1,41 @@
 function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
+    % boundingBoxesFromLastSection.mergeOverlapping merges bounding boxes that overlap 
+    %
+    % function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
+    %
+    % Purpose
     % Consolidate bounding boxes that overlap a reasonable amount so long as doing so
-    % Is not going to result in a large increase in the area being imaged.
+    % Is not going to result in a large increase in the area being imaged. This avoids
+    % imaging the same area twice and also helps to ensure that all of the tissue is 
+    % imaged. 
+    % 
+    % Inputs [REQIURED]
+    % stats - the output of getBoundingBoxes, a local function in boundingBoxesFromLastSection
+    % imSize - the size of the image 
     %
-    % Returns the updated stats struct and the difference in ROI number after running.
+    % Inputs  [OPTIONAL]
+    % DD - False by default. If true, this is a hacky solution to avoid issues with imaging
+    % a single brain twice (see https://github.com/raacampbell/autofinder/issues/14). It works
+    % by expanding the ROI to the minimal bounding box using the local function 
+    % expandROItoBoundingBox. In other words, "L-shaped" ROIs will become rectangles.
     %
-    % If the original image data is optionally supplied, then diagnostic plots are made. 
+    % im - Empty by default. If the original image data is optionally supplied, then diagnostic 
+    % plots are made. 
     %
-    % If DD is true we apply code that will try to stop expanded boundingboxes from causing
-    % problems: https://github.com/raacampbell/autofinder/issues/14
+    %
+    % Outputs
+    % stats - the updated stats struct
+    % nRoiChangee - the difference in ROI number after running
+    %
+    % 
+    % 
+    % Rob Campbell - SWC 2019/2020
 
 
     if nargin<3 || isempty(DD)
         DD=false;
     end
+
     % Handle optional third argument
     if nargin<4
         im=[];
@@ -119,6 +142,9 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
         areaOfROI1 = sum( tmpIm(:,:,combosToTest(ind,1)), 'all');
         areaOfROI2 = sum( tmpIm(:,:,combosToTest(ind,2)), 'all');
         areaOfMergedROI = boundingBoxesFromLastSection.boundingBoxAreaFromImage(tCombo);
+
+        % The following is the proportion increase in imaged pixels. It also reflects
+        % whether a much larger bounding box will be needed to accomodate an usual ROI shape. 
         proportionIncrease = areaOfMergedROI/(areaOfROI1+areaOfROI2);
 
         mergeThresh=1.3; %only merge if doing so doesn't increase imaged area by more than this. 
@@ -139,13 +165,14 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
             pause
         end
 
-        % Merge if less than 10%
+        % Merge if the increase in area is less than mergeThresh
         if proportionIncrease<mergeThresh
             if verbose
-                fprintf('Merging into plane %d and then deleting plane %d\n', ...
-                    combosToTest(ind,1), combosToTest(ind,2))
+                fprintf('Merging into plane %d and then deleting plane %d. Area change: %0.2f\n', ...
+                    combosToTest(ind,1), combosToTest(ind,2), proportionIncrease)
             end
             tmpIm(:,:,combosToTest(ind,1)) = tCombo;
+
             if diagnositicPlots
                 subplot(1,2,1)
                 imagesc(im.*tmpIm(:,:,combosToTest(ind,1)) )
@@ -159,7 +186,6 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
             end
 
             tmpIm(:,:,combosToTest(ind,2)) = []; %Delete plane
-
 
         else
             % Otherwise remove the overlap between these two areas
@@ -233,9 +259,21 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
     end
 
 
-function BW = expandROItoBoundingBox(BW,expandThresh)
+function [BW,propChange] = expandROItoBoundingBox(BW,expandThresh)
     % Takes as input a BW image that contains a ROI and finds the minimal bounding box. Then 
     % replaces the ROI with this bounding box. 
+    %
+    % i.e. it would convert this:
+    %
+    %   **
+    %   ***
+    %   ****
+    %
+    % To this:
+    %
+    %   ****
+    %   ****
+    %   ****
     %
     %
     % Inputs

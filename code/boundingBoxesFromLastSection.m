@@ -85,13 +85,18 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         fprintf('Choosing a threshold of %0.2f\n', tThresh)
     end
 
+
+
     if isempty(lastSectionStats)
+
         % We run on the whole image
         BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
         stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
+
     else
+
         % Run within each ROI then afterwards consolidate results
         for ii = 1:length(lastSectionStats.BoundingBoxes)
             fprintf('* Analysing ROI %d for sub-ROIs\n', ii)
@@ -103,6 +108,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
         if ~isempty(tStats{1})
+
             % Collate bounding boxes across sub-regions into one "stats" structure. 
             n=1;
             for ii = 1:length(tStats)
@@ -129,6 +135,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Deal with scenario where nothing was found
     if isempty(stats)
+
         if nargout>0
             varargout{1}=[];
         end
@@ -139,10 +146,13 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             varargout{3}=im;
         end
         return
+
     end
+
 
     % We now expand the tight bounding boxes to larger ones that correspond to a tiled acquisition
     if doTiledRoi
+        fprintf('\n -> Creating tiled bounding boxes\n');
         %Convert to a tiled ROI size 
         for ii=1:length(stats)
             stats(ii).BoundingBox = ...
@@ -151,17 +161,21 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
         end
 
-        % TODO -- this is the step that can fail with four or more ROIs
+        % TODO -- this is the step that can fail with four or more ROIs <---------
         fprintf('* Doing merge of tiled bounding boxes\n')
         [stats,delta_n_ROI] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im),false);
 
-        if delta_n_ROI<0 %If the number of ROIs did not change
+
+        % If the number of ROIs decreased then we must re-run the tiled box algorithm
+        % TOOD -- question: does this lead to boxes getting even larger?
+        if delta_n_ROI<0
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
                 boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
                     pixelSize, tileSize);
-            end % for 
-        end %if dRoi
+            end % for ii=1:length(stats)
+        end %if delta_n_ROI<0
+
     end % if doTiledRoi
 
 
