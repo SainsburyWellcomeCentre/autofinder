@@ -19,7 +19,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
         noPlot=false;
     end
 
-
+    settings = boundingBoxesFromLastSection.readSettings;
     pauseBetweenSections=false;
 
     % Step one: process the initial image (first section) and find the bounding boxes
@@ -27,7 +27,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     % previous section to constrain ROI choice on then next section. Hence we are not
     % in the main for loop yet.
 
-    rescaleTo=40; %TODO: should be an input argument
+    rescaleTo=settings.stackStr.rescaleTo;
     if rescaleTo>1
         %pStack.imStack = pStack.imStack(:,:,1:2:end);
         s=size(pStack.imStack);
@@ -120,7 +120,10 @@ function varargout=runOnStackStruct(pStack,noPlot)
     for ii=1:length(stats)
         stats(ii).threshSD=threshSD;
     end
+
+    % Log settings to the first element of the structure
     stats(1).runOnStackStructArgs = argIn;
+    stats(1).settings = settings;
 
     if noPlot, fprintf('\n'), end
 

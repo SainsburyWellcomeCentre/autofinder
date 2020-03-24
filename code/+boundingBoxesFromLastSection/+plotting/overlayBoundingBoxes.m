@@ -24,7 +24,7 @@ hold on
 imagesc(im)
 
 colormap gray
-axis equal tight
+axis ij equal tight
 H=[];
 for ii=1:length(stats)
     H(ii)=boundingBoxesFromLastSection.plotting.overlayBoundingBox(stats(ii).BoundingBox);
