@@ -18,6 +18,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
     % a single brain twice (see https://github.com/raacampbell/autofinder/issues/14). It works
     % by expanding the ROI to the minimal bounding box using the local function 
     % expandROItoBoundingBox. In other words, "L-shaped" ROIs will become rectangles.
+    % Alternatively, if DD is numeric and non-negative then it over-rides the mergeThresh value.
     %
     % im - Empty by default. If the original image data is optionally supplied, then diagnostic 
     % plots are made. 
@@ -34,6 +35,16 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
 
     if nargin<3 || isempty(DD)
         DD=false;
+    end
+
+    settings = boundingBoxesFromLastSection.readSettings;
+
+    if isnumeric(DD) && DD>=0
+        % This over-rides the default behavior
+        mergeThresh=DD;
+    else
+        %only merge if doing so doesn't increase imaged area by more than this. 
+        mergeThresh=settings.mergeO.mergeThresh;
     end
 
     % Handle optional third argument
@@ -89,7 +100,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
         combosToTest = nchoosek(1:size(tmpIm,3),2);  %The unique combinations to test
         overlapProp = zeros(1,length(combosToTest)); %Pre-allocate a variable in which to store results
 
-        if DD
+        if DD==true
             tmpIm = expandROItoBoundingBox(tmpIm,1.08);
         end
 
@@ -139,15 +150,13 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
 
 
         % Determine by how much we will increase the total imaged area if we merge these ROIs
-        areaOfROI1 = sum( tmpIm(:,:,combosToTest(ind,1)), 'all');
-        areaOfROI2 = sum( tmpIm(:,:,combosToTest(ind,2)), 'all');
+        areaOfROI1 = sum( tmpIm(:,:,combosToTest(ind,1)), 'all' );
+        areaOfROI2 = sum( tmpIm(:,:,combosToTest(ind,2)), 'all' );
         areaOfMergedROI = boundingBoxesFromLastSection.boundingBoxAreaFromImage(tCombo);
 
         % The following is the proportion increase in imaged pixels. It also reflects
         % whether a much larger bounding box will be needed to accomodate an usual ROI shape. 
         proportionIncrease = areaOfMergedROI/(areaOfROI1+areaOfROI2);
-
-        mergeThresh=1.3; %only merge if doing so doesn't increase imaged area by more than this. 
 
         if diagnositicPlots
             clf
