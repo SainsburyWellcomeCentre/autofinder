@@ -20,22 +20,12 @@ function varargout=runOnStackStruct(pStack,noPlot)
     end
 
 
-
+    pauseBetweenSections=false;
 
     % Step one: process the initial image (first section) and find the bounding boxes
     % for tissue within it. This is the only point where we don't use the ROIs from the
     % previous section to constrain ROI choice on then next section. Hence we are not
     % in the main for loop yet.
-    fprintf('Finding bounding box in first section\n')
-    argIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
-             'tileSize', pStack.tileSizeInMicrons, ...
-             'doPlot', ~noPlot};
-    if isfield(pStack,'tThreshSD')
-        argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
-        threshSD = pStack.tThreshSD;
-    else
-        threshSD=7;
-    end
 
     rescaleTo=40; %TODO: should be an input argument
     if rescaleTo>1
@@ -47,8 +37,25 @@ function varargout=runOnStackStruct(pStack,noPlot)
         pStack.voxelSizeInMicrons = rescaleTo;
     end
 
-    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
+    fprintf('Finding bounding box in first section\n')
+    argIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
+             'tileSize', pStack.tileSizeInMicrons, ...
+             'doPlot', ~noPlot};
 
+    if isfield(pStack,'tThreshSD')
+        argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
+        threshSD = pStack.tThreshSD;
+    else
+        threshSD=7;
+    end
+
+    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
+    drawnow
+    if pauseBetweenSections
+        set(gcf,'Name',sprintf('%d/%d',1,size(pStack.imStack,3)))
+        fprintf(' -> Press return\n')
+        pause
+    end
 
     % Pre-allocate various variables
     L={};
@@ -83,7 +90,12 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
         if ~isempty(tmp)
             stats(ii)=tmp;
+            set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.imStack,3)))
             drawnow
+            if pauseBetweenSections
+                fprintf(' -> Press return\n')
+                pause
+            end
         else
             break
         end
@@ -111,6 +123,9 @@ function varargout=runOnStackStruct(pStack,noPlot)
     stats(1).runOnStackStructArgs = argIn;
 
     if noPlot, fprintf('\n'), end
+
+    % Reset the figure name
+    set(gcf,'Name','')
 
     if nargout>0
         varargout{1}=stats;

@@ -68,6 +68,10 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     lastSectionStats = params.Results.lastSectionStats;
 
 
+    fprintf('boundingBoxesFromLastSection running with: ')
+    fprintf('pixelSize: %0.2f, tileSize: %d, tThresh: %0.2f\n', ...
+        pixelSize, tileSize, tThresh)
+
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
     im = medfilt2(im,[5,5]);
