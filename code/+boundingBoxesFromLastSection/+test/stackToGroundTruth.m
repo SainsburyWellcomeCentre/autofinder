@@ -28,7 +28,7 @@ end
 % Get the downsampled tile size
 recipe=yaml.ReadYaml(pathToRecipe);
 
-tileSize = recipe.TileStepSize.X * 1E3; %assume square tiles
+tileSize = recipe.VoxelSize.X * recipe.Tile.nRows; %assume square tiles
 
 % TODO (BAD) the following will work on SWC rigs for sure but maybe not elsewhere. 
 % If X/Y are flipped for some reason. 
