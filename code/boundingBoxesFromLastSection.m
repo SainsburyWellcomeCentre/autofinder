@@ -171,8 +171,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
         % If the number of ROIs decreased then we must re-run the tiled box algorithm
-        % TOOD -- question: does this lead to boxes getting even larger?
+        % TODO -- question: does this lead to boxes getting even larger? -- YES
         if delta_n_ROI<0
+            fprintf('Bounding box number decreased by %d. Recalculating them.\n',delta_n_ROI)
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
                 boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
