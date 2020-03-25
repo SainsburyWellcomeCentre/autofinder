@@ -46,10 +46,12 @@ out = '';
 
 BW = zeros(size(pStack.binarized,[1,2])); 
 for ii=1:length(stats)
-
     %Empty image. We will fill with ones all regions where brain was found.
     tB = pStack.borders{1}{ii};
     for jj = 1:length(tB)
+        if isempty(tB{jj})
+            continue
+        end
         f= sub2ind(size(BW),tB{jj}(:,1),tB{jj}(:,2));
         BW(f)=1;
     end
