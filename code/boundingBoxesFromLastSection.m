@@ -68,9 +68,14 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     lastSectionStats = params.Results.lastSectionStats;
 
 
+    fprintf('boundingBoxesFromLastSection running with: ')
+    fprintf('pixelSize: %0.2f, tileSize: %d, tThresh: %0.2f\n', ...
+        pixelSize, tileSize, tThresh)
+
+    settings = boundingBoxesFromLastSection.readSettings;
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
-    im = medfilt2(im,[5,5]);
+    im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage]);
     im = single(im);
 
 
@@ -85,13 +90,18 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         fprintf('Choosing a threshold of %0.2f\n', tThresh)
     end
 
+
+
     if isempty(lastSectionStats)
+
         % We run on the whole image
         BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
         stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
+
     else
+
         % Run within each ROI then afterwards consolidate results
         for ii = 1:length(lastSectionStats.BoundingBoxes)
             fprintf('* Analysing ROI %d for sub-ROIs\n', ii)
@@ -103,6 +113,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
         if ~isempty(tStats{1})
+
             % Collate bounding boxes across sub-regions into one "stats" structure. 
             n=1;
             for ii = 1:length(tStats)
@@ -129,6 +140,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Deal with scenario where nothing was found
     if isempty(stats)
+
         if nargout>0
             varargout{1}=[];
         end
@@ -139,28 +151,42 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             varargout{3}=im;
         end
         return
+
     end
 
 
+    % We now expand the tight bounding boxes to larger ones that correspond to a tiled acquisition
     if doTiledRoi
+
+        fprintf('\n -> Creating tiled bounding boxes\n');
         %Convert to a tiled ROI size 
         for ii=1:length(stats)
             stats(ii).BoundingBox = ...
             boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
                 pixelSize, tileSize);
-
         end
 
-        fprintf('* Doing merge of tiled bounding boxes\n')
-        [stats,dRoi] = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+        if settings.main.doTiledMerge
+            % TODO -- this is the step that can fail with four or more ROIs <---------
+            fprintf('* Doing merge of tiled bounding boxes\n')
+            [stats,delta_n_ROI] = ...
+                boundingBoxesFromLastSection.mergeOverlapping(stats, size(im), ...
+                    settings.main.tiledMergeThresh);
+        else
+            delta_n_ROI=0;
+        end
 
-        if dRoi<0
+        % If the number of ROIs decreased then we must re-run the tiled box algorithm
+        % TODO -- question: does this lead to boxes getting even larger? -- YES
+        if delta_n_ROI<0 && settings.main.secondExpansion && settings.main.doTiledMerge
+            fprintf('Bounding box number decreased by %d. Recalculating them.\n',delta_n_ROI)
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
                 boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
                     pixelSize, tileSize);
-            end % for 
-        end %if dRoi
+            end % for ii=1:length(stats)
+        end %if delta_n_ROI<0
+
     end % if doTiledRoi
 
 
@@ -228,21 +254,25 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 function BW = binarizeImage(im,pixelSize,tThresh)
     % Binarise and clean image. Adding a border before returning
     verbose = false;
+    settings = boundingBoxesFromLastSection.readSettings;
+
     BW = im>tThresh;
-    BW = medfilt2(BW,[5,5]);
+    BW = medfilt2(BW,[settings.mainBin.medFiltBW,settings.mainBin.medFiltBW]);
 
     if verbose
         fprintf('Binarized size before dilation: %d by %d\n',size(BW));
     end
 
     % Remove crap using spatial filtering
-    SE = strel('disk',round(50/pixelSize));
+    SE = strel(settings.mainBin.primaryShape, ...
+        round(settings.mainBin.primaryFiltSize/pixelSize));
     BW = imerode(BW,SE);    
     BW = imdilate(BW,SE);
 
 
-    % Add a border around the brain
-    SE = strel('square',round(200/pixelSize));
+    % EXPAND IMAGED AREA: Add a small border around the brain
+    SE = strel(settings.mainBin.expansionShape, ...
+        round(settings.mainBin.expansionSize/pixelSize));
     BW = imdilate(BW,SE);
 
     if verbose
@@ -256,6 +286,7 @@ function BW = binarizeImage(im,pixelSize,tThresh)
 function stats = getBoundingBoxes(BW,im,pixelSize)
     % Get bounding boxes in binarized image, BW. 
     verbose=true;
+    settings = boundingBoxesFromLastSection.readSettings;
 
     % Find bounding boxes, removing very small ones and 
     stats = regionprops(BW,'boundingbox', 'area', 'extrema');
@@ -266,8 +297,7 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     end
 
     % Delete very small objects and ensure we have no non-integers
-    minSizeInSqMicrons=50;
-    sizeThresh = minSizeInSqMicrons * pixelSize;
+    sizeThresh = settings.mainGetBB.minSizeInSqMicrons / pixelSize;
 
 
     for ii=length(stats):-1:1
@@ -281,7 +311,7 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     end
 
     % -------------------
-    % TEMP UNTIL WE FIX BAKINGTRAY
+    % TEMP UNTIL WE FIX BAKINGTRAY WE MUST REMOVE THE NON-IMAGED CORNER PIXELS
     %Look for ROIs smaller than 2 by 2 mm and ask whether they are the un-imaged corner tile.
     %(BakingTray currently (Dec 2019) produces these tiles and this needs sorting.)
     %If so delete. TODO: longer term we want to get rid of the problem at acquisition. 

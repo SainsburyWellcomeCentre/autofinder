@@ -19,17 +19,29 @@ function varargout=runOnStackStruct(pStack,noPlot)
         noPlot=false;
     end
 
-
-
+    settings = boundingBoxesFromLastSection.readSettings;
+    pauseBetweenSections=false;
 
     % Step one: process the initial image (first section) and find the bounding boxes
     % for tissue within it. This is the only point where we don't use the ROIs from the
     % previous section to constrain ROI choice on then next section. Hence we are not
     % in the main for loop yet.
+
+    rescaleTo=settings.stackStr.rescaleTo;
+    if rescaleTo>1
+        %pStack.imStack = pStack.imStack(:,:,1:2:end);
+        s=size(pStack.imStack);
+        s(1:2) = round( s(1:2) / (rescaleTo/pStack.voxelSizeInMicrons) );
+        pStack.imStack = imresize3(pStack.imStack, s);
+        pStack.origVoxelSize = pStack.voxelSizeInMicrons;
+        pStack.voxelSizeInMicrons = rescaleTo;
+    end
+
     fprintf('Finding bounding box in first section\n')
     argIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
              'tileSize', pStack.tileSizeInMicrons, ...
              'doPlot', ~noPlot};
+
     if isfield(pStack,'tThreshSD')
         argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
         threshSD = pStack.tThreshSD;
@@ -38,7 +50,12 @@ function varargout=runOnStackStruct(pStack,noPlot)
     end
 
     stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
-
+    drawnow
+    if pauseBetweenSections
+        set(gcf,'Name',sprintf('%d/%d',1,size(pStack.imStack,3)))
+        fprintf(' -> Press return\n')
+        pause
+    end
 
     % Pre-allocate various variables
     L={};
@@ -46,7 +63,7 @@ function varargout=runOnStackStruct(pStack,noPlot)
     tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
 
-
+    rollingThreshold=false; %If true we base the threshold on the last few slices
 
     % Enter main for loop in which we process each section one at a time.
     for ii=2:size(pStack.imStack,3)
@@ -54,7 +71,9 @@ function varargout=runOnStackStruct(pStack,noPlot)
         % Use a rolling threshold based on the last nImages to drive brain/background
         % segmentation in the next image. 
         nImages=5;
-        if ii<=nImages
+        if rollingThreshold==false
+           thresh = median( [stats(1).medianBackground] + [stats(1).stdBackground]*threshSD);
+        elseif ii<=nImages
             thresh = median( [stats.medianBackground] + [stats.stdBackground]*threshSD);
         else
             thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*threshSD);
@@ -71,20 +90,45 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
         if ~isempty(tmp)
             stats(ii)=tmp;
+            set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.imStack,3)))
             drawnow
+            if pauseBetweenSections
+                fprintf(' -> Press return\n')
+                pause
+            end
         else
             break
         end
 
     end
 
+    %Log aspects of the run in the first element
+    stats(1).rescaleTo = rescaleTo; % Log by how much we re-scaled. 
+    stats(1).rollingThreshold=rollingThreshold;
+
+    % If we re-scaled then we need to put the bounding box coords back into the original size
+    if rescaleTo>1
+        for ii=1:length(stats)
+            stats(ii).BoundingBoxes = ...
+                cellfun(@(x) round(x*(rescaleTo/pStack.origVoxelSize)), stats(ii).BoundingBoxes,'UniformOutput',false);
+
+            stats(ii).globalBoundingBox = round((rescaleTo/pStack.origVoxelSize) * stats(ii).globalBoundingBox);
+        end
+    end
+
     %Add the threshSD setting to everything
     for ii=1:length(stats)
         stats(ii).threshSD=threshSD;
     end
+
+    % Log settings to the first element of the structure
     stats(1).runOnStackStructArgs = argIn;
+    stats(1).settings = settings;
 
     if noPlot, fprintf('\n'), end
+
+    % Reset the figure name
+    set(gcf,'Name','')
 
     if nargout>0
         varargout{1}=stats;

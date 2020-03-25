@@ -1,7 +1,7 @@
 function runOnAllInDir(runDir)
     % Run auto-find test on all structures in runDir
     %
-    % function runOnAllInDir(runDir)
+    % function boundingBoxesFromLastSection.tests.runOnAllInDir(runDir)
     %
     % Purpose
     % Batch run of boundingBoxesFromLastSection.test.runOnStackStruc
@@ -14,7 +14,14 @@ function runOnAllInDir(runDir)
     % runDir - directory in which to look for files and run. If missing, 
     %          the current directory is used. 
     %
-    % 
+    %
+    % Example
+    % >> ls
+    %   readme.txt stacks     tests 
+    % >> boundingBoxesFromLastSection.tests.runOnAllInDir('stacks/twoBrains')
+    %
+    % Or run on all sub-directories:
+    % >> boundingBoxesFromLastSection.tests.runOnAllInDir('stacks')
 
 
 
@@ -56,7 +63,7 @@ end
 
 
 for ii=1:length(pStack_list)
-    tFile = fullfile(runDir,pStack_list(ii).name);
+    tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
     fprintf('Loading %s\n',tFile)
     load(tFile)
     [~,nameWithoutExtension] = fileparts(pStack_list(ii).name);

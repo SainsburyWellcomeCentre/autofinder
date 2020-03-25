@@ -84,6 +84,48 @@ To run on all directories containing sample data within the stacks sub-directory
 >> boundingBoxesFromLastSection.test.runOnAllInDir
 ```
 
+
+## How it works
+The general idea is that bounding boxes around sample(s) are found in the current section (`n`), expanded by about 200 microns, then applied to section `n+1`. 
+When section `n+1` is imaged, the bounding boxes are re-calculated as before.
+This approach takes into account the fact that the imaged area of most samples changes during the acquisition. 
+Because the acquisition is tiled and we round up to the nearest tile, we usually end up with a border of more than 200 microns. 
+In practice, this avoids clipping the sample in cases where it gets larger quickly as we section through it. 
+There is likely no need to search for cases where sample edges are clipped in order to add tiles. 
+We image rectangular bounding boxes rather than oddly shaped tile patterns because in most cases our tile size is large. 
+
+
+### Implementation
+`imStack` is a downsampled stack that originates from the preview images of a BakingTray serial section 2p acquisition. 
+To calculate the bounding boxes for section 11 we would run:
+```
+boundingBoxesFromLastSection(imStack(:,:,10))
+```
+
+The function will return an image of section 10 with the bounding boxes drawn around it. 
+It uses default values for a bunch of important parameters, such as pixel size.
+Of course in reality these bounding boxes will need to be evaluated with respect to section 11. 
+To perform this exploration we can run the algorithm on the whole stack.
+To achieve this we load a "pStack" structure, as produced by `boundingBoxesFromLastSection.test.runOnStackStruct`, above. 
+Then, as described above, we can run:
+```
+ boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
+```
+
+How does `boundingBoxesFromLastSection` actually give us back the bounding boxes when run the first time (i.e. not in a loop over a stack)? 
+It does the following:
+* Median filter the stack with a 2D filter
+* On the first section, derives a threshold between brain and no-brain by using the median plus a few SDs of the border pixels. 
+We can do this because the border pixels will definitely contain no brain the first time around. 
+* On the first section we now binarize the image using the above threshold and do some morphological filtering to tidy it up and to expand the border by 200 microns. This is done by the internal function `binarizeImage`. 
+* This binarized image is now fed to the internal function `getBoundingBoxes`, which calls `regionProps` to return a bounding box. 
+It also: removes very small boxes, provides a hackish fix for the missing corner tile, then sorts the bounding boxes in order of ascending size. 
+* Next we use the external function `boundingBoxesFromLastSection.mergeOverlapping` to merge bounding boxes in cases where the is is appropriate. This function is currently problematic as it exhibits some odd behaviours that can cause very large overlaps between bounding boxes. 
+* Finally, bounding boxes are expanded to the nearest whole tile and the merging is re-done. 
+
+
+
+
 ## Changelog
 v2 Does well with single brains and multiple brains where the individual brains have bounding boxes that are not going to overlap. 
 Once bounding boxes overlap we begin to get odd and major failures. 
@@ -92,3 +134,6 @@ An example of this is `threeBrains/AF_C2_2FPPVs_previewStack.mat` with `tThreshS
 The problem lies with `mergeOverlapping`. 
 The bounding boxes are correctly found but the merge step produces a bad result when applied to the tile-corrected output.
 I believe it is losing a ROI when doing the merge comparisons because it's failing to correctly do comparisons with more than 2 ROIs.
+
+v3 Fixed issues relating to multiple sample ROIs. 
+The main problems were that `mergeOverlapping` was deleteing ROIs and that the final bounding-box generation step had a tendency to merge ROIs that should not have been merged. 
