@@ -32,7 +32,7 @@ if fidR == -1
 end
 
 
-tline='STARTSTART'; % Just a marker so the loop starts
+tline=fgets(fidR); %first line is empty
 
 starsCounter=0;
 totalSqMM_missed=0;
