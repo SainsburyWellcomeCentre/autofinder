@@ -29,6 +29,7 @@ fidR=fopen(fname,'r');
 
 if fidR == -1
     fprintf('Failed to open %s for reading\n', fname)
+    return
 end
 
 
