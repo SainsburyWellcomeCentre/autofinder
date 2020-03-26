@@ -41,7 +41,7 @@ function settings = returnSettings
     settings.mainBin.primaryShape = 'disk';
     settings.mainBin.primaryFiltSize = 50; %in microns
     settings.mainBin.expansionShape = 'square';
-    settings.mainBin.expansionSize = 100;  %in microns
+    settings.mainBin.expansionSize = 300;  %in microns
 
     % The following are used in boundingBoxesFromLastSection > getBoundingBoxes
     settings.mainGetBB.minSizeInSqMicrons = 15000;
