@@ -27,9 +27,17 @@ end
 
 f = fields(resStructA);
 
-sqmmA = zeros(length(f),1);
-sqmmB = zeros(length(f),1);
+sqmmA_sum = zeros(length(f),1);
+sqmmB_sum = zeros(length(f),1);
 
+sqmmA_max = zeros(length(f),1);
+sqmmB_max = zeros(length(f),1);
+
+extraA_sum = zeros(length(f),1);
+extraB_sum = zeros(length(f),1);
+
+extraA_max = zeros(length(f),1);
+extraB_max = zeros(length(f),1);
 
 
 for ii=1:length(f)
@@ -51,10 +59,17 @@ for ii=1:length(f)
     end
 
     % Log info for plotting
-    sqmmA(ii) = tA.sqmmMissed;
-    sqmmB(ii) = tB.sqmmMissed;
+    sqmmA_sum(ii) = sum(tA.sqmmMissed);
+    sqmmB_sum(ii) = sum(tB.sqmmMissed);
 
+    sqmmA_max(ii) = max(tA.sqmmMissed);
+    sqmmB_max(ii) = max(tB.sqmmMissed);
 
+    extraA_sum(ii) = sum(tA.sqmmExtra);
+    extraB_sum(ii) = sum(tB.sqmmExtra);
+
+    extraA_max(ii) = max(tA.sqmmExtra);
+    extraB_max(ii) = max(tB.sqmmExtra);
 end
 
 
@@ -62,18 +77,42 @@ end
 clf 
 
 subplot(2,2,1)
-plot(sqmmA - sqmmB, '.r-')
+plot(sqmmB_sum - sqmmA_sum, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
 hold off
 xlabel('Acquisition #')
-ylabel('delta square mm missed')
+ylabel('B minus A square mm missed')
+title('Total square mm missed (lower better)')
 
 subplot(2,2,2)
-plot(sqmmA, sqmmB, 'o')
-hold on
-plot(xlim,xlim,'k:')
+plot(sqmmB_max - sqmmA_max, '.r-')
+hold on 
+plot(xlim,[0,0],'k:')
 grid on
-xlabel('Sq mm missed A')
-ylabel('Sq mm missed B')
+hold off
+xlabel('Acquisition #')
+ylabel('B minus A square mm missed')
+title('Worst section square mm missed (lower better)')
+
+subplot(2,2,3)
+plot(extraB_sum - extraA_sum, '.r-')
+hold on 
+plot(xlim,[0,0],'k:')
+grid on
+hold off
+xlabel('Acquisition #')
+ylabel('B minus A square mm extra')
+title('Total square mm extra (lower better)')
+
+subplot(2,2,4)
+plot(extraB_max - extraA_max, '.r-')
+hold on 
+plot(xlim,[0,0],'k:')
+grid on
+hold off
+xlabel('Acquisition #')
+ylabel('B minus A square mm extra')
+title('Largest square mm increase (lower better)')
+

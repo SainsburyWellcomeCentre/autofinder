@@ -42,7 +42,8 @@ emptyStruct = struct(...
     'allAcquired',false, ...
     'propUnprocessedSections',0, ...
     'numStars',0, ...
-    'sqmmMissed',0);
+    'sqmmMissed',0,...
+    'sqmmExtra',0);
 
 tline=fgets(fidR); %first line is empty
 
@@ -54,7 +55,8 @@ while ~isnumeric(tline)
         tKey = tok{1}{1};
         resStruct.(tKey) = emptyStruct;
         starsCounter=0;
-        totalSqMM_missed=0;
+        sqmm_missed=0;
+        sqmm_extra=0;
     end
 
 
@@ -72,17 +74,26 @@ while ~isnumeric(tline)
         starsCounter = starsCounter+1;
     end
 
-    if ~isempty(strfind(tline,' sq mm'))
+    if ~isempty(strfind(tline,'non-imaged'))
         tok=regexp(tline, ' tiles; (.*) sq mm', 'tokens');
         if ~isempty(tok)
-            totalSqMM_missed = totalSqMM_missed + str2num(tok{1}{1});
+            sqmm_missed(end+1) = str2num(tok{1}{1});
         end
     end
+
+    if ~isempty(strfind(tline,'extra sq mm'))
+        tok=regexp(tline, ' has (.*) extra sq mm', 'tokens');
+        if ~isempty(tok)
+            sqmm_extra(end+1) = str2num(tok{1}{1});
+        end
+    end
+
 
     % At end of each sample is an empty line. We write results now
 
     if length(tline)==1
-        resStruct.(tKey).sqmmMissed = totalSqMM_missed;
+        resStruct.(tKey).sqmmMissed = sqmm_missed;
+        resStruct.(tKey).sqmmExtra = sqmm_extra;
         resStruct.(tKey).numStars = starsCounter;
     end
 
