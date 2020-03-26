@@ -32,21 +32,49 @@ end
 % Loop through each result file 
 evaltxtFname = fullfile(runDir,'results.txt');
 
+%We will open only transiently to write
 fid=fopen(evaltxtFname,'w');
+fclose(fid);
 
-for ii=1:length(resultFiles)
+lockFname = fullfile(runDir,'LOCK'); %So we can parallelise
+
+parfor ii=1:length(resultFiles)
     tFile = resultFiles(ii).name;
 
     % Load the data
-    msg = sprintf('Evaluating %s\n', tFile);
-    fprintf(fid,'\n%s',msg);
-    fprintf(msg)
+    msg = sprintf('\nEvaluating %s\n', tFile);
+    fprintf(msg);
 
-    load(fullfile(runDir,tFile))
+    testLog = testLog_loader(fullfile(runDir,tFile));
 
     %Evaluate and write to file
-    msg=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(testLog);
-    fprintf(fid,msg);
+    tmp=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(testLog);
+    msg = [msg,tmp];
+
+    writeData(evaltxtFname,msg,lockFname)
+
 end
 
-fclose(fid);
+
+
+
+% internal functions 
+function testLog=testLog_loader(fname)
+    load(fname)
+
+function writeData(evaltxtFname,msg,lockFname)
+    while exist(lockFname,'file')
+        fprintf('  *** WAITING TO WRITE DATA TO LOG FILE ***\n') 
+        pause(0.1)
+    end
+
+    fprintf('STARTING WRITE TO LOG FILE...')
+    fid=fopen(lockFname,'w+');
+    fclose(fid);
+
+    fid=fopen(evaltxtFname,'a+');
+    fprintf(fid,msg);
+    fclose(fid);
+
+    delete(lockFname);
+    fprintf('DONE\n')
