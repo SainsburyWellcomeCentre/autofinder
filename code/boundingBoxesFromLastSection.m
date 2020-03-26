@@ -103,13 +103,19 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     else
 
         % Run within each ROI then afterwards consolidate results
+        nT=1;
         for ii = 1:length(lastSectionStats.BoundingBoxes)
-            fprintf('* Analysing ROI %d for sub-ROIs\n', ii)
+            fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
-            tStats{ii} = boundingBoxesFromLastSection.mergeOverlapping(tStats{ii},size(tIm));
+
+            if ~isempty(tStats{ii})
+                tStats{nT} = boundingBoxesFromLastSection.mergeOverlapping(tStats{ii},size(tIm));
+                nT=nT+1;
+            end
+
         end
 
         if ~isempty(tStats{1})
@@ -140,7 +146,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Deal with scenario where nothing was found
     if isempty(stats)
-
+        fprintf(' ** Stats array is empty. %s is bailing out. **\n',mfilename)
         if nargout>0
             varargout{1}=[];
         end
@@ -167,7 +173,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
         if settings.main.doTiledMerge
-            % TODO -- this is the step that can fail with four or more ROIs <---------
             fprintf('* Doing merge of tiled bounding boxes\n')
             [stats,delta_n_ROI] = ...
                 boundingBoxesFromLastSection.mergeOverlapping(stats, size(im), ...
@@ -177,7 +182,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
         % If the number of ROIs decreased then we must re-run the tiled box algorithm
-        % TODO -- question: does this lead to boxes getting even larger? -- YES
         if delta_n_ROI<0 && settings.main.secondExpansion && settings.main.doTiledMerge
             fprintf('Bounding box number decreased by %d. Recalculating them.\n',delta_n_ROI)
             for ii=1:length(stats)
@@ -299,7 +303,6 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     % Delete very small objects and ensure we have no non-integers
     sizeThresh = settings.mainGetBB.minSizeInSqMicrons / pixelSize;
 
-
     for ii=length(stats):-1:1
         stats(ii).BoundingBox(1:2) = round(stats(ii).BoundingBox(1:2));
         stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
@@ -307,7 +310,9 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
             fprintf('Removing small ROI of size %d\n', stats(ii).Area)
             stats(ii)=[];
         end
-
+    end
+    if length(stats)==0
+        fprintf('%s > getBoundingBoxes after removing small ROIs there are none left.\n',mfilename)
     end
 
     % -------------------
@@ -315,6 +320,7 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     %Look for ROIs smaller than 2 by 2 mm and ask whether they are the un-imaged corner tile.
     %(BakingTray currently (Dec 2019) produces these tiles and this needs sorting.)
     %If so delete. TODO: longer term we want to get rid of the problem at acquisition. 
+
     for ii=length(stats):-1:1
         boxArea = prod(stats(ii).BoundingBox(3:4)*pixelSize*1E-3);
         if boxArea>2
@@ -335,7 +341,6 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     end
     % -------------------
 
-
     %Sort in ascending size order
     [~,ind]=sort([stats.Area]);
     stats = stats(ind);
@@ -345,11 +350,11 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     end
 
     if length(stats)==1
-        fprintf('Found 1 Bounding Box\n')
+        fprintf('%s > getBoundingBoxes Found 1 Bounding Box\n',mfilename)
     elseif length(stats)>1
-        fprintf('Found %d Bounding Boxes\n',length(stats))
+        fprintf('%s > getBoundingBoxes Found %d Bounding Boxes\n',mfilename,length(stats))
     elseif length(stats)==0
-        fprintf('Found no Bounding Boxes\n')
+        fprintf('%s > getBoundingBoxes Found no Bounding Boxes\n',mfilename)
     end
 
 
