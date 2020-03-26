@@ -8,11 +8,18 @@ function varargout = viewStackResult(fname,imRange)
 % return handle to volView. 
 %
 % Inputs
-% fname - path to file
+% fname - path to file. If empty or missing a GUI comes up.
 % imRange - optional ([1,200] by default) if supplied, this is the 
 %           displayed range in volView.
 % 
+
 % Rob Campbell - March 2020
+
+if nargin<1 || isempty(fname)
+    [fname,tpath] = uigetfile(pwd);
+    fname = fullfile(tpath,fname);
+    fprintf('Opening %s\n',fname)
+end
 
 if ~exist(fname,'file')
     fprintf('Can not find %d\n', fname);
