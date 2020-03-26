@@ -121,7 +121,23 @@ for ii=1:length(stats)
 
     end
     BW(:)=0; %Wipe the binary image
-end
+
+    % Calculate how many pixels were imaged more than once. Weight each by the number of extra times it was imaged.
+    tmp=boundingBoxesFromLastSection.genOverlapStack(stats(ii).BoundingBoxes,size(pStack.imStack,1:2));
+    tmp=sum(tmp,3);
+    tmp=tmp-1;
+    tmp(tmp<0)=0;
+    totalPixOverlaps = sum(tmp(:));
+    totalExtraSqmm = sqrt(totalPixOverlaps) * pStack.voxelSizeInMicrons * 1E-3;
+    if totalPixOverlaps>0
+        msg = sprintf('Section %03d/%03d has %0.3f extra sq mm due to multiple-imaging of pixels\n', ...
+            ii, size(pStack.binarized,3), totalExtraSqmm);
+        fprintf(msg)
+        out = [out,msg];
+    end
+end %for ii=1:length(stats)
+
+
 
 if nPlanesWithMissingBrain==0
     msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
@@ -136,4 +152,6 @@ if length(stats)~=size(pStack.binarized,3)
     fprintf(msg)
     out = [out,msg];
 end
+
+
 

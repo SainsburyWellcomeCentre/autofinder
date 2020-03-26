@@ -233,7 +233,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
     out.notes=''; %Anything odd can go in here
     out.tThresh = tThresh;
-
+    out.imSize = size(im);
 
     % Optionally return coords of each box
     if nargout>0
