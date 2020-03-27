@@ -114,7 +114,7 @@ for ii=1:length(stats)
             length(stats(ii).BoundingBoxes), ...
             nonImagedPixels, ...
             nonImagedTiles, ...
-            sqrt(nonImagedPixels) * pStack.voxelSizeInMicrons * 1E-3);
+            sqrt(nonImagedPixels * pStack.voxelSizeInMicrons * 1E-3) );
 
         fprintf(msg)
         out = [out,msg];
@@ -128,7 +128,7 @@ for ii=1:length(stats)
     tmp=tmp-1;
     tmp(tmp<0)=0;
     totalPixOverlaps = sum(tmp(:));
-    totalExtraSqmm = sqrt(totalPixOverlaps) * pStack.voxelSizeInMicrons * 1E-3;
+    totalExtraSqmm = sqrt(totalPixOverlaps * pStack.voxelSizeInMicrons * 1E-3);
     if totalPixOverlaps>0
         msg = sprintf('Section %03d/%03d has %0.3f extra sq mm due to multiple-imaging of pixels\n', ...
             ii, size(pStack.binarized,3), totalExtraSqmm);
