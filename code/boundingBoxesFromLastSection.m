@@ -27,6 +27,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     %               present it should be the output of image2boundingBoxes from a
     %               previous sectionl
     % borderPixSize - number of pixels from border to user for background calc. 5 by default
+    % 'skipMergeNROIThresh' - If more than this number of ROIs is found, do not attempt
+    %                         to merge. Just return them. Used to speed up auto-finding.
+    %                         By default this is infinity, so we always try to merge.
     %
     % Outputs
     % stats - borders and so forth
