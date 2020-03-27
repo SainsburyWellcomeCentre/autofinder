@@ -151,6 +151,6 @@ I then ran the algorithm on all samples and looked at the results. We have the f
   - Other thresholding failures include: LUNG_MACRO (bright tissue at edge?), OI06_OI07 (very little brain found and it just gives up -- faint?)
 
 * v5
- - Increasing the border from 100 to 300 microns helps a lot with the posterior cortex failure. Detailed examination pending, but it's positive.
- - The sudden unexpected failures were due to a bug that is now fixed.
- - One of the acquisitions which initially had no brain is now fine after the pixel change: a tiny bit of tissue was present and now crosses threshold. 
+  - Increasing the border from 100 to 300 microns helps a lot with the posterior cortex failure. Detailed examination pending, but it's positive.
+  - The sudden unexpected failures were due to a bug that is now fixed.
+  - One of the acquisitions which initially had no brain is now fine after the pixel change: a tiny bit of tissue was present and now crosses threshold. 
