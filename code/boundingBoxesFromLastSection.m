@@ -55,7 +55,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('tThreshSD',settings.main.defaultThreshSD, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
-
+    params.addParameter('skipMergeNROIThresh',inf, @(x) isnumeric(x) )
 
     params.parse(varargin{:})
     pixelSize = params.Results.pixelSize;
@@ -66,7 +66,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     tThreshSD = params.Results.tThreshSD;
     borderPixSize = params.Results.borderPixSize;
     lastSectionStats = params.Results.lastSectionStats;
-
+    skipMergeNROIThresh = params.Results.skipMergeNROIThresh;
 
     fprintf('boundingBoxesFromLastSection running with: ')
     fprintf('pixelSize: %0.2f, tileSize: %d microns, tThresh: %0.3f\n', ...
@@ -99,7 +99,10 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
-        stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
+
+        if length(stats) < skipMergeNROIThresh
+            stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
+        end
 
     else
 
@@ -135,8 +138,10 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             % they ought to be merged. This would not have been possible to do until this point. 
             % TODO -- possibly we can do only the final merge?
 
-            fprintf('* Doing final merge\n')
-            stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+            if length(stats) < skipMergeNROIThresh
+                fprintf('* Doing final merge\n')
+                stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+            end
         else
             % No bounding boxes found
             fprintf('boundingBoxesFromLastSection found no bounding boxes\n')
@@ -173,7 +178,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
                 pixelSize, tileSize);
         end
 
-        if settings.main.doTiledMerge
+        if settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
             fprintf('* Doing merge of tiled bounding boxes\n')
             [stats,delta_n_ROI] = ...
                 boundingBoxesFromLastSection.mergeOverlapping(stats, size(im), ...
@@ -183,7 +188,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
         % If the number of ROIs decreased then we must re-run the tiled box algorithm
-        if delta_n_ROI<0 && settings.main.secondExpansion && settings.main.doTiledMerge
+        if delta_n_ROI<0 && settings.main.secondExpansion && settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
             fprintf('Bounding box number decreased by %d. Recalculating them.\n',delta_n_ROI)
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
