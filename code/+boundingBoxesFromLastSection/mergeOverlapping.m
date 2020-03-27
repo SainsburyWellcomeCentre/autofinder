@@ -52,7 +52,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
         im=[];
     end
 
-    verbose=true; %Report more detailed info to command line
+    verbose=false; %Report more detailed info to command line
 
     if isempty(im)
         diagnositicPlots=false;
