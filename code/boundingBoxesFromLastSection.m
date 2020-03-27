@@ -240,6 +240,15 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.tThresh = tThresh;
     out.imSize = size(im);
 
+    % Calculate the number of pixels in the bounding boxes
+    totalBoundingBoxPixels = 0;
+    for ii=1:length(out.BoundingBoxes)
+        totalBoundingBoxPixels = totalBoundingBoxPixels + ...
+            prod(out.BoundingBoxes{ii}(3:4))
+    end
+    out.totalBoundingBoxPixels = totalBoundingBoxPixels;
+    out.propImagedAreaCoveredByBoundingBox = totalBoundingBoxPixels / prod(size(im));
+
     % Optionally return coords of each box
     if nargout>0
         varargout{1}=out;
