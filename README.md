@@ -33,7 +33,7 @@ pStack =
 
 There are two empty fields (`binarized` and `borders`) in the `pStack` structure. 
 These need to be populated with what we will treat as a proxy for ground truth: which regions actually contain brain.
-The is necessary for subsequent evaluation steps but is not necessary to run the automatic tissue-finding code. 
+This is necessary for subsequent evaluation steps but is not necessary to run the automatic tissue-finding code. 
 This is done with:
 
 ```
@@ -127,7 +127,8 @@ It also: removes very small boxes, provides a hackish fix for the missing corner
 
 
 ## Changelog
-v2 Does well with single brains and multiple brains where the individual brains have bounding boxes that are not going to overlap. 
+
+* v2 Does well with single brains and multiple brains where the individual brains have bounding boxes that are not going to overlap. 
 Once bounding boxes overlap we begin to get odd and major failures. 
 For instance, whole brains sudenly are excluded. 
 An example of this is `threeBrains/AF_C2_2FPPVs_previewStack.mat` with `tThreshSD=4` -- irrespective of threshold we lose the bottom brain from section 17 to section 18. 
@@ -135,5 +136,23 @@ The problem lies with `mergeOverlapping`.
 The bounding boxes are correctly found but the merge step produces a bad result when applied to the tile-corrected output.
 I believe it is losing a ROI when doing the merge comparisons because it's failing to correctly do comparisons with more than 2 ROIs.
 
-v3 Fixed issues relating to multiple sample ROIs. 
+* v3 Fixed issues relating to multiple sample ROIs. 
 The main problems were that `mergeOverlapping` was deleteing ROIs and that the final bounding-box generation step had a tendency to merge ROIs that should not have been merged. 
+
+* v4 Corrects the [issue with merge leading to imaging the same brain twice](https://github.com/raacampbell/autofinder/issues/14). 
+I then ran the algorithm on all samples and looked at the results. We have the following failure modes that need addressing:
+  - Ten acquisitions show mild to moderate failure to image the very posterior part of cortex when it appears. This is very severe in an additional three more: HMV_NN01, AL_029 and AL023.
+  - One acquisition shows persistent issues finding all the brain: HMV_OIs04_OIs05. This is potentially serious since we don't know this happens. 
+  - One acquisition (AF_PCA_19_20_22_25) has a brain where we start imaging very caudal indeed. The spinal cord appears before cerebellum and it takes a few sections until cerebellum is imaged. Minor data loss.
+  - Two acquisitions show a thresholding issue where the brain is found in section 1 but subsequent ones are empty: AF_4C2s and AF_C2_2FPPVs. This would not lead to data loss, only annoyance. 
+  - Two acquisitions suddenly fail to find the tissue mid way through acqisition: C2vGvLG1 and CC_125_1__125_2. This would not lead to data loss, only annoyance. 
+  - Two acquisitions of 4 brains each lose one brain because it wasn't visible at the start of the acquisition. Not serious because we can solve this via user intervention before acquisition starts. 
+  - Two acquisitions fail due to sudden loss of the tissue for whatever reason: sample_972991_972992, FERRET. Not a problem with the algorithm. The microscope would just stop and send a Slack message. No data loss due to algorithm. 
+  - Other thresholding failures include: LUNG_MACRO (bright tissue at edge?), OI06_OI07 (very little brain found and it just gives up -- faint?)
+
+25/03/2020
+Next step is to [correct the number of microns per pixel](https://github.com/raacampbell/autofinder/issues/15), which is off slightly. 
+Then re-run the above.
+Confirm that some of the ground-truth fixes implement today actually work. 
+Get coverage numbers for every acquisition. 
+Then try to fix the posterior cortex problem, as that's the largest group with failure. Confirm fixing doesn't mess up anything else. 
