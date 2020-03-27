@@ -150,9 +150,7 @@ I then ran the algorithm on all samples and looked at the results. We have the f
   - Two acquisitions fail due to sudden loss of the tissue for whatever reason: sample_972991_972992, FERRET. Not a problem with the algorithm. The microscope would just stop and send a Slack message. No data loss due to algorithm. 
   - Other thresholding failures include: LUNG_MACRO (bright tissue at edge?), OI06_OI07 (very little brain found and it just gives up -- faint?)
 
-25/03/2020
-Next step is to [correct the number of microns per pixel](https://github.com/raacampbell/autofinder/issues/15), which is off slightly. 
-Then re-run the above.
-Confirm that some of the ground-truth fixes implement today actually work. 
-Get coverage numbers for every acquisition. 
-Then try to fix the posterior cortex problem, as that's the largest group with failure. Confirm fixing doesn't mess up anything else. 
+* v5
+ - Increasing the border from 100 to 300 microns helps a lot with the posterior cortex failure. Detailed examination pending, but it's positive.
+ - The sudden unexpected failures were due to a bug that is now fixed.
+ - One of the acquisitions which initially had no brain is now fine after the pixel change: a tiny bit of tissue was present and now crosses threshold. 
