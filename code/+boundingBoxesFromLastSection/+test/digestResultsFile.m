@@ -29,13 +29,15 @@ fidR=fopen(fname,'r');
 
 if fidR == -1
     fprintf('Failed to open %s for reading\n', fname)
+    return
 end
 
 
 tline=fgets(fidR); %first line is empty
 
 starsCounter=0;
-totalSqMM_missed=0;
+sqMM_missed=[];
+sqMM_extra=[];
 
 while ~isnumeric(tline)
     tline=fgets(fidR);
@@ -43,7 +45,8 @@ while ~isnumeric(tline)
     if ~isempty(strfind(tline,'Evaluating'))
         fprintf(fidD,tline);
         starsCounter=0;
-        totalSqMM_missed=0;
+        sqMM_missed=0;
+        sqMM_extra=0;
     end
 
     if ~isempty(strfind(tline,'GOOD ')) || ~isempty(strfind(tline,'WARNING ')) 
@@ -54,19 +57,28 @@ while ~isnumeric(tline)
         starsCounter = starsCounter+1;
     end
 
-    if ~isempty(strfind(tline,' sq mm'))
+    if ~isempty(strfind(tline,' non-imaged '))
         tok=regexp(tline, ' tiles; (.*) sq mm', 'tokens');
         if ~isempty(tok)
-            totalSqMM_missed = totalSqMM_missed + str2num(tok{1}{1});
+            sqMM_missed(end+1) = str2num(tok{1}{1});
+        end
+    end
+
+    if ~isempty(strfind(tline,' extra sq mm due to '))
+        tok=regexp(tline, ' has (.*) extra sq mm', 'tokens');
+        if ~isempty(tok)
+            sqMM_extra(end+1) = str2num(tok{1}{1});
         end
     end
 
     % At end of each sample is an empty line. We write results now
 
     if length(tline)==1
-        fprintf(fidD,'Total square mm missed = %0.1f\n', totalSqMM_missed);
-        fprintf(fidD,'Num stars = %d\n\n',starsCounter);
-
+        fprintf(fidD,'Total square mm missed = %0.1f\n', sum(sqMM_missed));
+        fprintf(fidD,'Worst section sq mm missed = %0.1f\n', max(sqMM_missed));
+        fprintf(fidD,'Num sq mm stars = %d\n\n',starsCounter);
+        fprintf(fidD,'Total extra square mm added = %0.1f\n', sum(sqMM_extra));
+        fprintf(fidD,'Worst section extra sq mm added = %0.1f\n', max(sqMM_extra));
     end
 
 end

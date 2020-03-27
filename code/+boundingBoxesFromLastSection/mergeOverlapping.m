@@ -70,13 +70,8 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
     end
 
     % Generate an empty image that will accomodate all the boxes
-    tmpIm = zeros([imSize,length(stats)]);
-    initialRoiNum=length(stats);
-    % Fill in the blank "image" with the areas that are ROIs
-    for ii=1:length(stats)
-        eb = boundingBoxesFromLastSection.validateBoundingBox(stats(ii).BoundingBox, imSize);
-        tmpIm(eb(2):eb(2)+eb(4), eb(1):eb(1)+eb(3),ii) = 1;
-    end
+    initialRoiNum=length(stats); %Used below
+    tmpIm = boundingBoxesFromLastSection.genOverlapStack({stats.BoundingBox},imSize);
 
     % If areas do not overlap the sum of tmpIm along dim 3 will contain only 1 and 0.
     % Therefore the following anonymous function will return true when there are overlaps.
@@ -101,7 +96,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
         overlapProp = zeros(1,length(combosToTest)); %Pre-allocate a variable in which to store results
 
         if DD==true
-            tmpIm = expandROItoBoundingBox(tmpIm,1.08);
+            tmpIm = expandROItoBoundingBox(tmpIm,1.08); 
         end
 
         if diagnositicPlots
@@ -290,6 +285,8 @@ function [BW,propChange] = expandROItoBoundingBox(BW,expandThresh)
     %      processes each plan separately and returns an array of the same size. 
     % expandThresh - 0 by default. If positive number, the plane is only modified if 
     %                doing so satisfies (newArea/origArea) > expandThresh
+
+    %TODO - likely can delete. I don't think we need this any more 26/03/2020
 
     verbose=false;
     if verbose

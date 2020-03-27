@@ -62,10 +62,10 @@ else
 end
 
 
-for ii=1:length(pStack_list)
+parfor ii=1:length(pStack_list)
     tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
     fprintf('Loading %s\n',tFile)
-    load(tFile)
+    pStack = pstack_loader(tFile)
     [~,nameWithoutExtension] = fileparts(pStack_list(ii).name);
 
     % Do not process if the loaded .mat file does not contain a struct
@@ -78,7 +78,10 @@ for ii=1:length(pStack_list)
     try
         testLog = boundingBoxesFromLastSection.test.runOnStackStruct(pStack,true);
         testLog(1).stackFname = tFile; %Into the first element add the file name
-        save(fullfile(testDirThisSession,['log_',pStack_list(ii).name]),'testLog')
+
+        saveFname = fullfile(testDirThisSession,['log_',pStack_list(ii).name]);
+        fprintf('Saving data to %s\n', saveFname)
+        testlog_saver(saveFname,testLog)% (fullfile(testDirThisSession,['log_',pStack_list(ii).name]),'testLog')
     catch ME
         fid = fopen(fullfile(testDirThisSession,['FAIL_',nameWithoutExtension]),'w');
         fprintf(fid,ME.message);
@@ -88,3 +91,11 @@ for ii=1:length(pStack_list)
 
 
 end
+
+
+% internal functions 
+function pStack=pstack_loader(fname)
+    load(fname)
+
+function testlog_saver(fname,testLog)
+    save(fname,'testLog')

@@ -1,6 +1,16 @@
-function [tArea,boundingBoxSize] = boundingBoxAreaFromImage(im)
+function [tArea,boundingBoxSize] = boundingBoxAreaFromImage(BW)
     % Determine the area of a bounding box required to fit all non-zero pixels in a binary image.
-    tmp = im>0;
+    %
+    % function [tArea,boundingBoxSize] = boundingBoxFromLastSection.boundingBoxAreaFromImage(BW)
+    %
+    % Inputs
+    % BW - binarised image
+    %
+    % Outputs
+    % tArea - total area of bounding box
+    % boundingBoxSize - length of each side of the bounding box
+    %
+    tmp = BW>0;
 
     %Rows and columns that have at least one non-zero pixel
     a = find(sum(tmp,1)>1);
