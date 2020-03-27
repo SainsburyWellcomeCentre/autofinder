@@ -11,7 +11,8 @@ function evaluateDir(runDir)
 % boundingBoxesFromLastSection.test.runOnStackStruct
 % boundingBoxesFromLastSection.test.evaluateDir('tests/191210_1426')
 %
-%
+% Then do:
+% boundingBoxesFromLastSection.test.digestResultsFile('results.txt')
 
 
 

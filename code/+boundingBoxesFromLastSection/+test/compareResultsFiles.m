@@ -74,7 +74,7 @@ end
 
 
 
-clf 
+clf
 
 subplot(2,2,1)
 plot(sqmmB_sum - sqmmA_sum, '.r-')
