@@ -84,6 +84,7 @@ function [tThresh,stats] = run(pStack, runSeries)
 
         fprintf('\n\n\n ** SEARCHING LOW SNR with %d INITIAL ROIS\n', initial_nROIs)
 
+        finalX=nan;
         while x(end)<maxThresh
 
             fprintf(' ---> thresh = %0.3f\n', x(end))
@@ -104,9 +105,13 @@ function [tThresh,stats] = run(pStack, runSeries)
             x(end+1)=x(end)*1.8;
         end
 
-        tThresh = finalX;
-        fprintf(' ---> Choosing a final thresh of %0.3f\n', ...
-            finalX, tThresh);
+        if ~isnan(finalX)
+            tThresh = finalX;
+        else
+            tThresh = defaultThresh;
+        end
+
+        fprintf(' ---> Choosing a final thresh of %0.3f\n', finalX);
 
     end %lowSNRalg
 
