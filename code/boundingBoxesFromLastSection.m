@@ -69,8 +69,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     fprintf('boundingBoxesFromLastSection running with: ')
-    fprintf('pixelSize: %0.2f, tileSize: %d, tThresh: %0.2f\n', ...
-        pixelSize, tileSize, tThresh)
+    fprintf('pixelSize: %0.2f, tileSize: %d microns, tThresh: %0.3f\n', ...
+        pixelSize, round(tileSize), tThreshSD)
 
 
 
