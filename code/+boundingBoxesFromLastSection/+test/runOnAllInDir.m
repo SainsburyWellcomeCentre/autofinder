@@ -65,7 +65,7 @@ end
 parfor ii=1:length(pStack_list)
     tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
     fprintf('Loading %s\n',tFile)
-    pStack = pstack_loader(tFile)
+    pStack = pstack_loader(tFile);
     [~,nameWithoutExtension] = fileparts(pStack_list(ii).name);
 
     % Do not process if the loaded .mat file does not contain a struct
