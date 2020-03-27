@@ -35,6 +35,7 @@ function settings = returnSettings
     settings.main.doTiledMerge=true; %Mainly for debugging
     settings.main.tiledMergeThresh=1.05;
     settings.main.secondExpansion=false;
+    settings.main.defaultThreshSD=7; %This appears both in boundingBoxesFromLastSection and in runOnStackStruct
 
     % The following are used in boundingBoxesFromLastSection > binarizeImage
     settings.mainBin.medFiltBW = 5;

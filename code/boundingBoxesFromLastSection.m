@@ -42,7 +42,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         return
     end
 
-
+    settings = boundingBoxesFromLastSection.readSettings;
     % Parse input arguments
     params = inputParser;
     params.CaseSensitive = false;
@@ -52,7 +52,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
-    params.addParameter('tThreshSD',7, @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('tThreshSD',settings.main.defaultThreshSD, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
 
@@ -72,12 +72,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     fprintf('pixelSize: %0.2f, tileSize: %d, tThresh: %0.2f\n', ...
         pixelSize, tileSize, tThresh)
 
-    settings = boundingBoxesFromLastSection.readSettings;
+
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
     im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage]);
     im = single(im);
-
 
     % If no threshold for segregating sample from background was supplied then calculate one
     % based on the pixels around the image border.
@@ -88,6 +87,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
         fprintf('Choosing a threshold of %0.2f\n', tThresh)
+    else
+        fprintf('Running %s with a threshold of %0.1f\n', mfilename, tThresh)
     end
 
 

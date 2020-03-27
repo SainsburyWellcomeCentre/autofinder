@@ -1,6 +1,8 @@
 function varargout=runOnStackStruct(pStack,noPlot)
     % Run the brain-finding algorithm on a stack processed by genGroundTruthBorders
     %
+    % function boundingBoxesFromLastSection.test.runOnStackStruct(pStack,noPlot)
+    %
     % Purpose
     % Simulate the behavior of an imaging system seeking to image only
     % the tissue without benefit of a low res preview scan of the area.
@@ -11,6 +13,17 @@ function varargout=runOnStackStruct(pStack,noPlot)
     %
     % This function just loops through the sample-detection code. It
     % doesn't implement extra steps for finding the sample. 
+    %
+    % Inputs
+    % pStack - preview stack structure
+    % noPlot - flase by default
+    %
+    %
+    % Extras:
+    % To over-ride the defaul threshold:
+    % pStack.tThreshSD=3;
+    % boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
+    %
 
 
 
@@ -37,20 +50,27 @@ function varargout=runOnStackStruct(pStack,noPlot)
         pStack.voxelSizeInMicrons = rescaleTo;
     end
 
-    fprintf('Finding bounding box in first section\n')
+
     argIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
              'tileSize', pStack.tileSizeInMicrons, ...
              'doPlot', ~noPlot};
 
     if isfield(pStack,'tThreshSD')
-        argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
         threshSD = pStack.tThreshSD;
+        argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
+        fprintf('%s is starting with a custom SD threshold of %0.1f\n', ...
+            mfilename, threshSD)
     else
-        threshSD=7;
+        threshSD=settings.main.defaultThreshSD;
+        fprintf('%s is starting with a default SD threshold of %0.1f\n', ...
+            mfilename, threshSD)
+
     end
 
+    fprintf('Finding bounding box in first section\n')
     stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
     drawnow
+
     if pauseBetweenSections
         set(gcf,'Name',sprintf('%d/%d',1,size(pStack.imStack,3)))
         fprintf(' -> Press return\n')
