@@ -19,15 +19,16 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     %
     % Inputs (Optional param/val pairs)
     % pixelSize - 7 (microns/pixel) by default
-    % tileSize - 1000 (microns/pixel) by default. Size of tile FOV in microns.
+    % tileSize - 1000 (microns) by default. Size of tile FOV in microns.
     % tThresh - Threshold for brain/no brain. By default this is auto-calculated
+    % tThreshSD - Used to do the auto-calculation of tThresh.
     % doPlot - if true, display image and overlay boxes. false by default
     % doTiledRoi - if true (default) return the ROI we would have if tile scanning. 
     % lastSectionStats - By default the whole image is used. If this argument is 
     %               present it should be the output of image2boundingBoxes from a
     %               previous sectionl
     % borderPixSize - number of pixels from border to user for background calc. 5 by default
-    % 'skipMergeNROIThresh' - If more than this number of ROIs is found, do not attempt
+    % skipMergeNROIThresh - If more than this number of ROIs is found, do not attempt
     %                         to merge. Just return them. Used to speed up auto-finding.
     %                         By default this is infinity, so we always try to merge.
     %
@@ -72,7 +73,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     skipMergeNROIThresh = params.Results.skipMergeNROIThresh;
 
     fprintf('boundingBoxesFromLastSection running with: ')
-    fprintf('pixelSize: %0.2f, tileSize: %d microns, tThresh: %0.3f\n', ...
+    fprintf('pixelSize: %0.2f, tileSize: %d microns, tThreshSD: %0.3f\n', ...
         pixelSize, round(tileSize), tThreshSD)
 
 
@@ -89,9 +90,10 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('Choosing a threshold of %0.2f\n', tThresh)
+        fprintf('No threshold provided to %s - Choosing a threshold of %0.1f\n', mfilename, tThresh)
+
     else
-        fprintf('Running %s with a threshold of %0.1f\n', mfilename, tThresh)
+        fprintf('Running %s with a threshold of %0.2f\n', mfilename, tThresh)
     end
 
 

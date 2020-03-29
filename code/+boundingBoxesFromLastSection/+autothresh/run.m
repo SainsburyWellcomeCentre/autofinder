@@ -1,7 +1,7 @@
-function [tThresh,stats] = run(pStack, runSeries)
+function [tThreshSD,stats] = run(pStack, runSeries)
     % Search a range of thresholds and find the best one. 
     %
-    % function [tThresh,stats] = boundingBoxFromLastSection.autoThresh.run(pStack)
+    % function [tThreshSD,stats] = boundingBoxFromLastSection.autoThresh.run(pStack)
     %
     % Purpose
     % Choose threshold based on the number of ROIs it produces. 
@@ -34,12 +34,12 @@ function [tThresh,stats] = run(pStack, runSeries)
     if runSeries
         x=0.015;
         while x<maxThresh
-            fprintf('Running for tThresh * %0.2f\n',x);
+            fprintf('Running for tThreshSD * %0.2f\n',x);
             stats(end+1)=runThreshCheck(x);
             x=x*1.6;
         end
         boundingBoxesFromLastSection.autothresh.plot(stats)
-        tThresh = nan;
+        tThreshSD = nan;
         return
     end
 
@@ -48,14 +48,14 @@ function [tThresh,stats] = run(pStack, runSeries)
     % Otherwise we try to find a threshold
     if stats.propImagedAreaUnderBoundingBox>0.95
         disp('HIGH SNR')
-        [tThresh,stats] = highSNRalg(stats);
+        [tThreshSD,stats] = highSNRalg(stats);
     else
         fprintf('Looks like a low SNR sample')
-        [tThresh,stats] = lowSNRalg(stats);
+        [tThreshSD,stats] = lowSNRalg(stats);
     end
 
     boundingBoxesFromLastSection(pStack.imStack(:,:,1),argIn{:}, ...
-        'tThreshSD',tThresh,'doPlot',true);
+        'tThreshSD',tThreshSD,'doPlot',true);
 
     % Nested functions follow
     function stats = runThreshCheck(tThreshSD)
@@ -78,7 +78,7 @@ function [tThresh,stats] = run(pStack, runSeries)
 
     end % runThreshCheck
 
-    function [tThresh,stats] = lowSNRalg(stats)
+    function [tThreshSD,stats] = lowSNRalg(stats)
         initial_nROIs = stats.nRois;
         x=0.015;
 
@@ -106,9 +106,9 @@ function [tThresh,stats] = run(pStack, runSeries)
         end
 
         if ~isnan(finalX)
-            tThresh = finalX;
+            tThreshSD = finalX;
         else
-            tThresh = defaultThresh;
+            tThreshSD = defaultThresh;
         end
 
         fprintf(' ---> Choosing a final thresh of %0.3f\n', finalX);
@@ -116,7 +116,7 @@ function [tThresh,stats] = run(pStack, runSeries)
     end %lowSNRalg
 
 
-    function [tThresh,stats] = highSNRalg(stats)
+    function [tThreshSD,stats] = highSNRalg(stats)
         % Start with a high threshold and decrease
         % A sharp increase in ROI number means that we're too low
         % Filling the whole FOV means we're too low
@@ -127,7 +127,7 @@ function [tThresh,stats] = run(pStack, runSeries)
         % instead?
 
         x = maxThresh;
-        tThresh=nan;
+        tThreshSD=nan;
         while x>0.01
             x(end+1)= x(end) * 0.75;
             fprintf(' ---> thresh = %0.3f\n', x(end))
@@ -140,10 +140,9 @@ function [tThresh,stats] = run(pStack, runSeries)
 
         end
 
-
-        if isnan(tThresh)
+        if isnan(tThreshSD)
             fprintf('Bounding box always stays small. Sticking with default threshold of %0.2f\n', defaultThresh)
-            tThresh=defaultThresh
+            tThreshSD=defaultThresh;
         end
     end %highSNRalg
 
