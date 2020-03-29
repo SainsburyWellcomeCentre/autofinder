@@ -28,7 +28,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
 
     stats=runThreshCheck(0);
-    maxThresh=30;
+    maxThresh=40;
 
     % Produce a curve
     if runSeries
@@ -67,12 +67,14 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.meanBoundingBoxPixels=0;
             stats.boundingBoxSqMM=0;
             stats.propImagedAreaUnderBoundingBox=0;
+            stats.notes=''
         else
             stats.nRois = length(OUT.BoundingBoxes);
             stats.boundingBoxPixels=OUT.totalBoundingBoxPixels;
             stats.meanBoundingBoxPixels=mean(OUT.BoundingBoxPixels);
             stats.boundingBoxSqMM = sqrt(OUT.totalBoundingBoxPixels * voxSize * 1E-3);
             stats.propImagedAreaUnderBoundingBox=OUT.propImagedAreaCoveredByBoundingBox;
+            stats.notes='';
         end
         stats.tThreshSD=tThreshSD;
 
@@ -129,15 +131,36 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         x = maxThresh;
         tThreshSD=nan;
         while x>0.01
-            x(end+1)= x(end) * 0.75;
             fprintf(' ---> thresh = %0.3f\n', x(end))
             stats(end+1)=runThreshCheck(x(end));
 
+            % If we reach over 95% coverage then back up a notch and assign the threshold as this value
             if stats(end).propImagedAreaUnderBoundingBox>0.95
-                tThresh = x(end-1)*1.75;
+                tThreshSD = x(end-1)*1.75;
                 break
             end
+            x(end+1)= x(end) * 0.8;
+        end
 
+        %Now sort because 0 is at the start
+        tT=[stats.tThreshSD];
+        [~,ind] = sort(tT);
+        stats = stats(ind);
+
+        % Before finally bailing out, see if we can improve the threshold. If many 
+        % points have the same number of ROIs, choose the middle of this range instead. 
+        nR = [stats.nRois];
+        [theMode,numOccurances] = mode(nR);
+
+        
+        % If there are more than three of them and all are in a row, then we use the mean of these as the threshold
+        if numOccurances>3 && all(diff(find(nR==theMode))==1)
+            fprintf('-->  Choosing based on mode\n.')
+            tThreshSD = mean(tT(find(nR==theMode)));
+            stats(1).notes=sprintf('mean of values at nROI=%d', theMode);
+        else
+            fprintf('--> Choosing based on exit point\n.')
+            stats(1).notes='Value near full size ROI';
         end
 
         if isnan(tThreshSD)

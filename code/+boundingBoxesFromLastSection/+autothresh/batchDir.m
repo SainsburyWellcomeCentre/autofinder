@@ -1,6 +1,7 @@
 function out = batchDir(runDir)
     % function [tThresh,stats] = boundingBoxFromLastSection.autoThresh.batchDir(runDir)
-
+    %
+    % Run on all in directory and retun a structure with the results
 
 
 
@@ -13,17 +14,18 @@ function out = batchDir(runDir)
         return
     end
 
-    out.thresh = zeros(1,length(pStack_list));
-    out.nameWithoutExtension={};
-
     for ii=1:length(pStack_list)
         tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
-        fprintf('Loading %s\n',tFile)
+        fprintf('\n\n\n  ****   %d/%d Loading %s ****\n\n', ii, length(pStack_list), tFile)
         pStack = pstack_loader(tFile);
         [~,nameWithoutExtension] = fileparts(pStack_list(ii).name);
 
-        out.thresh(ii)=boundingBoxesFromLastSection.autothresh.run(pStack,false);
-        out.nameWithoutExtension{ii}=nameWithoutExtension;
+        [out(ii).thresh,out(ii).stats]=boundingBoxesFromLastSection.autothresh.run(pStack,false);
+
+        out(ii).nameWithoutExtension=nameWithoutExtension;
+        out(ii).fullPath=tFile;
+        fprintf('\n  ****   %d/%d FINISHED %s ****\n\n', ii, length(pStack_list), tFile)
+        pause
     end
 
 
