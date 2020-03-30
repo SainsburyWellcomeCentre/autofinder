@@ -90,7 +90,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('No threshold provided to %s - Choosing a threshold of %0.1f\n', mfilename, tThresh)
+        fprintf('No threshold provided to %s - Choosing a threshold of %0.1f based on threshSD of %0.2f\n', ...
+         mfilename, tThresh, tThreshSD)
 
     else
         fprintf('Running %s with a threshold of %0.2f\n', mfilename, tThresh)
@@ -239,12 +240,14 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.stdBackground = std(backgroundPix(:));
 
     out.nBackgroundPix = sum(~BW(:));
+    out.nBackgroundSqMM = sqrt(out.nBackgroundPix * pixelSize);
 
     foregroundPix = im(find(BW));
     out.meanForeground = mean(foregroundPix(:));
     out.medianForeground = median(foregroundPix(:));
     out.stdForeground = std(foregroundPix(:));
     out.nForegroundPix = sum(BW(:));
+    out.nForegroundSqMM = sqrt(out.nForegroundPix * pixelSize);
     out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
     out.notes=''; %Anything odd can go in here
     out.tThresh = tThresh;
