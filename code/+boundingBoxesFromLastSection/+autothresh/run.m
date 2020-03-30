@@ -32,6 +32,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
     % Produce a curve
     if runSeries
+        t=tic;
         x=0.015;
         while x<maxThresh
             fprintf('Running for tThreshSD * %0.2f\n',x);
@@ -40,6 +41,8 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         end
         boundingBoxesFromLastSection.autothresh.plot(stats)
         tThreshSD = nan;
+        fprintf('Finished!\n')
+        toc(t)
         return
     end
 
@@ -67,7 +70,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.meanBoundingBoxPixels=0;
             stats.boundingBoxSqMM=0;
             stats.propImagedAreaUnderBoundingBox=0;
-            stats.notes=''
+            stats.notes='';
         else
             stats.nRois = length(OUT.BoundingBoxes);
             stats.boundingBoxPixels=OUT.totalBoundingBoxPixels;
@@ -155,11 +158,11 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         
         % If there are more than three of them and all are in a row, then we use the mean of these as the threshold
         if numOccurances>3 && all(diff(find(nR==theMode))==1)
-            fprintf('-->  Choosing based on mode\n.')
+            fprintf(' --->  High SNR: Choosing based on mode.\n')
             tThreshSD = mean(tT(find(nR==theMode)));
             stats(1).notes=sprintf('mean of values at nROI=%d', theMode);
         else
-            fprintf('--> Choosing based on exit point\n.')
+            fprintf(' ---> High SNR: Choosing based on exit point value where ROI gets large.\n')
             stats(1).notes='Value near full size ROI';
         end
 
