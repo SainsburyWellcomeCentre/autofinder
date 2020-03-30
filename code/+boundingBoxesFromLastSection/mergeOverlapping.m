@@ -219,6 +219,11 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
         fprintf('Finished merging with %d bounding boxes\n', length(stats))
     end
 
+
+    % Delete any planes which happen to empty
+    sP = squeeze(sum(tmpIm,[1,2]));
+    tmpIm(:,:,sP==0) = [];
+
     %Loop through each plane and create a bounding box from it
     %Can not use the sum of all planes as we risk merging bounding boxes
     for ii=1:size(tmpIm,3)
