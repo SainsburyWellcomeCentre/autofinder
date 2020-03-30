@@ -37,7 +37,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         while x<maxThresh
             fprintf('Running for tThreshSD * %0.2f\n',x);
             stats(end+1)=runThreshCheck(x);
-            x=x*1.6;
+            x=x*1.1;
         end
         boundingBoxesFromLastSection.autothresh.plot(stats)
         tThreshSD = nan;
@@ -116,7 +116,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             tThreshSD = defaultThresh;
         end
 
-        fprintf(' ---> Choosing a final thresh of %0.3f\n', finalX);
+        fprintf(' ---> Low SNR Choosing a final thresh of %0.3f\n', finalX);
 
     end %lowSNRalg
 
@@ -142,7 +142,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
                 tThreshSD = x(end-1)*1.75;
                 break
             end
-            x(end+1)= x(end) * 0.8;
+            x(end+1)= x(end) * 0.9;
         end
 
         %Now sort because 0 is at the start
@@ -155,15 +155,17 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         nR = [stats.nRois];
         [theMode,numOccurances] = mode(nR);
 
-        
+
         % If there are more than three of them and all are in a row, then we use the mean of these as the threshold
+        fprintf('mode nROIs: %d and occurs %d times\n', theMode, numOccurances)
+        
         if numOccurances>3 && all(diff(find(nR==theMode))==1)
             fprintf(' --->  High SNR: Choosing based on mode.\n')
             tThreshSD = mean(tT(find(nR==theMode)));
-            stats(1).notes=sprintf('mean of values at nROI=%d', theMode);
+            stats(1).notes=sprintf('High SNR: mean of values at nROI=%d', theMode);
         else
             fprintf(' ---> High SNR: Choosing based on exit point value where ROI gets large.\n')
-            stats(1).notes='Value near full size ROI';
+            stats(1).notes='High SNR: Value near full size ROI';
         end
 
         if isnan(tThreshSD)
