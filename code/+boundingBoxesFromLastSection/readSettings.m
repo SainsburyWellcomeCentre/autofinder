@@ -52,4 +52,4 @@ function settings = returnSettings
     settings.mergeO.mergeThresh=1.3; %This is the default value
 
     % The following are used in boundingBoxesFromLastSection.runOnStackStruct
-    settings.stackStr.rescaleTo=40; 
+    settings.stackStr.rescaleTo=50; 
