@@ -43,7 +43,7 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
 
     if nargin<3 || isempty(noPlot)
         % Auto find the threshold?
-        doAutoThreshold = false;
+        doAutoThreshold = true;
     end
 
 

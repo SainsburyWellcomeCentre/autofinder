@@ -64,7 +64,7 @@ while ~isnumeric(tline)
         resStruct.(tKey).allAcquired=true;
     end
 
-    if ~isempty(strfind(tline,'WARNING ')) 
+    if ~isempty(strfind(tline,'WARNING -- There are ')) 
         tok = regexp(tline,'There are (\d+) sections .* only (\d+) were','tokens');
         tok = tok{1};
         resStruct.(tKey).propUnprocessedSections = str2num(tok{2})/str2num(tok{1});

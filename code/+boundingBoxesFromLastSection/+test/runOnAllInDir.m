@@ -13,7 +13,7 @@ function runOnAllInDir(runDir,doAutoThreshold)
     % Inputs (optional)
     % runDir - directory in which to look for files and run. If missing, 
     %          the current directory is used.
-    % doAutoThreshold - false by default
+    % doAutoThreshold - true by default
     %
     %
     % Example
@@ -33,7 +33,7 @@ end
 
 if nargin<2 || isempty(doAutoThreshold)
     % Auto find the threshold?
-    doAutoThreshold = false;
+    doAutoThreshold = true;
 end
 
 
