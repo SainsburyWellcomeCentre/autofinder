@@ -44,6 +44,32 @@ nPlanesWithMissingBrain=0;
 
 out = '';
 
+
+
+if nPlanesWithMissingBrain==0
+    msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
+        length(stats));
+    fprintf(msg)
+    out = [out,msg];
+end
+
+if length(stats)~=size(pStack.binarized,3)
+    msg=sprintf('WARNING -- There are %d sections in the image stack but only %d were processed.\n', ...
+        size(pStack.binarized,3), length(stats));
+    fprintf(msg)
+    out = [out,msg];
+end
+
+% Look for cases where the bounding box covers more than 95% of the FOV
+pArea = sum([stats.propImagedAreaCoveredByBoundingBox]>0.99);
+if pArea>0
+    msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 0.99 in %d sections\n', ...
+        pArea);
+    fprintf(msg)
+    out = [out,msg];
+end
+
+
 BW = zeros(size(pStack.binarized,[1,2])); 
 for ii=1:length(stats)
     %Empty image. We will fill with ones all regions where brain was found.
@@ -140,22 +166,4 @@ for ii=1:length(stats)
     end
 
 end %for ii=1:length(stats)
-
-
-
-if nPlanesWithMissingBrain==0
-    msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
-        length(stats));
-    fprintf(msg)
-    out = [out,msg];
-end
-
-if length(stats)~=size(pStack.binarized,3)
-    msg=sprintf('WARNING -- There are %d sections in the image stack but only %d were processed.\n', ...
-        size(pStack.binarized,3), length(stats));
-    fprintf(msg)
-    out = [out,msg];
-end
-
-
 

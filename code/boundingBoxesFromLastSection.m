@@ -31,6 +31,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % skipMergeNROIThresh - If more than this number of ROIs is found, do not attempt
     %                         to merge. Just return them. Used to speed up auto-finding.
     %                         By default this is infinity, so we always try to merge.
+    % rescaleTo - number of microns per pixel to which we will re-scale. By default 
+    %             uses value from settings file.
+    %
     %
     % Outputs
     % stats - borders and so forth
@@ -60,6 +63,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
     params.addParameter('skipMergeNROIThresh',inf, @(x) isnumeric(x) )
+    params.addParameter('rescaleTo',settings.stackStr.rescaleTo, @(x) isnumeric(x) )    
 
     params.parse(varargin{:})
     pixelSize = params.Results.pixelSize;
@@ -71,6 +75,25 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     borderPixSize = params.Results.borderPixSize;
     lastSectionStats = params.Results.lastSectionStats;
     skipMergeNROIThresh = params.Results.skipMergeNROIThresh;
+    rescaleTo = params.Results.rescaleTo;
+
+    if size(im,3)>1
+        fprintf('%s requires a single image not a stack\n',mfilename)
+        return
+    end
+
+    if rescaleTo>1
+        fprintf('%s is rescaling image to %d mic/pix from %0.2f mic/pix\n', ...
+            mfilename, rescaleTo, pixelSize);
+        sizeIm=size(im);
+        sizeIm = round( sizeIm / (rescaleTo/pixelSize) );
+        im = imresize(im, sizeIm);
+        origPixelSize = pixelSize;
+        pixelSize = rescaleTo;
+    else
+        origPixelSize = pixelSize;
+    end
+
 
     fprintf('boundingBoxesFromLastSection running with: ')
     fprintf('pixelSize: %0.2f, tileSize: %d microns, tThreshSD: %0.3f\n', ...
@@ -112,9 +135,16 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     else
 
+        if rescaleTo>1
+            lastSectionStats.BoundingBoxes = ...
+                cellfun(@(x) round(x/(rescaleTo/origPixelSize)), lastSectionStats.BoundingBoxes,'UniformOutput',false);
+        end
+
         % Run within each ROI then afterwards consolidate results
         nT=1;
         for ii = 1:length(lastSectionStats.BoundingBoxes)
+            % Scale daown the bounding boxes
+
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
@@ -218,14 +248,8 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Finish up: generate all relevant stats to return as an output argument
     out.BoundingBoxes = {stats.BoundingBox};
+    out.globalBoundingBox={}; % Filled in later 
 
-    % Determine the size of the overall box that would include all boxes
-    if length(out.BoundingBoxes)==1
-        out.globalBoundingBox = out.BoundingBoxes{1};
-    elseif length(out.BoundingBoxes)>1
-        tmp = cell2mat(out.BoundingBoxes');
-        out.globalBoundingBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
-    end
 
     % Store statistics in output structure
     inverseBW = ~BW; %Pixels outside of brain
@@ -234,6 +258,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     b = borderPixSize;
     inverseBW(b+1:end-b,b+1:end-b)=0;
     backgroundPix = im(find(inverseBW));
+    out.origPixelSize = origPixelSize;
+    out.rescaledPixelSize = rescaleTo;
+    out.rescaledRatio = origPixelSize/rescaleTo;
 
     out.meanBackground = mean(backgroundPix(:));
     out.medianBackground = median(backgroundPix(:));
@@ -260,6 +287,22 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
     out.totalBoundingBoxPixels = sum(out.BoundingBoxPixels);
     out.propImagedAreaCoveredByBoundingBox = out.totalBoundingBoxPixels / prod(size(im));
+
+
+    % Finally: return bounding boxes to original size
+    % If we re-scaled then we need to put the bounding box coords back into the original size
+    if rescaleTo>1
+        out.BoundingBoxes = ...
+            cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.BoundingBoxes,'UniformOutput',false);
+    end
+
+    % Determine the size of the overall box that would include all boxes
+    if length(out.BoundingBoxes)==1
+        out.globalBoundingBox = out.BoundingBoxes{1};
+    elseif length(out.BoundingBoxes)>1
+        tmp = cell2mat(out.BoundingBoxes');
+        out.globalBoundingBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
+    end
 
     % Optionally return coords of each box
     if nargout>0
