@@ -25,13 +25,21 @@ if nargin<1 || isempty(fname)
 end
 
 if ~exist(fname,'file')
-    fprintf('Can not find %d\n', fname);
+    fprintf('Can not find %s\n', fname);
     return
 end
+
+[~,~,ext] = fileparts(fname);
+if ~strcmp('.mat',ext)
+    fprintf('Expected a path to a .mat file\n')
+    return
+end
+
 
 if nargin<2
     imRange=[1,200];
 end
+
 
 load(fname)
 
