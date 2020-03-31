@@ -4,15 +4,18 @@ function varargout = viewStackResult(fname,imRange)
 % h=boundingBoxesFromLastSection.plotting.viewStackResult(fname,imRange)
 %
 % Purpose
-% Load data into volView to see results of an anlysis. Optionally
-% return handle to volView. 
+% Load data into volView based on a stack result file to see results of an anlysis. 
+% Optionally return handle to volView. 
 %
 % Inputs
 % fname - path to file. If empty or missing a GUI comes up.
 % imRange - optional ([1,200] by default) if supplied, this is the 
 %           displayed range in volView.
-% 
-
+%
+%
+% Example
+% >> boundingBoxesFromLastSection.plotting.viewStackResult('200330_1657/log_CC_125_1__125_2_previewStack.mat')
+%
 % Rob Campbell - March 2020
 
 if nargin<1 || isempty(fname)

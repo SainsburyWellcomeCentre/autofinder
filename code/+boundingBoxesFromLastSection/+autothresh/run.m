@@ -83,12 +83,15 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
     end % runThreshCheck
 
+
+
     function [tThreshSD,stats] = lowSNRalg(stats)
         initial_nROIs = stats.nRois;
         x=0.015;
 
         fprintf('\n\n\n ** SEARCHING LOW SNR with %d INITIAL ROIS\n', initial_nROIs)
 
+        % We loop through and break off if the number of ROIs drops
         finalX=nan;
         while x(end)<maxThresh
 
@@ -149,6 +152,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         tT=[stats.tThreshSD];
         [~,ind] = sort(tT);
         stats = stats(ind);
+
 
         % Before finally bailing out, see if we can improve the threshold. If many 
         % points have the same number of ROIs, choose the middle of this range instead. 

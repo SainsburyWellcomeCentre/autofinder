@@ -76,7 +76,10 @@ parfor ii=1:length(pStack_list)
     end
 
     try
+        % Run
         testLog = boundingBoxesFromLastSection.test.runOnStackStruct(pStack,true);
+
+        % Log useful info in first element
         testLog(1).stackFname = tFile; %Into the first element add the file name
 
         saveFname = fullfile(testDirThisSession,['log_',pStack_list(ii).name]);

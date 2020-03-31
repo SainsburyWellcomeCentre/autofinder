@@ -18,6 +18,8 @@ function varargout=runOnStackStruct(pStack,noPlot)
     % pStack - preview stack structure
     % noPlot - flase by default
     %
+    % Outputs
+    % stats structure
     %
     % Extras:
     % To over-ride the defaul threshold:
@@ -152,7 +154,4 @@ function varargout=runOnStackStruct(pStack,noPlot)
 
     if nargout>0
         varargout{1}=stats;
-    end
-    if nargout>1
-        varargout{2} = stats;
     end
