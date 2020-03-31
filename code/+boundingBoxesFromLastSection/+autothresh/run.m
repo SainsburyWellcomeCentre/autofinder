@@ -75,7 +75,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.nRois = length(OUT.BoundingBoxes);
             stats.boundingBoxPixels=OUT.totalBoundingBoxPixels;
             stats.meanBoundingBoxPixels=mean(OUT.BoundingBoxPixels);
-            stats.boundingBoxSqMM = sqrt(OUT.totalBoundingBoxPixels * voxSize * 1E-3);
+            stats.boundingBoxSqMM = OUT.totalBoundingBoxPixels * (voxSize * 1E-3)^2;
             stats.propImagedAreaUnderBoundingBox=OUT.propImagedAreaCoveredByBoundingBox;
             stats.notes='';
         end
