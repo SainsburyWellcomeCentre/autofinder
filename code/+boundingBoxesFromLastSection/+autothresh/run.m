@@ -142,7 +142,12 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
             % If we reach over 95% coverage then back up a notch and assign the threshold as this value
             if stats(end).propImagedAreaUnderBoundingBox>0.95
-                tThreshSD = x(end-1)*1.75;
+                if length(x)>1
+                    tThreshSD = x(end-1)*1.75;
+                else
+                    fprintf('\nODD -- High SNR -- breaking with length(x)==1\n');
+                    tThreshSD = x(end)*1.75;
+                end
                 break
             end
             x(end+1)= x(end) * 0.9;
@@ -150,7 +155,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
         %Now sort because 0 is at the start
         tT=[stats.tThreshSD];
-        [~,ind] = sort(tT);
+        [tT,ind] = sort(tT,'ascend');
         stats = stats(ind);
 
 
