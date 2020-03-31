@@ -240,14 +240,14 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.stdBackground = std(backgroundPix(:));
 
     out.nBackgroundPix = sum(~BW(:));
-    out.nBackgroundSqMM = sqrt(out.nBackgroundPix * pixelSize);
+    out.nBackgroundSqMM = out.nBackgroundPix * (pixelSize*1E-3)^2;
 
     foregroundPix = im(find(BW));
     out.meanForeground = mean(foregroundPix(:));
     out.medianForeground = median(foregroundPix(:));
     out.stdForeground = std(foregroundPix(:));
     out.nForegroundPix = sum(BW(:));
-    out.nForegroundSqMM = sqrt(out.nForegroundPix * pixelSize);
+    out.nForegroundSqMM = out.nForegroundPix * (pixelSize*1E-3)^2;
     out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
     out.notes=''; %Anything odd can go in here
     out.tThresh = tThresh;

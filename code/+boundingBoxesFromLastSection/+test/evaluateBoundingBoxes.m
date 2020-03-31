@@ -65,8 +65,10 @@ for ii=1:length(stats)
         BW(bb(2):bb(2)+bb(4), bb(1):bb(1)+bb(3))=0;
     end
 
-    % Any non-zero pixels indicate non-imaged sample areas
+    % Any non-zero pixels indicate non-imaged sample areas. These are the 
+    % number of non-imaged pixels in the original, non-rescaled, images.
     nonImagedPixels = sum(BW,[1,2]);
+
 
     if nonImagedPixels>0
         nPlanesWithMissingBrain = nPlanesWithMissingBrain + 1;
@@ -94,6 +96,7 @@ for ii=1:length(stats)
             caxis([0,300])
             drawnow
         end
+
         % How many pixels fell outside of the area?
         pixelsInATile = round(pStack.tileSizeInMicrons/pStack.voxelSizeInMicrons)^2;
         nonImagedTiles = nonImagedPixels/pixelsInATile;
@@ -114,7 +117,7 @@ for ii=1:length(stats)
             length(stats(ii).BoundingBoxes), ...
             nonImagedPixels, ...
             nonImagedTiles, ...
-            sqrt(nonImagedPixels * pStack.voxelSizeInMicrons * 1E-3) );
+            nonImagedPixels * (pStack.voxelSizeInMicrons*1E-3)^2);
 
         fprintf(msg)
         out = [out,msg];
@@ -128,13 +131,14 @@ for ii=1:length(stats)
     tmp=tmp-1;
     tmp(tmp<0)=0;
     totalPixOverlaps = sum(tmp(:));
-    totalExtraSqmm = sqrt(totalPixOverlaps * pStack.voxelSizeInMicrons * 1E-3);
+    totalExtraSqmm = totalPixOverlaps * (pStack.voxelSizeInMicrons * 1E-3)^2;
     if totalPixOverlaps>0
         msg = sprintf('Section %03d/%03d has %0.3f extra sq mm due to multiple-imaging of pixels\n', ...
             ii, size(pStack.binarized,3), totalExtraSqmm);
         fprintf(msg)
         out = [out,msg];
     end
+
 end %for ii=1:length(stats)
 
 
