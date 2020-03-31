@@ -113,6 +113,26 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             x(end+1)=x(end)*1.8;
         end
 
+
+        % If it's still a NaN then the number of ROIs never dropped. 
+        % Instead, lets's look for a drop in coverage
+        tT=[stats.tThreshSD];
+        [tT,ind] = sort(tT,'ascend');
+        stats = stats(ind);
+
+        if isnan(finalX)
+            sqm = round([stats.boundingBoxSqMM],1);
+            f=find(diff(sqm)<0);
+            if ~isempty(f) && f(1)>2
+                finalX = tT(f(1)-1);
+                stats(1).notes=sprintf('Low SNR: Chose finalX based on drop in bounding box area');
+            end
+        else
+            stats(1).notes=sprintf('Low SNR: Chose finalX based on break from full coverage');
+
+        end
+
+
         if ~isnan(finalX)
             tThreshSD = finalX;
         else
@@ -163,18 +183,43 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         % points have the same number of ROIs, choose the middle of this range instead. 
         nR = [stats.nRois];
         [theMode,numOccurances] = mode(nR);
+        fM=find(nR==theMode); %The indecies of the mode
 
 
         % If there are more than three of them and all are in a row, then we use the mean of these as the threshold
-        fprintf('mode nROIs: %d and occurs %d times\n', theMode, numOccurances)
-        
-        if numOccurances>3 && all(diff(find(nR==theMode))==1)
-            fprintf(' --->  High SNR: Choosing based on mode.\n')
+        fprintf('\n\nFinishing up high SNR.\nROIs mode: %d and occurs %d times\n', theMode, numOccurances)
+
+        if numOccurances>3 && all(diff(fM)==1)
+            fprintf(' --->  High SNR: Choosing based on uninterupted mode.\n')
             tThreshSD = mean(tT(find(nR==theMode)));
             stats(1).notes=sprintf('High SNR: mean of values at nROI=%d', theMode);
+
+        elseif numOccurances>8 && (length(fM)/length(fM(1):fM(end)))>0.8
+            fprintf(' --->  High SNR: Choosing based on mode with few interruptions: n=%d missing=%d\n', ...
+                length(fM), length(fM(1):fM(end))-length(fM) )
+
+            % Remove thresholds that are very low. Clip out low values, in other words.
+            tT(tT<=0.5)=[];
+
+            tThreshSD = mean(tT(find(nR==theMode)));
+            stats(1).notes=sprintf('High SNR: mean of %d values at nROI=%d. %d missing.', ...
+                numOccurances, theMode, length(fM(1):fM(end))-length(fM) );
+
+        elseif ~isempty(findLowestThreshStretch(nR,4))
+            ind = findLowestThreshStretch(nR,4);
+
+            % Remove thresholds that are very low. Clip out low values, in other words.
+            tT(tT<=0.5)=[];
+
+            tThreshSD = mean(tT(ind));
+            msg=sprintf('High SNR: Choosing using findLowestThreshStretch with thresh of 4: tThreshSD=%0.2f\n',tThreshSD);
+            fprintf(msg)
+            stats(1).notes=msg;
+
         else
             fprintf(' ---> High SNR: Choosing based on exit point value where ROI gets large.\n')
             stats(1).notes='High SNR: Value near full size ROI';
+
         end
 
         if isnan(tThreshSD)
@@ -184,3 +229,48 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     end %highSNRalg
 
 end % main function
+
+
+function ind = findLowestThreshStretch(nR,thresh)
+
+    % Find the stretch of mode(nR) that is lowest. 
+    % i.e. If we have a bunch of nR=4 values at lower thersholds, then a gap of a different value,
+    % then a bunch more pf nR=4 at high values, we want to choose the lower threshold values. So
+    % long as these number more than thresh. 
+
+    ind=[];
+    if length(nR) < thresh
+        return
+    end
+    modeR = mode(nR);
+
+    F=find(nR==modeR);
+
+    dF=diff(F);
+
+    while length(dF)>thresh
+
+        % Turn into a word and split it with strsplit
+        tStr = num2str( dF ~=1 );
+        tStr = strrep(tStr,' ','');
+        splt = strsplit(tStr,'1');
+
+        % If the the first lot was too short we chop it out and go back
+        if length(splt{1})+1 < thresh
+            f=find(dF ~= 1);
+
+            %Delete this short stretch
+            dF(1:f(1)) = [];
+            F(1:f(1)) = [];
+            continue
+        elseif length(splt{1})+1 >= thresh
+            % Otherwise this was the correct length
+            f=find(dF ~= 1);
+            ind=F(1:f(1));
+            return
+        end
+    end
+
+end
+
+
