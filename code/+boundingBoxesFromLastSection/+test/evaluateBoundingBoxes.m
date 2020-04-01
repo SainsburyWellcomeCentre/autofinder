@@ -1,7 +1,7 @@
 function out=evaluateBoundingBoxes(stats,pStack)
 % Evaluate how well the bounding boxes capture the brain
 %
-%   function out=evaluateBoundingBoxes(stats)
+%  function out=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats)
 %
 % Purpose
 % Report accuracy of brain finding. Shows images of failed sections
@@ -76,6 +76,16 @@ msg=sprintf('Median area of ROIs filled with tissue: %0.2f (run at %d micron bor
     medCoverage, stats(1).settings.mainBin.expansionSize);
 fprintf(msg)
 out = [out,msg];
+
+%Report the total imaged area, summing over all ROIs
+totalImagedArea=sum([stats.totalBoundingBoxPixels]);
+totalImagedArea = totalImagedArea * (stats(1).rescaledPixelSize * 1E-3)^2;
+msg=sprintf('Total imaged sq mm in this acquisition: %0.2f\n', ...
+    totalImagedArea);
+fprintf(msg)
+out = [out,msg];
+
+
 
 
 BW = zeros(size(pStack.binarized,[1,2])); 

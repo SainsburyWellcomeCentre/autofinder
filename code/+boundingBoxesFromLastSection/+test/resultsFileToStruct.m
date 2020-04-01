@@ -63,10 +63,17 @@ while ~isnumeric(tline)
     if ~isempty(strfind(tline,'GOOD '))
         resStruct.(tKey).allAcquired=true;
     end
+
     if ~isempty(strfind(tline,'Median area of ROIs filled'))
         tok = regexp(tline,'tissue: (.*) \(run at','tokens');
         tok = tok{1};
         resStruct.(tKey).medianROIareaWithTissue = str2num(tok{1});
+    end
+
+    if ~isempty(strfind(tline,'Total imaged sq mm in this acquisition:'))
+        tok = regexp(tline,'acquisition: (.*)','tokens');
+        tok = tok{1};
+        resStruct.(tKey).totalImagedSqMM = str2num(tok{1});
     end
 
     if ~isempty(strfind(tline,'WARNING -- There are ')) 
