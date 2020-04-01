@@ -141,7 +141,7 @@ The main problems were that `mergeOverlapping` was deleteing ROIs and that the f
 
 * v4 Corrects the [issue with merge leading to imaging the same brain twice](https://github.com/raacampbell/autofinder/issues/14). 
 I then ran the algorithm on all samples and looked at the results. We have the following failure modes that need addressing:
-  - Ten acquisitions show mild to moderate failure to image the very posterior part of cortex when it appears. This is very severe in an additional three more: HMV_NN01, AL_029 and AL023.
+  - Ten acquisitions show mild to moderate failure to image the very posterior part of cortex when it appears. This is very severe in an additional three more: ~~HMV_NN01~~, ~~AL_029~~ and ~~AL023~~.
   - ~~One acquisition shows persistent issues finding all the brain: HMV_OIs04_OIs05. This is potentially serious since we don't know this happens.~~ Fixed 
   - One acquisition (AF_PCA_19_20_22_25) has a brain where we start imaging very caudal indeed. The spinal cord appears before cerebellum and it takes a few sections until cerebellum is imaged. Minor data loss.
   - ~~Two acquisitions show a thresholding issue where the brain is found in section 1 but subsequent ones are empty: AF_4C2s and AF_C2_2FPPVs. This would not lead to data loss, only annoyance.~~Fixed
