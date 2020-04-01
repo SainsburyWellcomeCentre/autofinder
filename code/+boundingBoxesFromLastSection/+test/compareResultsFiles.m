@@ -39,6 +39,11 @@ extraB_sum = zeros(length(f),1);
 extraA_max = zeros(length(f),1);
 extraB_max = zeros(length(f),1);
 
+medROIareaFilledA = zeros(length(f),1);
+medROIareaFilledB = zeros(length(f),1);
+
+totalROIareA = zeros(length(f),1);
+totalROIareB = zeros(length(f),1);
 
 for ii=1:length(f)
     if ~isfield(resStructB,f{ii});
@@ -70,13 +75,19 @@ for ii=1:length(f)
 
     extraA_max(ii) = max(tA.sqmmExtra);
     extraB_max(ii) = max(tB.sqmmExtra);
+
+    medROIareaFilledA(ii) = tA.medianROIareaWithTissue;
+    medROIareaFilledB(ii) = tB.medianROIareaWithTissue;
+
+    totalROIareA(ii) = tA.totalImagedSqMM;
+    totalROIareB(ii) = tB.totalImagedSqMM;
 end
 
 
 
 clf
 
-subplot(2,2,1)
+subplot(3,2,1)
 plot(sqmmB_sum - sqmmA_sum, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -86,7 +97,7 @@ xlabel('Acquisition #')
 ylabel('B minus A square mm missed')
 title('Total square mm missed (lower better)')
 
-subplot(2,2,2)
+subplot(3,2,2)
 plot(sqmmB_max - sqmmA_max, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -96,7 +107,7 @@ xlabel('Acquisition #')
 ylabel('B minus A square mm missed')
 title('Worst section square mm missed (lower better)')
 
-subplot(2,2,3)
+subplot(3,2,3)
 plot(extraB_sum - extraA_sum, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -106,7 +117,7 @@ xlabel('Acquisition #')
 ylabel('B minus A square mm extra')
 title('Total square mm extra (lower better)')
 
-subplot(2,2,4)
+subplot(3,2,4)
 plot(extraB_max - extraA_max, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -115,4 +126,29 @@ hold off
 xlabel('Acquisition #')
 ylabel('B minus A square mm extra')
 title('Largest square mm increase (lower better)')
+
+subplot(3,2,5)
+plot(medROIareaFilledB - medROIareaFilledA, '.r-')
+hold on 
+plot(xlim,[0,0],'k:')
+grid on
+hold off
+xlabel('Acquisition #')
+ylabel('B minus A ROI pixels that contain tissue')
+title('Median square mm increase (higher better)')
+
+
+
+subplot(3,2,6)
+plot(totalROIareB - totalROIareA, '.r-')
+hold on 
+plot(xlim,[0,0],'k:')
+grid on
+hold off
+xlabel('Acquisition #')
+ylabel('B minus A total ROI sq mm')
+title('Total ROI sq mm')
+
+
+
 

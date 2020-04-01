@@ -32,7 +32,7 @@ sqmm_max = zeros(length(f),1);
 extra_sum = zeros(length(f),1);
 extra_max = zeros(length(f),1);
 medROIareaFilled = zeros(length(f),1);
-
+totalImagedSqMM = zeros(length(f),1);
 for ii=1:length(f)
 
     tF = resStruct.(f{ii});
@@ -45,6 +45,7 @@ for ii=1:length(f)
     extra_sum(ii) = sum(tF.sqmmExtra);
     extra_max(ii) = max(tF.sqmmExtra);
     medROIareaFilled(ii) = tF.medianROIareaWithTissue;
+    totalImagedSqMM(ii) =  tF.totalImagedSqMM;
 end
 
 
@@ -110,7 +111,14 @@ xlabel('Missed sq mm')
 ylabel('# acquisitions')
 
 
+
 subplot(4,2,7)
+plot(totalImagedSqMM,'.r-')
+xlabel('Acquisition #')
+ylabel('Total imaged sq mm')
+grid on
+
+subplot(4,2,8)
 plot(medROIareaFilled,'.r-')
 ylim([0,1])
 xlabel('Acquisition #')
