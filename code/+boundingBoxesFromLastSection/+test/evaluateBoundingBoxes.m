@@ -46,6 +46,7 @@ out = '';
 
 
 
+
 if nPlanesWithMissingBrain==0
     msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
         length(stats));
@@ -68,6 +69,13 @@ if pArea>0
     fprintf(msg)
     out = [out,msg];
 end
+
+%Report the average proportion of pixels within a boundingbox that have tissue
+medCoverage=median(([stats.nForegroundPix]./[stats.totalBoundingBoxPixels]));
+msg=sprintf('Median area of ROIs filled with tissue: %0.2f (run at %d micron border size).\n', ...
+    medCoverage, stats(1).settings.mainBin.expansionSize);
+fprintf(msg)
+out = [out,msg];
 
 
 BW = zeros(size(pStack.binarized,[1,2])); 

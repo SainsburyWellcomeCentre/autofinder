@@ -31,6 +31,7 @@ sqmm_sum = zeros(length(f),1);
 sqmm_max = zeros(length(f),1);
 extra_sum = zeros(length(f),1);
 extra_max = zeros(length(f),1);
+medROIareaFilled = zeros(length(f),1);
 
 for ii=1:length(f)
 
@@ -43,14 +44,14 @@ for ii=1:length(f)
     sqmm_max(ii) = max(tF.sqmmMissed);
     extra_sum(ii) = sum(tF.sqmmExtra);
     extra_max(ii) = max(tF.sqmmExtra);
-
+    medROIareaFilled(ii) = tF.medianROIareaWithTissue;
 end
 
 
 
 clf
 
-subplot(3,2,1)
+subplot(4,2,1)
 plot(sqmm_sum, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -60,7 +61,7 @@ xlabel('Acquisition #')
 ylabel('Square mm missed')
 title('Total square mm missed (lower better)')
 
-subplot(3,2,2)
+subplot(4,2,2)
 plot(sqmm_max, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -70,7 +71,7 @@ xlabel('Acquisition #')
 ylabel('Aquare mm missed')
 title('Worst section square mm missed (lower better)')
 
-subplot(3,2,3)
+subplot(4,2,3)
 plot(extra_sum, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -80,7 +81,7 @@ xlabel('Acquisition #')
 ylabel('Square mm extra')
 title('Total square mm extra (lower better)')
 
-subplot(3,2,4)
+subplot(4,2,4)
 plot(extra_max, '.r-')
 hold on 
 plot(xlim,[0,0],'k:')
@@ -91,7 +92,7 @@ ylabel('Aquare mm extra')
 title('Section with most extra square mm (lower better)')
 
 
-subplot(3,2,5)
+subplot(4,2,5)
 plot(extra_sum,sqmm_sum,'.r')
 hold on
 xoffset = diff(xlim)*0.0075;
@@ -103,7 +104,15 @@ hold off
 xlabel('Extra sq mm')
 ylabel('Missed sq mm')
 
-subplot(3,2,6)
+subplot(4,2,6)
 hist(sqmm_sum,25)
 xlabel('Missed sq mm')
 ylabel('# acquisitions')
+
+
+subplot(4,2,7)
+plot(medROIareaFilled,'.r-')
+ylim([0,1])
+xlabel('Acquisition #')
+ylabel('Prop ROI area filled')
+grid on

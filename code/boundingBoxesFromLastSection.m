@@ -142,6 +142,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
         % Run within each ROI then afterwards consolidate results
         nT=1;
+
         for ii = 1:length(lastSectionStats.BoundingBoxes)
             % Scale daown the bounding boxes
 
@@ -274,6 +275,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.meanForeground = mean(foregroundPix(:));
     out.medianForeground = median(foregroundPix(:));
     out.stdForeground = std(foregroundPix(:));
+
     out.nForegroundPix = sum(BW(:));
     out.nForegroundSqMM = out.nForegroundPix * (pixelSize*1E-3)^2;
     out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
@@ -282,11 +284,14 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.imSize = size(im);
 
     % Calculate the number of pixels in the bounding boxes
-
     for ii=1:length(out.BoundingBoxes)
         out.BoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4));
     end
     out.totalBoundingBoxPixels = sum(out.BoundingBoxPixels);
+
+    % What proportion of the whole FOV is covered by the bounding boxes?
+    % This number is only available in test datasets. In real acquisitions with the 
+    % auto-finder we won't have this number. 
     out.propImagedAreaCoveredByBoundingBox = out.totalBoundingBoxPixels / prod(size(im));
 
 
