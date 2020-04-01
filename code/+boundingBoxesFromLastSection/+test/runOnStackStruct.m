@@ -91,7 +91,6 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
     stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
     drawnow
 
-
     if pauseBetweenSections
         set(gcf,'Name',sprintf('%d/%d',1,size(pStack.imStack,3)))
         fprintf(' -> Press return\n')

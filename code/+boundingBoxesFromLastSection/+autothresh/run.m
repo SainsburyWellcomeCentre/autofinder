@@ -187,7 +187,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
 
         % If there are more than three of them and all are in a row, then we use the mean of these as the threshold
-        fprintf('\n\nFinishing up high SNR.\nROIs mode: %d and occurs %d times\n', theMode, numOccurances)
+        fprintf('\n\nFinishing up high SNR.\nNumber of ROIs have mode value of %d which occurs %d times\n', theMode, numOccurances)
 
         if numOccurances>3 && all(diff(fM)==1)
             fprintf(' --->  High SNR: Choosing based on uninterupted mode.\n')
@@ -199,9 +199,10 @@ function [tThreshSD,stats] = run(pStack, runSeries)
                 length(fM), length(fM(1):fM(end))-length(fM) )
 
             % Remove thresholds that are very low. Clip out low values, in other words.
+            tT = tT(find(nR==theMode));
             tT(tT<=0.5)=[];
+            tThreshSD = mean(tT);
 
-            tThreshSD = mean(tT(find(nR==theMode)));
             stats(1).notes=sprintf('High SNR: mean of %d values at nROI=%d. %d missing.', ...
                 numOccurances, theMode, length(fM(1):fM(end))-length(fM) );
 
@@ -209,9 +210,10 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             ind = findLowestThreshStretch(nR,4);
 
             % Remove thresholds that are very low. Clip out low values, in other words.
+            tT = tT(ind);
             tT(tT<=0.5)=[];
+            tThreshSD = mean(tT);
 
-            tThreshSD = mean(tT(ind));
             msg=sprintf('High SNR: Choosing using findLowestThreshStretch with thresh of 4: tThreshSD=%0.2f\n',tThreshSD);
             fprintf(msg)
             stats(1).notes=msg;
@@ -238,6 +240,8 @@ function ind = findLowestThreshStretch(nR,thresh)
     % then a bunch more pf nR=4 at high values, we want to choose the lower threshold values. So
     % long as these number more than thresh. 
 
+    verbose=false;
+
     ind=[];
     if length(nR) < thresh
         return
@@ -248,28 +252,53 @@ function ind = findLowestThreshStretch(nR,thresh)
 
     dF=diff(F);
 
+    passNum=1;
+
+    if verbose
+        fprintf('Running findLowestThreshStretch with a thresh of %d\n\n', thresh)
+    end
     while length(dF)>thresh
 
         % Turn into a word and split it with strsplit
         tStr = num2str( dF ~=1 );
         tStr = strrep(tStr,' ','');
+        if verbose
+            fprintf('findLowestThreshStretch pass number # %d\n',passNum)
+            fprintf('Word before splitting: %s\n',tStr)
+        end
+
         splt = strsplit(tStr,'1');
 
-        % If the the first lot was too short we chop it out and go back
+
         if length(splt{1})+1 < thresh
+            % If the the first sequence was too short we chop it out and go back
             f=find(dF ~= 1);
 
             %Delete this short stretch
+            if verbose
+                fprintf('Chopping first sequene of length %d\n\n',length(splt{1})+1)
+            end
             dF(1:f(1)) = [];
             F(1:f(1)) = [];
+            passNum = passNum + 1;
             continue
+
         elseif length(splt{1})+1 >= thresh
             % Otherwise this was the correct length
             f=find(dF ~= 1);
-            ind=F(1:f(1));
+            if isempty(f)
+                ind=F(1:end);
+            else
+                ind=F(1:f(1));
+            end
+                
             return
         end
-    end
+        if verbose
+            fprintf('\n\n')
+        end
+        passNum = passNum + 1;
+    end %while
 
 end
 
