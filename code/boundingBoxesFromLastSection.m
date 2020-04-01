@@ -252,6 +252,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % Store statistics in output structure
+    BW = binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
     inverseBW = ~BW; %Pixels outside of brain
 
     % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
