@@ -124,7 +124,10 @@ It also: removes very small boxes, provides a hackish fix for the missing corner
 * Finally, bounding boxes are expanded to the nearest whole tile and the merging is re-done. 
 
 
-
+## Making summaries
+`boundingBoxesFromLastSection.test.evaluateBoundingBoxes` works on a stats structure saved by 
+`boundingBoxesFromLastSection.test.runOnAllInDir`. We can do the whole test directory with
+`boundingBoxesFromLastSection.test.evaluateDir`. 
 
 ## Changelog
 
