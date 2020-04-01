@@ -147,7 +147,7 @@ I then ran the algorithm on all samples and looked at the results. We have the f
   - ~~Two acquisitions show a thresholding issue where the brain is found in section 1 but subsequent ones are empty: AF_4C2s and AF_C2_2FPPVs. This would not lead to data loss, only annoyance.~~Fixed
   - ~~Two acquisitions suddenly fail to find the tissue mid way through acqisition: C2vGvLG1 and CC_125_1__125_2. This would not lead to data loss, only annoyance.~~Fixed
   - ~~Two acquisitions of 4 brains each lose one brain because it wasn't visible at the start of the acquisition. Not serious because we can solve this via user intervention before acquisition starts.~~ Phase 2 
-  - ~~Two acquisitions fail due to sudden loss of the tissue for whatever reason: sample_972991_972992, FERRET. Not a problem with the algorithm. The microscope would just stop and send a Slack message. No data loss due to algorithm.~~Phase 2 
+  - ~~Two acquisitions fail due to sudden loss of the tissue for whatever reason: sample_972991_972992, FERRET~~. Not a problem with the algorithm. The microscope would just stop and send a Slack message. No data loss due to algorithm. Phase 2 
   - Other thresholding failures include: ~~LUNG_MACRO (bright tissue at edge?)~~ Basically fixed., ~~OI06_OI07 (very little brain found and it just gives up -- faint?)~~ Fixed.
 
 * v5
