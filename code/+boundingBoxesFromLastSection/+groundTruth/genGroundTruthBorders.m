@@ -21,7 +21,7 @@ function pStack = genGroundTruthBorders(pStack,threshSTD)
 
 
 
-if nargin<2
+if nargin<2 || isempty(threshSTD)
     threshSTD=4;
 end
 
