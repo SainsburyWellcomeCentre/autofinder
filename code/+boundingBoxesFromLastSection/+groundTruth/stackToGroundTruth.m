@@ -1,7 +1,7 @@
 function pStack = stackToGroundTruth(imStack,pathToRecipe,nSamples)
 % Wrap an image stack into a "ground truth" structure (pStack) for testing
 %
-% boundingBoxesFromLastSection.test.stackToGroundTruth(imStack,pathToRecipe,nSamples)
+% boundingBoxesFromLastSection.groundTruth.stackToGroundTruth(imStack,pathToRecipe,nSamples)
 %
 % Purpose
 % The "groundTruth" structure will be used for testing the behavior of the brain-finding
