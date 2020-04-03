@@ -144,14 +144,14 @@ The main problems were that `mergeOverlapping` was deleteing ROIs and that the f
 
 * v4 Corrects the [issue with merge leading to imaging the same brain twice](https://github.com/raacampbell/autofinder/issues/14). 
 I then ran the algorithm on all samples and looked at the results. We have the following failure modes that need addressing:
-  - Ten acquisitions show mild to moderate failure to image the very posterior part of cortex when it appears. This is very severe in an additional three more: HMV_NN01, AL_029 and AL023.
-  - One acquisition shows persistent issues finding all the brain: HMV_OIs04_OIs05. This is potentially serious since we don't know this happens. 
+  - Ten acquisitions show mild to moderate failure to image the very posterior part of cortex when it appears. This is very severe in an additional three more: ~~HMV_NN01~~, ~~AL_029~~ and ~~AL023~~.
+  - ~~One acquisition shows persistent issues finding all the brain: HMV_OIs04_OIs05. This is potentially serious since we don't know this happens.~~ Fixed 
   - One acquisition (AF_PCA_19_20_22_25) has a brain where we start imaging very caudal indeed. The spinal cord appears before cerebellum and it takes a few sections until cerebellum is imaged. Minor data loss.
-  - Two acquisitions show a thresholding issue where the brain is found in section 1 but subsequent ones are empty: AF_4C2s and AF_C2_2FPPVs. This would not lead to data loss, only annoyance. 
-  - Two acquisitions suddenly fail to find the tissue mid way through acqisition: C2vGvLG1 and CC_125_1__125_2. This would not lead to data loss, only annoyance. 
-  - Two acquisitions of 4 brains each lose one brain because it wasn't visible at the start of the acquisition. Not serious because we can solve this via user intervention before acquisition starts. 
-  - Two acquisitions fail due to sudden loss of the tissue for whatever reason: sample_972991_972992, FERRET. Not a problem with the algorithm. The microscope would just stop and send a Slack message. No data loss due to algorithm. 
-  - Other thresholding failures include: LUNG_MACRO (bright tissue at edge?), OI06_OI07 (very little brain found and it just gives up -- faint?)
+  - ~~Two acquisitions show a thresholding issue where the brain is found in section 1 but subsequent ones are empty:~~ ~~AF_4C2s~~ and ~~AF_C2_2FPPVs~~. This would not lead to data loss, only annoyance. Fixed
+  - ~~Two acquisitions suddenly fail to find the tissue mid way through acqisition~~: ~~C2vGvLG1~~ and ~~CC_125_1__125_2~~. This would not lead to data loss, only annoyance. Fixed
+  - ~~Two acquisitions of 4 brains each lose one brain because it wasn't visible at the start of the acquisition. Not serious because we can solve this via user intervention before acquisition starts.~~ Phase 2 
+  - ~~Two acquisitions fail due to sudden loss of the tissue for whatever reason: sample_972991_972992, FERRET~~. Not a problem with the algorithm. The microscope would just stop and send a Slack message. No data loss due to algorithm. Phase 2 
+  - Other thresholding failures include: ~~LUNG_MACRO (bright tissue at edge?)~~ Basically fixed., ~~OI06_OI07 (very little brain found and it just gives up -- faint?)~~ Fixed.
 
 * v5
   - Increasing the border from 100 to 300 microns helps a lot with the posterior cortex failure. Detailed examination pending, but it's positive.
