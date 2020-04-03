@@ -63,6 +63,7 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
              'doPlot', ~noPlot};
 
     if isfield(pStack,'tThreshSD')
+        % Start with a threshold hard-coded into the pStack file
         tThreshSD = pStack.tThreshSD;
         argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
         fprintf('%s is starting with a custom SD threshold of %0.1f\n', ...
@@ -71,12 +72,15 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
             fprintf('**** YOU ASKED FOR AUTO-THRESH BUT pStack has a tThreshSD field. USING THAT INSTEAD!\n\n')
             pause(0.75)
         end
+
     elseif doAutoThreshold
-        % Optionally figure out the threshold automatically
+        % Determine the threshold automatically
         fprintf('%s is running auto-thresh\n', mfilename)
         [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack,false);
         argIn = [argIn,{'tThreshSD',tThreshSD}];
+
     else
+        % Use the default value in the settings file
         tThreshSD=settings.main.defaultThreshSD;
         fprintf('%s is starting with a default SD threshold of %0.1f\n', ...
             mfilename, tThreshSD)
@@ -86,7 +90,8 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
 
 
 
-
+    % In the first section the user should have acquired a preview that captures the whole sample
+    % and has a generous border area. We therefore extract the ROIs from the whole of the first section.
     fprintf('\nDoing section %d/%d\n', 1, size(pStack.imStack,3))
     fprintf('Finding bounding box in first section\n')
     stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
@@ -106,7 +111,8 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
 
     rollingThreshold=false; %If true we base the threshold on the last few slices
 
-    % Enter main for loop in which we process each section one at a time.
+
+    % Enter main for loop in which we process each section one at a time using the ROIs from the previous section
     for ii=2:size(pStack.imStack,3)
         fprintf('\nDoing section %d/%d\n', ii, size(pStack.imStack,3))
         % Use a rolling threshold based on the last nImages to drive brain/background
@@ -120,7 +126,7 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
             thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*tThreshSD);
         end
 
-        % boundingBoxesFromLastSection is fed the ROI structure from the previous section. 
+        % boundingBoxesFromLastSection is fed the ROI structure from the **previous section**
         % It runs the sample-detection code within these ROIs only and returns the results.
         [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
             'pixelSize', pStack.voxelSizeInMicrons,...
