@@ -1,6 +1,9 @@
 function evaluateDir(runDir)
 % Evaluate all results in runDir
 %
+% function boundingBoxesFromLastSection.test.evaluateDir(runDir)
+%
+%
 % Purpose
 % Makes a text file describing performance of the brain finder for each
 % sample. Call from directory contining the pStack files

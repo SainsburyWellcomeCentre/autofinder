@@ -40,6 +40,7 @@ for ii=1:length(inds)
 
     %Find smallest border and remove it
     tB = pStack.borders{1}{tInd};
+    fprintf('Removing one border from a list of %d borders\n', length(tB));
     L = cellfun(@length, tB);
     [~,minInd] = min(L);
     tB(minInd)=[];
