@@ -88,10 +88,15 @@ out = [out,msg];
 
 
 
-BW = zeros(size(pStack.binarized,[1,2])); 
 for ii=1:length(stats)
-    %Empty image. We will fill with ones all regions where brain was found.
-    tB = pStack.borders{1}{ii};
+
+    %Empty image. We will fill with ones all regions where the ground-truth brain was found.
+    tB = pStack.borders{1}{ii}; % Ground truth brain borders
+
+    % Create an empty binary image
+    BW = zeros(size(pStack.binarized,[1,2])); 
+
+    % Draw the borders over it
     for jj = 1:length(tB)
         if isempty(tB{jj})
             continue
@@ -99,11 +104,23 @@ for ii=1:length(stats)
         f= sub2ind(size(BW),tB{jj}(:,1),tB{jj}(:,2));
         BW(f)=1;
     end
+
+    %Fill it in
     BW = imfill(BW);
 
-    for jj=1:length(stats(ii).BoundingBoxes)
+
+    % Now we get the bounding boxes and set all pixels within those to zero.
+    % So if all the brain was found the BW image will be full of zeros.
+    % HOWEVER: we get the bounding boxes from the preceeding section for all but
+    % the first section
+    if ii>1
+        bBoxes = stats(ii-1).BoundingBoxes;
+    else
+        bBoxes = stats(ii).BoundingBoxes;
+    end
+    for jj=1:length(bBoxes)
         % All pixels that are within the bounding box should be zero
-        bb=stats(ii).BoundingBoxes{jj};
+        bb=bBoxes{jj};
 
         bb(bb<=0)=1; %In case boxes have origins outside of the image
         BW(bb(2):bb(2)+bb(4), bb(1):bb(1)+bb(3))=0;
@@ -130,8 +147,8 @@ for ii=1:length(stats)
             hold off
 
             % Overlay bounding boxes
-            for jj=1:length(stats(ii).BoundingBoxes)
-                bb=stats(ii).BoundingBoxes{jj};
+            for jj=1:length(bBoxes)
+                bb=bBoxes{jj};
                 boundingBoxesFromLastSection.plotting.overlayBoundingBox(bb);
             end
 
@@ -167,10 +184,9 @@ for ii=1:length(stats)
         out = [out,msg];
 
     end
-    BW(:)=0; %Wipe the binary image
 
     % Calculate how many pixels were imaged more than once. Weight each by the number of extra times it was imaged.
-    tmp=boundingBoxesFromLastSection.genOverlapStack(stats(ii).BoundingBoxes,size(pStack.imStack,1:2));
+    tmp=boundingBoxesFromLastSection.genOverlapStack(bBoxes,size(pStack.imStack,1:2));
     tmp=sum(tmp,3);
     tmp=tmp-1;
     tmp(tmp<0)=0;
