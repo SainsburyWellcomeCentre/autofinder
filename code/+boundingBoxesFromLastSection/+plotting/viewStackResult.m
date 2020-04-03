@@ -1,4 +1,4 @@
-function varargout = viewStackResult(fname,imRange)
+function varargout = viewStackResult(fname,imRange,noCheating)
 % Overlay bounding box on current axes
 %
 % h=boundingBoxesFromLastSection.plotting.viewStackResult(fname,imRange)
@@ -11,6 +11,9 @@ function varargout = viewStackResult(fname,imRange)
 % fname - path to file. If empty or missing a GUI comes up.
 % imRange - optional ([1,200] by default) if supplied, this is the 
 %           displayed range in volView.
+% noCheating - true by default. If true, we overlay the bounding boxes as
+%              they would be were we running a live acquisition. i.e. we 
+%              overlay the boxes from section n over section n+1
 %
 %
 % Example
@@ -36,8 +39,12 @@ if ~strcmp('.mat',ext)
 end
 
 
-if nargin<2
+if nargin<2 || isempty(imRange)
     imRange=[1,200];
+end
+
+if nargin<3
+    noCheating=true;
 end
 
 
@@ -46,8 +53,19 @@ load(fname)
 fprintf('Loading %s\n',testLog(1).stackFname)
 load(testLog(1).stackFname)
 
+% Get the bounding boxes 
 b={{testLog.BoundingBoxes},{},{}};;
 
+
+if noCheating
+    % Apply bounding boxes as they would be were we running this for real:
+
+    % Duplicate the first one, as we'll apply it twice: to section 1 and section 2. 
+    b{1}=[b{1}(1),b{1}(1:end)];
+
+    % Delete the final one: we never apply that
+    b{1}(end)=[];
+end
 
 H=volView(pStack.imStack,imRange,b);
 
