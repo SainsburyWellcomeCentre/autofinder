@@ -46,14 +46,6 @@ out = '';
 
 
 
-
-if nPlanesWithMissingBrain==0
-    msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
-        length(stats));
-    fprintf(msg)
-    out = [out,msg];
-end
-
 if length(stats)~=size(pStack.binarized,3)
     msg=sprintf('WARNING -- There are %d sections in the image stack but only %d were processed.\n', ...
         size(pStack.binarized,3), length(stats));
@@ -185,6 +177,7 @@ for ii=1:length(stats)
 
     end
 
+
     % Calculate how many pixels were imaged more than once. Weight each by the number of extra times it was imaged.
     tmp=boundingBoxesFromLastSection.genOverlapStack(bBoxes,size(pStack.imStack,1:2));
     tmp=sum(tmp,3);
@@ -201,3 +194,9 @@ for ii=1:length(stats)
 
 end %for ii=1:length(stats)
 
+if nPlanesWithMissingBrain==0
+    msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
+        length(stats));
+    fprintf(msg)
+    out = [out,msg];
+end
