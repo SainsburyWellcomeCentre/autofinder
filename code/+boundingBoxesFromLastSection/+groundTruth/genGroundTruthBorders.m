@@ -22,7 +22,7 @@ function pStack = genGroundTruthBorders(pStack,threshSTD)
 
 
 if nargin<2 || isempty(threshSTD)
-    threshSTD=4;
+    threshSTD=7;
 end
 
 fprintf('Generating ground truth\n')
