@@ -42,7 +42,7 @@ function pStack = resizePStack(pStack,micsPixTarget)
             %Constrain ROIs to the FOV
 
             % Any zeros should be 1
-            f=find(thisROI<0);
+            f=find(thisROI<1);
             thisROI(f)=1;
 
             % Now constrain the max values
@@ -52,6 +52,7 @@ function pStack = resizePStack(pStack,micsPixTarget)
             f=find(thisROI(:,2)>newSize(2));
             thisROI(f,2)=newSize(2);
 
+            % Replace the ROI
             thisSection{jj} = thisROI;
         end
         pStack.borders{1}{ii} = thisSection;
