@@ -70,6 +70,7 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
             mfilename, tThreshSD)
         if doAutoThreshold
             fprintf('**** YOU ASKED FOR AUTO-THRESH BUT pStack has a tThreshSD field. USING THAT INSTEAD!\n\n')
+            doAutoThreshold=false;
             pause(0.75)
         end
 
