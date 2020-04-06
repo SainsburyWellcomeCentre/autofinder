@@ -93,7 +93,8 @@ for ii=1:length(stats)
         if isempty(tB{jj})
             continue
         end
-        f= sub2ind(size(BW),tB{jj}(:,1),tB{jj}(:,2));
+
+        f = sub2ind(size(BW),tB{jj}(:,1),tB{jj}(:,2));
         BW(f)=1;
     end
 

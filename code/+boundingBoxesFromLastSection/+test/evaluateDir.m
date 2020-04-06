@@ -52,10 +52,16 @@ parfor ii=1:length(resultFiles)
     testLog = testLog_loader(fullfile(runDir,tFile));
 
     %Evaluate and write to file
-    tmp=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(testLog);
-    msg = [msg,tmp];
-
-    writeData(evaltxtFname,msg,lockFname)
+       try
+            tmp=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(testLog);
+            msg = [msg,tmp];
+            writeData(evaltxtFname,msg,lockFname)
+        catch ME
+            msg = sprintf('\n\n FAILED TO EVALUATE FILE %s with error %s\n\n', ...
+                tFile, ME.message);
+            fprintf(msg)
+            writeData(evaltxtFname,msg,lockFname)
+        end
 
 end
 
