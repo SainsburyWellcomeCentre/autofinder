@@ -112,3 +112,17 @@ while ~isnumeric(tline)
 end
 
 fclose(fidR);
+
+%Sort keys alphabetically because we make the results file with a parfor loop
+%meaning that the acquisitions are in a random order
+tFields = sort(fields(resStruct));
+
+tmp=struct;
+for ii=1:length(tFields)
+    tmp.(tFields{ii}) = resStruct.(tFields{ii});
+
+end
+
+resStruct = tmp;
+
+
