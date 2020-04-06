@@ -1,6 +1,9 @@
 function pStack = genGroundTruthBorders(pStack,threshSTD)
 % Determines the ground truth pixels which contain brain for each slice 
 %
+% function pStack = boundingBoxesFromLastSection.groundTruth.genGroundTruthBorders(pStack,threshSTD)
+%
+%
 % Purpose
 % This function produces ground truth data indicating where the brain is. 
 % This can then be used to assess how well the auto brain finder is going.
@@ -18,7 +21,9 @@ function pStack = genGroundTruthBorders(pStack,threshSTD)
 %
 % Outputs
 % pStack - Same as input structure but now with added results.
-
+%
+% Also see:
+% boundingBoxesFromLastSection.groundTruth.genBordersForAllInDir
 
 
 if nargin<2 || isempty(threshSTD)
