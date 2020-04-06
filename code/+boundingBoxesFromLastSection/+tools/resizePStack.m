@@ -14,6 +14,11 @@ function pStack = resizePStack(pStack,micsPixTarget)
     % Figure out the new image size
     rescaleBy = pStack.voxelSizeInMicrons / micsPixTarget;
 
+    if rescaleBy >= 1
+        fprintf('Not rescaling. Rescale factor is >=1\n')
+        return
+    end
+
     newSize = round([size(pStack.imStack,1:2)*rescaleBy, ...
         size(pStack.imStack,3)]);
 
@@ -24,23 +29,33 @@ function pStack = resizePStack(pStack,micsPixTarget)
     fprintf('done\n');
 
     % Rescale the borders
-
     for ii=1:length(pStack.borders{1})
         thisSection = pStack.borders{1}{ii};
+
+        % Just in case there are borders with no points, we remove them
+        emptyInd=find(cellfun(@(x) isempty(x),thisSection));
+        thisSection(emptyInd)=[];
+
         for jj=1:length(thisSection)
             thisROI = round(thisSection{jj} * rescaleBy);
 
             %Constrain ROIs to the FOV
+
+            % Any zeros should be 1
             f=find(thisROI<0);
             thisROI(f)=1;
 
+            % Now constrain the max values
             f=find(thisROI(:,1)>newSize(1));
-            thisROI(f)=newSize(1);
+            thisROI(f,1)=newSize(1);
 
             f=find(thisROI(:,2)>newSize(2));
-            thisROI(f)=newSize(2);
+            thisROI(f,2)=newSize(2);
 
             thisSection{jj} = thisROI;
         end
         pStack.borders{1}{ii} = thisSection;
     end
+
+    % Replace the pixel size
+    pStack.voxelSizeInMicrons = micsPixTarget;

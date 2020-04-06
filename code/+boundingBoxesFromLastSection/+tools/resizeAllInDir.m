@@ -39,12 +39,16 @@ function resizeAllInDir(runDir,targetMicsPix)
     parfor ii=1:length(pStack_list)
         tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
 
-        fprintf('Loading %s\n',tFile)
-        pStack = pstack_loader(tFile);
+        try
+            fprintf('Loading %s\n',tFile)
+            pStack = pstack_loader(tFile);
 
-        pStack = boundingBoxesFromLastSection.tools.resizePStack(pStack,targetMicsPix);
+            pStack = boundingBoxesFromLastSection.tools.resizePStack(pStack,targetMicsPix);
 
-        pstack_saver(tFile,pStack)
+            pstack_saver(tFile,pStack)
+        catch ME
+            fprintf('RESIZE OF FILE %s FAILED!\n', tFile)
+        end
     end
 
 
