@@ -131,9 +131,12 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
         % If the median SNR is low, we get rid tThresh values above 8
         % This helps with certain low SNR samples
-        if nanmedian([stats.SNR_medThreshRatio])<=4
-            fprintf(' ---> Median SNR is low! Clipping tThreshSD to low values. <---\n')
-            ind = find([stats.tThreshSD]<=8);
+        medSNR = nanmedian([stats.SNR_medThreshRatio]);
+        clipVal=8;
+        if medSNR<=4
+            fprintf(' ---> Median SNR is low: %0.1f -- Clipping tThreshSD to values below %d. <---\n', ...
+                medSNR, clipVal)
+            ind = find([stats.tThreshSD]<=clipVal);
             stats = stats(ind);
         end
 
