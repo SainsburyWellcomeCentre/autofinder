@@ -19,14 +19,21 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     %
     % Inputs (Optional param/val pairs)
     % pixelSize - 7 (microns/pixel) by default
-    % tileSize - 1000 (microns/pixel) by default. Size of tile FOV in microns.
+    % tileSize - 1000 (microns) by default. Size of tile FOV in microns.
     % tThresh - Threshold for brain/no brain. By default this is auto-calculated
+    % tThreshSD - Used to do the auto-calculation of tThresh.
     % doPlot - if true, display image and overlay boxes. false by default
     % doTiledRoi - if true (default) return the ROI we would have if tile scanning. 
     % lastSectionStats - By default the whole image is used. If this argument is 
     %               present it should be the output of image2boundingBoxes from a
     %               previous sectionl
     % borderPixSize - number of pixels from border to user for background calc. 5 by default
+    % skipMergeNROIThresh - If more than this number of ROIs is found, do not attempt
+    %                         to merge. Just return them. Used to speed up auto-finding.
+    %                         By default this is infinity, so we always try to merge.
+    % rescaleTo - number of microns per pixel to which we will re-scale. By default 
+    %             uses value from settings file.
+    %
     %
     % Outputs
     % stats - borders and so forth
@@ -42,7 +49,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         return
     end
 
-
+    settings = boundingBoxesFromLastSection.readSettings;
     % Parse input arguments
     params = inputParser;
     params.CaseSensitive = false;
@@ -52,10 +59,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
-    params.addParameter('tThreshSD',7, @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('tThreshSD',settings.main.defaultThreshSD, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
-
+    params.addParameter('skipMergeNROIThresh',inf, @(x) isnumeric(x) )
+    params.addParameter('rescaleTo',settings.stackStr.rescaleTo, @(x) isnumeric(x) )    
 
     params.parse(varargin{:})
     pixelSize = params.Results.pixelSize;
@@ -66,18 +74,36 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     tThreshSD = params.Results.tThreshSD;
     borderPixSize = params.Results.borderPixSize;
     lastSectionStats = params.Results.lastSectionStats;
+    skipMergeNROIThresh = params.Results.skipMergeNROIThresh;
+    rescaleTo = params.Results.rescaleTo;
+
+    if size(im,3)>1
+        fprintf('%s requires a single image not a stack\n',mfilename)
+        return
+    end
+
+    if rescaleTo>1
+        fprintf('%s is rescaling image to %d mic/pix from %0.2f mic/pix\n', ...
+            mfilename, rescaleTo, pixelSize);
+        sizeIm=size(im);
+        sizeIm = round( sizeIm / (rescaleTo/pixelSize) );
+        im = imresize(im, sizeIm);
+        origPixelSize = pixelSize;
+        pixelSize = rescaleTo;
+    else
+        origPixelSize = pixelSize;
+    end
 
 
     fprintf('boundingBoxesFromLastSection running with: ')
-    fprintf('pixelSize: %0.2f, tileSize: %d, tThresh: %0.2f\n', ...
-        pixelSize, tileSize, tThresh)
+    fprintf('pixelSize: %0.2f, tileSize: %d microns, tThreshSD: %0.3f\n', ...
+        pixelSize, round(tileSize), tThreshSD)
 
-    settings = boundingBoxesFromLastSection.readSettings;
+
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
     im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage]);
     im = single(im);
-
 
     % If no threshold for segregating sample from background was supplied then calculate one
     % based on the pixels around the image border.
@@ -87,7 +113,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('Choosing a threshold of %0.2f\n', tThresh)
+        fprintf('No threshold provided to %s - Choosing a threshold of %0.1f based on threshSD of %0.2f\n', ...
+         mfilename, tThresh, tThreshSD)
+
+    else
+        fprintf('Running %s with a threshold of %0.2f\n', mfilename, tThresh)
     end
 
 
@@ -98,13 +128,24 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
-        stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
+
+        if length(stats) < skipMergeNROIThresh
+            stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
+        end
 
     else
 
+        if rescaleTo>1
+            lastSectionStats.BoundingBoxes = ...
+                cellfun(@(x) round(x/(rescaleTo/origPixelSize)), lastSectionStats.BoundingBoxes,'UniformOutput',false);
+        end
+
         % Run within each ROI then afterwards consolidate results
         nT=1;
+
         for ii = 1:length(lastSectionStats.BoundingBoxes)
+            % Scale daown the bounding boxes
+
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             BW         = binarizeImage(tIm,pixelSize,tThresh);
@@ -134,8 +175,10 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             % they ought to be merged. This would not have been possible to do until this point. 
             % TODO -- possibly we can do only the final merge?
 
-            fprintf('* Doing final merge\n')
-            stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+            if length(stats) < skipMergeNROIThresh
+                fprintf('* Doing final merge\n')
+                stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im));
+            end
         else
             % No bounding boxes found
             fprintf('boundingBoxesFromLastSection found no bounding boxes\n')
@@ -172,7 +215,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
                 pixelSize, tileSize);
         end
 
-        if settings.main.doTiledMerge
+        if settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
             fprintf('* Doing merge of tiled bounding boxes\n')
             [stats,delta_n_ROI] = ...
                 boundingBoxesFromLastSection.mergeOverlapping(stats, size(im), ...
@@ -182,7 +225,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         end
 
         % If the number of ROIs decreased then we must re-run the tiled box algorithm
-        if delta_n_ROI<0 && settings.main.secondExpansion && settings.main.doTiledMerge
+        if delta_n_ROI<0 && settings.main.secondExpansion && settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
             fprintf('Bounding box number decreased by %d. Recalculating them.\n',delta_n_ROI)
             for ii=1:length(stats)
                 stats(ii).BoundingBox = ...
@@ -206,6 +249,58 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Finish up: generate all relevant stats to return as an output argument
     out.BoundingBoxes = {stats.BoundingBox};
+    out.globalBoundingBox={}; % Filled in later 
+
+
+    % Store statistics in output structure
+    BW = binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
+    inverseBW = ~BW; %Pixels outside of brain
+
+    % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
+    b = borderPixSize;
+    inverseBW(b+1:end-b,b+1:end-b)=0;
+    backgroundPix = im(find(inverseBW));
+    out.origPixelSize = origPixelSize;
+    out.rescaledPixelSize = rescaleTo;
+    out.rescaledRatio = origPixelSize/rescaleTo;
+
+    out.meanBackground = mean(backgroundPix(:));
+    out.medianBackground = median(backgroundPix(:));
+    out.stdBackground = std(backgroundPix(:));
+
+    out.nBackgroundPix = sum(~BW(:));
+    out.nBackgroundSqMM = out.nBackgroundPix * (pixelSize*1E-3)^2;
+
+    foregroundPix = im(find(BW));
+    out.meanForeground = mean(foregroundPix(:));
+    out.medianForeground = median(foregroundPix(:));
+    out.stdForeground = std(foregroundPix(:));
+
+    out.nForegroundPix = sum(BW(:));
+    out.nForegroundSqMM = out.nForegroundPix * (pixelSize*1E-3)^2;
+    out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
+    out.notes=''; %Anything odd can go in here
+    out.tThresh = tThresh;
+    out.imSize = size(im);
+
+    % Calculate the number of pixels in the bounding boxes
+    for ii=1:length(out.BoundingBoxes)
+        out.BoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4));
+    end
+    out.totalBoundingBoxPixels = sum(out.BoundingBoxPixels);
+
+    % What proportion of the whole FOV is covered by the bounding boxes?
+    % This number is only available in test datasets. In real acquisitions with the 
+    % auto-finder we won't have this number. 
+    out.propImagedAreaCoveredByBoundingBox = out.totalBoundingBoxPixels / prod(size(im));
+
+
+    % Finally: return bounding boxes to original size
+    % If we re-scaled then we need to put the bounding box coords back into the original size
+    if rescaleTo>1
+        out.BoundingBoxes = ...
+            cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.BoundingBoxes,'UniformOutput',false);
+    end
 
     % Determine the size of the overall box that would include all boxes
     if length(out.BoundingBoxes)==1
@@ -214,30 +309,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         tmp = cell2mat(out.BoundingBoxes');
         out.globalBoundingBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
     end
-
-    % Store statistics in output structure
-    inverseBW = ~BW; %Pixels outside of brain
-
-    % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
-    b = borderPixSize;
-    inverseBW(b+1:end-b,b+1:end-b)=0;
-    backgroundPix = im(find(inverseBW));
-
-    out.meanBackground = mean(backgroundPix(:));
-    out.medianBackground = median(backgroundPix(:));
-    out.stdBackground = std(backgroundPix(:));
-
-    out.nBackgroundPix = sum(~BW(:));
-
-    foregroundPix = im(find(BW));
-    out.meanForeground = mean(foregroundPix(:));
-    out.medianForeground = median(foregroundPix(:));
-    out.stdForeground = std(foregroundPix(:));
-    out.nForegroundPix = sum(BW(:));
-    out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
-    out.notes=''; %Anything odd can go in here
-    out.tThresh = tThresh;
-    out.imSize = size(im);
 
     % Optionally return coords of each box
     if nargout>0
@@ -258,11 +329,26 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 function BW = binarizeImage(im,pixelSize,tThresh)
     % Binarise and clean image. Adding a border before returning
     verbose = false;
+    showImages = false; %Set to true to display binarized images and force step-through with return key
+
     settings = boundingBoxesFromLastSection.readSettings;
 
     BW = im>tThresh;
+    if showImages
+        subplot(2,2,1)
+        imagesc(BW)
+        axis square
+        title('Before medfilt2')
+    end
+
     BW = medfilt2(BW,[settings.mainBin.medFiltBW,settings.mainBin.medFiltBW]);
 
+    if showImages
+        subplot(2,2,2)
+        imagesc(BW)
+        axis square
+        title('After medfilt2')
+    end
     if verbose
         fprintf('Binarized size before dilation: %d by %d\n',size(BW));
     end
@@ -272,12 +358,25 @@ function BW = binarizeImage(im,pixelSize,tThresh)
         round(settings.mainBin.primaryFiltSize/pixelSize));
     BW = imerode(BW,SE);    
     BW = imdilate(BW,SE);
+    if showImages
+        subplot(2,2,3)
+        imagesc(BW)
+        title('After morph filter')
+    end
 
 
     % EXPAND IMAGED AREA: Add a small border around the brain
     SE = strel(settings.mainBin.expansionShape, ...
         round(settings.mainBin.expansionSize/pixelSize));
     BW = imdilate(BW,SE);
+
+    if showImages
+        subplot(2,2,4)
+        imagesc(BW)
+        drawnow
+        title('After expansion')
+        pause
+    end
 
     if verbose
         fprintf('Binarized size after dilation: %d by %d\n',size(BW));

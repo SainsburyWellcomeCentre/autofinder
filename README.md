@@ -15,7 +15,7 @@ We will work with imaging stacks (`imStack`, below) obtained from the BakingTray
 
 ```
 >> nSamples=2;
->> pStack = boundingBoxesFromLastSection.test.stackToGroundTruth(imStack,'/pathTo/recipeFile',nSamples)
+>> pStack = boundingBoxesFromLastSection.groundTruth.stackToGroundTruth(imStack,'/pathTo/recipeFile',nSamples)
 
 pStack = 
 
@@ -37,7 +37,7 @@ This is necessary for subsequent evaluation steps but is not necessary to run th
 This is done with:
 
 ```
-pStack=boundingBoxesFromLastSection.test.genGroundTruthBorders(pStack,7)
+pStack=boundingBoxesFromLastSection.groundTruth.genGroundTruthBorders(pStack,7)
 ```
 
 And the results visualised with:
@@ -124,7 +124,10 @@ It also: removes very small boxes, provides a hackish fix for the missing corner
 * Finally, bounding boxes are expanded to the nearest whole tile and the merging is re-done. 
 
 
-
+## Making summaries
+`boundingBoxesFromLastSection.test.evaluateBoundingBoxes` works on a stats structure saved by 
+`boundingBoxesFromLastSection.test.runOnAllInDir`. We can do the whole test directory with
+`boundingBoxesFromLastSection.test.evaluateDir`. 
 
 ## Changelog
 

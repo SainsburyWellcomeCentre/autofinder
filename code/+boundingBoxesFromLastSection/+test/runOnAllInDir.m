@@ -1,7 +1,7 @@
-function runOnAllInDir(runDir)
+function runOnAllInDir(runDir,doAutoThreshold)
     % Run auto-find test on all structures in runDir
     %
-    % function boundingBoxesFromLastSection.tests.runOnAllInDir(runDir)
+    % function boundingBoxesFromLastSection.tests.runOnAllInDir(runDir,doAutoThreshold)
     %
     % Purpose
     % Batch run of boundingBoxesFromLastSection.test.runOnStackStruc
@@ -12,7 +12,8 @@ function runOnAllInDir(runDir)
     %
     % Inputs (optional)
     % runDir - directory in which to look for files and run. If missing, 
-    %          the current directory is used. 
+    %          the current directory is used.
+    % doAutoThreshold - true by default
     %
     %
     % Example
@@ -27,6 +28,12 @@ function runOnAllInDir(runDir)
 
 if nargin<1
     runDir='stacks';
+end
+
+
+if nargin<2 || isempty(doAutoThreshold)
+    % Auto find the threshold?
+    doAutoThreshold = true;
 end
 
 
@@ -65,7 +72,7 @@ end
 parfor ii=1:length(pStack_list)
     tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
     fprintf('Loading %s\n',tFile)
-    pStack = pstack_loader(tFile)
+    pStack = pstack_loader(tFile);
     [~,nameWithoutExtension] = fileparts(pStack_list(ii).name);
 
     % Do not process if the loaded .mat file does not contain a struct
@@ -76,7 +83,10 @@ parfor ii=1:length(pStack_list)
     end
 
     try
-        testLog = boundingBoxesFromLastSection.test.runOnStackStruct(pStack,true);
+        % Run
+        testLog = boundingBoxesFromLastSection.test.runOnStackStruct(pStack,true,doAutoThreshold);
+
+        % Log useful info in first element
         testLog(1).stackFname = tFile; %Into the first element add the file name
 
         saveFname = fullfile(testDirThisSession,['log_',pStack_list(ii).name]);

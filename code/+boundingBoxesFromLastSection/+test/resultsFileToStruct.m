@@ -64,7 +64,25 @@ while ~isnumeric(tline)
         resStruct.(tKey).allAcquired=true;
     end
 
-    if ~isempty(strfind(tline,'WARNING ')) 
+    if ~isempty(strfind(tline,'Median area of ROIs filled'))
+        tok = regexp(tline,'tissue: (.*) \(run at','tokens');
+        tok = tok{1};
+        resStruct.(tKey).medianROIareaWithTissue = str2num(tok{1});
+    end
+
+    if ~isempty(strfind(tline,'Total imaged sq mm in this acquisition:'))
+        tok = regexp(tline,'acquisition: (.*)','tokens');
+        tok = tok{1};
+        resStruct.(tKey).totalImagedSqMM = str2num(tok{1});
+    end
+
+    if ~isempty(strfind(tline,'Proportion of original area'))
+        tok = regexp(tline,'by ROIs: (.*)','tokens');
+        tok = tok{1};
+        resStruct.(tKey).propImagedArea = str2num(tok{1});
+    end
+
+    if ~isempty(strfind(tline,'WARNING -- There are ')) 
         tok = regexp(tline,'There are (\d+) sections .* only (\d+) were','tokens');
         tok = tok{1};
         resStruct.(tKey).propUnprocessedSections = str2num(tok{2})/str2num(tok{1});
@@ -100,3 +118,17 @@ while ~isnumeric(tline)
 end
 
 fclose(fidR);
+
+%Sort keys alphabetically because we make the results file with a parfor loop
+%meaning that the acquisitions are in a random order
+tFields = sort(fields(resStruct));
+
+tmp=struct;
+for ii=1:length(tFields)
+    tmp.(tFields{ii}) = resStruct.(tFields{ii});
+
+end
+
+resStruct = tmp;
+
+

@@ -35,13 +35,14 @@ function settings = returnSettings
     settings.main.doTiledMerge=true; %Mainly for debugging
     settings.main.tiledMergeThresh=1.05;
     settings.main.secondExpansion=false;
+    settings.main.defaultThreshSD=7; %This appears both in boundingBoxesFromLastSection and in runOnStackStruct
 
     % The following are used in boundingBoxesFromLastSection > binarizeImage
     settings.mainBin.medFiltBW = 5;
     settings.mainBin.primaryShape = 'disk';
     settings.mainBin.primaryFiltSize = 50; %in microns
     settings.mainBin.expansionShape = 'square';
-    settings.mainBin.expansionSize = 300;  %in microns
+    settings.mainBin.expansionSize = 600;  %in microns
 
     % The following are used in boundingBoxesFromLastSection > getBoundingBoxes
     settings.mainGetBB.minSizeInSqMicrons = 15000;
@@ -51,4 +52,4 @@ function settings = returnSettings
     settings.mergeO.mergeThresh=1.3; %This is the default value
 
     % The following are used in boundingBoxesFromLastSection.runOnStackStruct
-    settings.stackStr.rescaleTo=40; 
+    settings.stackStr.rescaleTo=50; 

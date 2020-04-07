@@ -25,3 +25,7 @@ function overlapStack = genOverlapStack(BoundingBoxes,imSize)
         eb = boundingBoxesFromLastSection.validateBoundingBox(tB, imSize);
         overlapStack(eb(2):eb(2)+eb(4), eb(1):eb(1)+eb(3),ii) = 1;
     end
+
+    % Just in case, delete any planes which happen to empty
+    sP = squeeze(sum(overlapStack,[1,2]));
+    overlapStack(:,:,sP==0) = [];

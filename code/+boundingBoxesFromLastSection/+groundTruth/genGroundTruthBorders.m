@@ -1,6 +1,9 @@
 function pStack = genGroundTruthBorders(pStack,threshSTD)
 % Determines the ground truth pixels which contain brain for each slice 
 %
+% function pStack = boundingBoxesFromLastSection.groundTruth.genGroundTruthBorders(pStack,threshSTD)
+%
+%
 % Purpose
 % This function produces ground truth data indicating where the brain is. 
 % This can then be used to assess how well the auto brain finder is going.
@@ -18,11 +21,13 @@ function pStack = genGroundTruthBorders(pStack,threshSTD)
 %
 % Outputs
 % pStack - Same as input structure but now with added results.
+%
+% Also see:
+% boundingBoxesFromLastSection.groundTruth.genBordersForAllInDir
 
 
-
-if nargin<2
-    threshSTD=4;
+if nargin<2 || isempty(threshSTD)
+    threshSTD=7;
 end
 
 fprintf('Generating ground truth\n')
@@ -74,6 +79,10 @@ function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
     sizeThresh = prod(size(BW)) * (minSize / nSamples);
 
     [L,indexedBW]=bwboundaries(BW,'noholes');
+
+    % Just in case there are borders with no points, we remove them
+    emptyInd=find(cellfun(@(x) isempty(x),L));
+    L(emptyInd)=[];
 
     for ii=length(L):-1:1
         f=find(indexedBW == ii);
