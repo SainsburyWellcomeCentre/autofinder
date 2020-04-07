@@ -35,7 +35,7 @@ for ii=1:length(logFiles)
     tTvec = [testLog(1).autothreshStats.tThreshSD];
     d = abs(tTvec - testLog(1).tThreshSD);
     [~,ind] = min(d);
-    SNR = testLog(1).autothreshStats(ind).SNR.medThreshRatio;
+    SNR = testLog(1).autothreshStats(ind).SNR_medThreshRatio;
     fprintf('%d/%d %s -- SNR: %0.2f -- %s\n', ...
         ii, length(logFiles), logFiles(ii).name, SNR, notes)
 

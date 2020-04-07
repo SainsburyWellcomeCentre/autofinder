@@ -39,6 +39,5 @@ function plot(stats)
     subplot(nRows,2,5)
     f=~isnan([stats.nRois]);
     stats = stats(f);
-    SNR=[stats.SNR];
-    plot([stats.tThreshSD],[SNR.medThreshRatio],'-ok')
+    plot([stats.tThreshSD],[stats.SNR_medThreshRatio],'-ok')
 end % main function
