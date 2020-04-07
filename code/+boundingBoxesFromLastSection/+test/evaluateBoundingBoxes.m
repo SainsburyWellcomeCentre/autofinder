@@ -78,6 +78,17 @@ fprintf(msg)
 out = [out,msg];
 
 
+%Report the proportion of the original FOV that was imaged. 
+%This is, of course, only valid for data not acquired with an auto-finder
+imSizeSqmm = prod(size(pStack.imStack)) * (pStack.voxelSizeInMicrons * 1E-3)^2;
+propImagedArea = totalImagedArea/imSizeSqmm;
+msg=sprintf('Proportion of original area imaged by ROIs: %0.4f\n', ...
+    propImagedArea);
+fprintf(msg)
+out = [out,msg];
+
+
+
 
 
 for ii=1:length(stats)

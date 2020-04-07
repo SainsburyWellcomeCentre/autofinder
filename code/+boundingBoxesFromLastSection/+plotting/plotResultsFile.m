@@ -33,8 +33,10 @@ extra_sum = zeros(length(f),1);
 extra_max = zeros(length(f),1);
 medROIareaFilled = zeros(length(f),1);
 totalImagedSqMM = zeros(length(f),1);
-for ii=1:length(f)
+propImagedArea = zeros(length(f),1);
 
+
+for ii=1:length(f)
     tF = resStruct.(f{ii});
 
     fprintf('%d. %s\n', ii, f{ii})
@@ -46,6 +48,7 @@ for ii=1:length(f)
     extra_max(ii) = max(tF.sqmmExtra);
     medROIareaFilled(ii) = tF.medianROIareaWithTissue;
     totalImagedSqMM(ii) =  tF.totalImagedSqMM;
+    propImagedArea(ii) = tF.propImagedArea;
 end
 
 
@@ -107,20 +110,34 @@ ylabel('Missed sq mm')
 
 subplot(4,2,6)
 hist(sqmm_sum,25)
+x=xlim;
+xlim([0,x(2)]);
 xlabel('Missed sq mm')
 ylabel('# acquisitions')
 
 
 
 subplot(4,2,7)
-plot(totalImagedSqMM,'.r-')
+plot(propImagedArea,'.r-')
+mu=mean(propImagedArea);
+hold on
+plot([xlim],[mu,mu],'--b')
+hold off
 xlabel('Acquisition #')
 ylabel('Total imaged sq mm')
+title(sprintf('Prop orig area covered by ROIs (mean=%0.3f)', mu))
+ylim([0,1])
 grid on
 
 subplot(4,2,8)
 plot(medROIareaFilled,'.r-')
+mu = mean(medROIareaFilled);
+hold on
+plot([xlim],[mu,mu],'--b')
+hold off
+
 ylim([0,1])
 xlabel('Acquisition #')
 ylabel('Prop ROI area filled')
+title('Proportion of imaged ROI that is filled with tissue')
 grid on

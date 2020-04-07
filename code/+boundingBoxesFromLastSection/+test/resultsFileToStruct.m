@@ -76,6 +76,12 @@ while ~isnumeric(tline)
         resStruct.(tKey).totalImagedSqMM = str2num(tok{1});
     end
 
+    if ~isempty(strfind(tline,'Proportion of original area'))
+        tok = regexp(tline,'by ROIs: (.*)','tokens');
+        tok = tok{1};
+        resStruct.(tKey).propImagedArea = str2num(tok{1});
+    end
+
     if ~isempty(strfind(tline,'WARNING -- There are ')) 
         tok = regexp(tline,'There are (\d+) sections .* only (\d+) were','tokens');
         tok = tok{1};
