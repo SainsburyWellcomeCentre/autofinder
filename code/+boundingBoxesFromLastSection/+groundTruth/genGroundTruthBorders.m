@@ -80,6 +80,10 @@ function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
 
     [L,indexedBW]=bwboundaries(BW,'noholes');
 
+    % Just in case there are borders with no points, we remove them
+    emptyInd=find(cellfun(@(x) isempty(x),L));
+    L(emptyInd)=[];
+
     for ii=length(L):-1:1
         f=find(indexedBW == ii);
         thisN = length(f);
