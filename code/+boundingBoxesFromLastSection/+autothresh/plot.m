@@ -8,30 +8,37 @@ function plot(stats)
     %
     %
 
+    nRows = 3;
 
     clf
-    subplot(2,2,1)
+    subplot(nRows,2,1)
     plot([stats.tThreshSD],[stats.nRois],'-ok')
     xlabel('threshold')
     ylabel('num ROIs')
     grid on
 
-    subplot(2,2,2)
+    subplot(nRows,2,2)
     plot([stats.tThreshSD],[stats.propImagedAreaUnderBoundingBox],'-ok')
     xlabel('threshold')
     ylabel('prop area covered by ROIs')
     grid on
 
 
-    subplot(2,2,3)
+    subplot(nRows,2,3)
     plot([stats.tThreshSD],[stats.meanBoundingBoxPixels],'-ok')
     xlabel('threshold')
     ylabel('Mean pixels per bounding box')
     grid on
 
-    subplot(2,2,4)
+    subplot(nRows,2,4)
     plot([stats.tThreshSD],[stats.meanBoundingBoxPixels]./[stats.nRois],'-ok')
     xlabel('threshold')
     ylabel('Mean pixels per bounding box')
     grid on
+
+    subplot(nRows,2,5)
+    f=~isnan([stats.nRois]);
+    stats = stats(f);
+    SNR=[stats.SNR];
+    plot([stats.tThreshSD],[SNR.medThreshRatio],'-ok')
 end % main function

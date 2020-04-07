@@ -65,12 +65,13 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         OUT = boundingBoxesFromLastSection(pStack.imStack(:,:,1),argIn{:},'tThreshSD',tThreshSD);
 
         if isempty(OUT)
-            stats.nRois=0;
-            stats.boundingBoxPixels=0;
-            stats.meanBoundingBoxPixels=0;
-            stats.boundingBoxSqMM=0;
-            stats.propImagedAreaUnderBoundingBox=0;
+            stats.nRois=nan;
+            stats.boundingBoxPixels=nan;
+            stats.meanBoundingBoxPixels=nan;
+            stats.boundingBoxSqMM=nan;
+            stats.propImagedAreaUnderBoundingBox=nan;
             stats.notes='';
+            stats.SNR=struct;
         else
             stats.nRois = length(OUT.BoundingBoxes);
             stats.boundingBoxPixels=OUT.totalBoundingBoxPixels;
@@ -78,6 +79,15 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.boundingBoxSqMM = OUT.totalBoundingBoxPixels * (voxSize * 1E-3)^2;
             stats.propImagedAreaUnderBoundingBox=OUT.propImagedAreaCoveredByBoundingBox;
             stats.notes='';
+
+            % Extract values related to SNR
+            imTMP = pStack.imStack(:,:,1);
+            aboveThresh = imTMP(imTMP>OUT.tThresh);
+            belowThresh = imTMP(imTMP<OUT.tThresh);
+
+            stats.SNR.medAboveThresh = single(median(aboveThresh));
+            stats.SNR.medBelowThresh = single(median(belowThresh));
+            stats.SNR.medThreshRatio = stats.SNR.medAboveThresh/stats.SNR.medBelowThresh;
         end
         stats.tThreshSD=tThreshSD;
 
