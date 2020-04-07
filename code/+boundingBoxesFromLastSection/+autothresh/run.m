@@ -18,6 +18,8 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         runSeries=true;
     end
 
+    % This is the image we will use to obtain the threshold
+    imTMP = pStack.imStack(:,:,1);
 
     settings = boundingBoxesFromLastSection.readSettings;
     defaultThresh = settings.main.defaultThreshSD;
@@ -27,8 +29,10 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,'skipMergeNROIThresh',10};
 
 
-    stats=runThreshCheck(0);
+    stats=calcStatsFromThreshold(0);
     maxThresh=40;
+
+
 
     % Produce a curve
     if runSeries
@@ -36,7 +40,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         x=0.015;
         while x<maxThresh
             fprintf('Running for tThreshSD * %0.2f\n',x);
-            stats(end+1)=runThreshCheck(x);
+            stats(end+1)=calcStatsFromThreshold(x);
             x=x*1.1;
         end
         boundingBoxesFromLastSection.autothresh.plot(stats)
@@ -48,21 +52,16 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
 
 
-    % Otherwise we try to find a threshold
-    if stats.propImagedAreaUnderBoundingBox>0.95
-        disp('HIGH SNR')
-        [tThreshSD,stats] = highSNRalg(stats);
-    else
-        fprintf('Looks like a low SNR sample')
-        [tThreshSD,stats] = lowSNRalg(stats);
-    end
+    % Find the threshold
+    [tThreshSD,stats] = getThreshAlg(stats);
 
-    boundingBoxesFromLastSection(pStack.imStack(:,:,1),argIn{:}, ...
-        'tThreshSD',tThreshSD,'doPlot',true);
+
+    boundingBoxesFromLastSection(imTMP, argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
 
     % Nested functions follow
-    function stats = runThreshCheck(tThreshSD)
-        OUT = boundingBoxesFromLastSection(pStack.imStack(:,:,1),argIn{:},'tThreshSD',tThreshSD);
+    function stats = calcStatsFromThreshold(tThreshSD)
+        % Calculate a bunch of stats from a threshold
+        OUT = boundingBoxesFromLastSection(imTMP, argIn{:},'tThreshSD',tThreshSD);
 
         if isempty(OUT)
             stats.nRois=nan;
@@ -71,7 +70,9 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.boundingBoxSqMM=nan;
             stats.propImagedAreaUnderBoundingBox=nan;
             stats.notes='';
-            stats.SNR=struct;
+            stats.SNR_medAboveThresh=nan;
+            stats.SNR_medBelowThresh=nan;
+            stats.SNR_medThreshRatio=nan;
         else
             stats.nRois = length(OUT.BoundingBoxes);
             stats.boundingBoxPixels=OUT.totalBoundingBoxPixels;
@@ -81,80 +82,20 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.notes='';
 
             % Extract values related to SNR
-            imTMP = pStack.imStack(:,:,1);
             aboveThresh = imTMP(imTMP>OUT.tThresh);
             belowThresh = imTMP(imTMP<OUT.tThresh);
 
-            stats.SNR.medAboveThresh = single(median(aboveThresh));
-            stats.SNR.medBelowThresh = single(median(belowThresh));
-            stats.SNR.medThreshRatio = stats.SNR.medAboveThresh/stats.SNR.medBelowThresh;
+            stats.SNR_medAboveThresh = single(median(aboveThresh));
+            stats.SNR_medBelowThresh = single(median(belowThresh));
+            stats.SNR_medThreshRatio = stats.SNR_medAboveThresh/stats.SNR_medBelowThresh;
         end
         stats.tThreshSD=tThreshSD;
 
-    end % runThreshCheck
+    end % calcStatsFromThreshold
 
 
 
-    function [tThreshSD,stats] = lowSNRalg(stats)
-        initial_nROIs = stats.nRois;
-        x=0.015;
-
-        fprintf('\n\n\n ** SEARCHING LOW SNR with %d INITIAL ROIS\n', initial_nROIs)
-
-        % We loop through and break off if the number of ROIs drops
-        finalX=nan;
-        while x(end)<maxThresh
-
-            fprintf(' ---> thresh = %0.3f\n', x(end))
-
-            stats(end+1)=runThreshCheck(x(end));
-
-            if stats(end).nRois > initial_nROIs
-                if length(x)>1
-                    finalX = x(end-1)*0.5;
-                    fprintf('BREAKING\n')
-                    break
-                else
-                    % LIKELY A BAD SITUATION
-                    finalX=0;
-                end
-            end
-
-            x(end+1)=x(end)*1.8;
-        end
-
-
-        % If it's still a NaN then the number of ROIs never dropped. 
-        % Instead, lets's look for a drop in coverage
-        tT=[stats.tThreshSD];
-        [tT,ind] = sort(tT,'ascend');
-        stats = stats(ind);
-
-        if isnan(finalX)
-            sqm = round([stats.boundingBoxSqMM],1);
-            f=find(diff(sqm)<0);
-            if ~isempty(f) && f(1)>2
-                finalX = tT(f(1)-1);
-                stats(1).notes=sprintf('Low SNR: Chose finalX based on drop in bounding box area');
-            end
-        else
-            stats(1).notes=sprintf('Low SNR: Chose finalX based on break from full coverage');
-
-        end
-
-
-        if ~isnan(finalX)
-            tThreshSD = finalX;
-        else
-            tThreshSD = defaultThresh;
-        end
-
-        fprintf(' ---> Low SNR Choosing a final thresh of %0.3f\n', finalX);
-
-    end %lowSNRalg
-
-
-    function [tThreshSD,stats] = highSNRalg(stats)
+    function [tThreshSD,stats] = getThreshAlg(stats)
         % Start with a high threshold and decrease
         % A sharp increase in ROI number means that we're too low
         % Filling the whole FOV means we're too low
@@ -168,14 +109,14 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         tThreshSD=nan;
         while x>0.75 %Very small thresholds tend to be bad news
             fprintf(' ---> thresh = %0.3f\n', x(end))
-            stats(end+1)=runThreshCheck(x(end));
+            stats(end+1)=calcStatsFromThreshold(x(end));
 
             % If we reach over 95% coverage then back up a notch and assign the threshold as this value
             if stats(end).propImagedAreaUnderBoundingBox>0.95
                 if length(x)>1
                     tThreshSD = x(end-1)*1.75;
                 else
-                    fprintf('\nODD -- High SNR -- breaking with length(x)==1\n');
+                    fprintf('\nODD -- breaking with length(x)==1\n');
                     tThreshSD = x(end)*1.75;
                 end
                 break
@@ -188,6 +129,16 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         [tT,ind] = sort(tT,'ascend');
         stats = stats(ind);
 
+        % If the median SNR is low, we get rid tThresh values above 8
+        % This helps with certain low SNR samples
+        medSNR = nanmedian([stats.SNR_medThreshRatio]);
+        clipVal=8;
+        if medSNR<=4
+            fprintf(' ---> Median SNR is low: %0.1f -- Clipping tThreshSD to values below %d. <---\n', ...
+                medSNR, clipVal)
+            ind = find([stats.tThreshSD]<=clipVal);
+            stats = stats(ind);
+        end
 
         % Before finally bailing out, see if we can improve the threshold. If many 
         % points have the same number of ROIs, choose the middle of this range instead. 
@@ -197,15 +148,17 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
 
         % If there are more than three of them and all are in a row, then we use the mean of these as the threshold
-        fprintf('\n\nFinishing up high SNR.\nNumber of ROIs have mode value of %d which occurs %d times\n', theMode, numOccurances)
+        fprintf('\n\nFinishing up.\nNumber of ROIs have mode value of %d which occurs %d times\n', theMode, numOccurances)
+
 
         if numOccurances>3 && all(diff(fM)==1)
-            fprintf(' --->  High SNR: Choosing based on uninterupted mode.\n')
-            tThreshSD = mean(tT(find(nR==theMode)));
-            stats(1).notes=sprintf('High SNR: mean of values at nROI=%d', theMode);
+            fprintf(' --->  Choosing based on uninterupted mode of %d.\n', theMode)
+            ind = find(nR==theMode);
+            tThreshSD = mean(tT(ind));
+            stats(1).notes=sprintf('Mean of values at nROI=%d', theMode);
 
         elseif numOccurances>8 && (length(fM)/length(fM(1):fM(end)))>0.8
-            fprintf(' --->  High SNR: Choosing based on mode with few interruptions: n=%d missing=%d\n', ...
+            fprintf(' --->  Choosing based on mode with few interruptions: n=%d missing=%d\n', ...
                 length(fM), length(fM(1):fM(end))-length(fM) )
 
             % Remove thresholds that are very low. Clip out low values, in other words.
@@ -213,7 +166,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             tT(tT<=0.5)=[];
             tThreshSD = mean(tT);
 
-            stats(1).notes=sprintf('High SNR: mean of %d values at nROI=%d. %d missing.', ...
+            stats(1).notes=sprintf('Mean of %d values at nROI=%d. %d missing.', ...
                 numOccurances, theMode, length(fM(1):fM(end))-length(fM) );
 
         elseif ~isempty(findLowestThreshStretch(nR,4))
@@ -224,13 +177,13 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             tT(tT<=0.5)=[];
             tThreshSD = mean(tT);
 
-            msg=sprintf('High SNR: Choosing using findLowestThreshStretch with thresh of 4: tThreshSD=%0.2f\n',tThreshSD);
+            msg=sprintf('Choosing using findLowestThreshStretch with thresh of 4: tThreshSD=%0.2f\n',tThreshSD);
             fprintf(msg)
             stats(1).notes=msg;
 
         else
-            fprintf(' ---> High SNR: Choosing based on exit point value where ROI gets large.\n')
-            stats(1).notes='High SNR: Value near full size ROI';
+            fprintf(' ---> Choosing based on exit point value where ROI got large.\n')
+            stats(1).notes='Value near full size ROI';
 
         end
 
@@ -238,17 +191,25 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             fprintf('Bounding box always stays small. Sticking with default threshold of %0.2f\n', defaultThresh)
             tThreshSD=defaultThresh;
         end
-    end %highSNRalg
+    end %getThreshAlg
 
 end % main function
 
 
 function ind = findLowestThreshStretch(nR,thresh)
+    % This function finds a a stretch of values in a vector which are the same. 
+    %
+    % nR - A vector defining the number of ROIs for each of a range of threshold 
+    %     values (which we don't need to know here)
+    % thresh - Defines the length of shortest stretch of identical values in nR.
+    %
+    % e.g. 
+    % nR = [1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    % thresh = 4
+    %
+    % It will choose the grouping of 2s at the left side of the vector. This is 
+    % so as bias ourselves to lower thresholds. 
 
-    % Find the stretch of mode(nR) that is lowest. 
-    % i.e. If we have a bunch of nR=4 values at lower thersholds, then a gap of a different value,
-    % then a bunch more pf nR=4 at high values, we want to choose the lower threshold values. So
-    % long as these number more than thresh. 
 
     verbose=false;
 

@@ -95,11 +95,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
 
 
-    fprintf('boundingBoxesFromLastSection running with: ')
-    fprintf('pixelSize: %0.2f, tileSize: %d microns, tThreshSD: %0.3f\n', ...
-        pixelSize, round(tileSize), tThreshSD)
-
-
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
     im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage]);
@@ -117,7 +112,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
          mfilename, tThresh, tThreshSD)
 
     else
-        fprintf('Running %s with a threshold of %0.2f\n', mfilename, tThresh)
+        fprintf('Running %s with provided threshold of %0.2f\n', mfilename, tThresh)
     end
 
 
@@ -337,7 +332,6 @@ function BW = binarizeImage(im,pixelSize,tThresh)
     if showImages
         subplot(2,2,1)
         imagesc(BW)
-        axis square
         title('Before medfilt2')
     end
 
@@ -346,7 +340,6 @@ function BW = binarizeImage(im,pixelSize,tThresh)
     if showImages
         subplot(2,2,2)
         imagesc(BW)
-        axis square
         title('After medfilt2')
     end
     if verbose
@@ -356,7 +349,7 @@ function BW = binarizeImage(im,pixelSize,tThresh)
     % Remove crap using spatial filtering
     SE = strel(settings.mainBin.primaryShape, ...
         round(settings.mainBin.primaryFiltSize/pixelSize));
-    BW = imerode(BW,SE);    
+    BW = imerode(BW,SE);
     BW = imdilate(BW,SE);
     if showImages
         subplot(2,2,3)
