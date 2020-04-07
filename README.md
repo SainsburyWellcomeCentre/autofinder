@@ -166,4 +166,4 @@ Increase to 127 samples in main pool plus another 25 in the phase 2 pool, which 
 What we need to do right now is address the problem with [low SNR acquisitions](https://github.com/raacampbell/autofinder/issues/40).
 
 * v8
-Deals with lowSNR acquisitions and also enables the rolling threshold, which sorts out a few other problems. The main sticking point now is what to do with brains such as `SW_BY319_2_3_4`, which do badly beuse [the laser power was changed mid-way](the https://github.com/raacampbell/autofinder/issues/33) through the acquisition. The rolling threshold does not cover this adquately as implemented. 
+Deals with lowSNR acquisitions and also enables the rolling threshold, which sorts out a few other problems. The main sticking point now is what to do with brains such as `SW_BY319_2_3_4`, which do badly beuse [the laser power was changed mid-way](https://github.com/raacampbell/autofinder/issues/33) through the acquisition. The rolling threshold does not cover this adquately as implemented. Working on the [occluded brain issue](https://github.com/raacampbell/autofinder/issues/33) might help the low laser power. In some ways they are related. 
