@@ -160,3 +160,7 @@ I then ran the algorithm on all samples and looked at the results. We have the f
   
 * v6
 Generally pretty good performance. Increased the pool of acquisitions from 65 to about 114. Removed one sample where laser power was changed. The main thing to sort out now is [whether the evaluation is using the correct borders](https://github.com/raacampbell/autofinder/issues/35). 
+
+* v7
+Increase to 127 samples in main pool plus another 25 in the phase 2 pool, which we'll worry about later. That includes 7 where there was just one or more samples not visible at the start, 2 where the sample vanishes part way due to an acquisition problem, the eye, and 7 which simply have too many duplicate tiles due to BS with large number of averages.  
+What we need to do right now is address the problem with [low SNR acquisitions](https://github.com/raacampbell/autofinder/issues/40).
