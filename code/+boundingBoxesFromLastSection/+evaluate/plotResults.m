@@ -17,7 +17,9 @@ function plotResults(testDir)
 %
 % Rob Campbell - SWC 2020
 
-
+if nargin<1
+    testDir=[];
+end
 summaryTable = getSummaryTable(testDir);
 if isempty(summaryTable)
     return 
@@ -52,6 +54,7 @@ hold off
 xlabel('Acquisition #')
 ylabel('Square mm missed')
 title('Total square mm missed (lower better)')
+xlim([1,size(summaryTable,1)])
 
 subplot(4,2,2)
 plot(summaryTable.totalNonImagedSqMM, '.r-')
@@ -62,6 +65,7 @@ hold off
 xlabel('Acquisition #')
 ylabel('Aquare mm missed')
 title('Worst section square mm missed (lower better)')
+xlim([1,size(summaryTable,1)])
 
 subplot(4,2,3)
 plot(summaryTable.totalImagedSqMM, '.r-')
@@ -72,6 +76,8 @@ hold off
 xlabel('Acquisition #')
 ylabel('Square mm extra')
 title('Total square mm extra (lower better)')
+xlim([1,size(summaryTable,1)])
+
 
 subplot(4,2,4)
 plot(summaryTable.maxExtraSqMM, '.r-')
@@ -82,7 +88,7 @@ hold off
 xlabel('Acquisition #')
 ylabel('Aquare mm extra')
 title('Section with most extra square mm (lower better)')
-
+xlim([1,size(summaryTable,1)])
 
 subplot(4,2,5)
 plot(summaryTable.totalImagedSqMM,summaryTable.totalNonImagedSqMM,'.r')
@@ -121,15 +127,20 @@ title(sprintf('Prop orig area covered by ROIs (mean=%0.3f)', mu))
 ylim([0,1])
 grid on
 
+
+
 subplot(4,2,8)
 plot(summaryTable.medPropPixelsInRoiThatAreTissue,'.r-')
 mu = mean(summaryTable.medPropPixelsInRoiThatAreTissue);
 hold on
 plot([xlim],[mu,mu],'--b')
 hold off
+xlim([1,size(summaryTable,1)])
+
 
 ylim([0,1])
 xlabel('Acquisition #')
 ylabel('Prop ROI area filled')
 title('Proportion of imaged ROI that is filled with tissue')
 grid on
+xlim([1,size(summaryTable,1)])
