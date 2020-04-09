@@ -69,6 +69,18 @@ else
 end
 
 
+% Log the details of this test run
+logFname = fullfile(testDirThisSession,'LOG_FILE.txt');
+fid=fopen(logFname,'w+');
+fprintf(fid,'Starting at %s\n', datestr(now,'yyyy-mm-dd, HH:MM:SS'));
+[~, hostname] = system('hostname'); 
+fprintf(fid,'Running on machine %s\n', strtrim(hostname));
+
+gitinfo = boundingBoxesFromLastSection.tools.getGitInfo;
+fprintf(fid,'Commit %s on %s branch\n', gitinfo.hash, gitinfo.branch);
+fclose(fid);
+t=tic;
+
 parfor ii=1:length(pStack_list)
     tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
     fprintf('Loading %s\n',tFile)
@@ -101,6 +113,13 @@ parfor ii=1:length(pStack_list)
 
 
 end
+
+
+%Log when we finished and how long it took
+fid = fopen(logFname,'a+');
+fprintf(fid,'Finished at %s. Processed %d acquisitions in %d seconds\n\n', ...
+    datestr(now,'yyyy-mm-dd, HH:MM:SS'), length(pStack_list), round(toc(t)) );
+fclose(fid);
 
 
 % internal functions 

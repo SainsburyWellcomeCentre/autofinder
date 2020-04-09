@@ -9,7 +9,7 @@ function pStack = stackToGroundTruth(imStack,pathToRecipe,nSamples)
 % parameters we need to obtain a ground truth brain border against which we can go on to 
 % test whether or not the auto-brain-finder has managed to identify the whole brain. 
 %
-% 
+%
 % Inputs
 % imStack - The preview image stack produced by previewFilesToTiffStack from BakingTray.
 % pathToRecipe - Path to this sample's recipe file
