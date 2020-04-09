@@ -70,9 +70,9 @@ txtReport = [txtReport,msg];
 
 %Report the total imaged area, summing over all ROIs
 totalImagedArea=sum([stats.totalBoundingBoxPixels]);
-totalImagedArea = totalImagedArea * (stats(1).rescaledPixelSize * 1E-3)^2;
+totalImagedSqMM = totalImagedArea * (stats(1).rescaledPixelSize * 1E-3)^2;
 msg=sprintf('Total imaged sq mm in this acquisition: %0.2f\n', ...
-    totalImagedArea);
+    totalImagedSqMM);
 fprintf(msg)
 txtReport = [txtReport,msg];
 
@@ -80,7 +80,7 @@ txtReport = [txtReport,msg];
 %Report the proportion of the original FOV that was imaged. 
 %This is, of course, only valid for data not acquired with an auto-finder
 imSizeSqmm = prod(size(pStack.imStack)) * (pStack.voxelSizeInMicrons * 1E-3)^2;
-propImagedArea = totalImagedArea/imSizeSqmm;
+propImagedArea = totalImagedSqMM/imSizeSqmm;
 msg=sprintf('Proportion of original area imaged by ROIs: %0.4f\n', ...
     propImagedArea);
 fprintf(msg)
@@ -91,12 +91,18 @@ txtReport = [txtReport,msg];
 % Build an output structure
 report.numSectionsWithHighCoverage=numSectionsWithHighCoverage;
 report.medPropPixelsInRoiThatAreTissue=medPropPixelsInRoiThatAreTissue;
-report.totalImagedArea=totalImagedArea;
+report.totalImagedSqMM=totalImagedSqMM;
 report.propImagedArea=propImagedArea;
 report.txtReport=txtReport;
 
 
 
+% Now loop through the whole stats structure and extract more information for
+% cases where there are non-imaged pixels, etc
+report.nonImagedTiles=zeros(1,length(stats));
+report.nonImagedPixels=zeros(1,length(stats));
+report.nonImagedSqMM=zeros(1,length(stats));
+report.extraSqMM=zeros(1,length(stats));
 for ii=1:length(stats)
 
     %Empty image. We will fill with ones all regions where the ground-truth brain was found.
@@ -181,6 +187,8 @@ for ii=1:length(stats)
             warnStr = '';
         end
 
+        nonImagedSqMM = nonImagedPixels * (pStack.voxelSizeInMicrons*1E-3)^2;
+
         msg = sprintf('%sSection %03d/%03d, %d ROIs, %d non-imaged pixels; %0.3f tiles; %0.3f sq mm \n', ...
             warnStr, ...
             ii, ...
@@ -188,12 +196,20 @@ for ii=1:length(stats)
             length(stats(ii).BoundingBoxes), ...
             nonImagedPixels, ...
             nonImagedTiles, ...
-            nonImagedPixels * (pStack.voxelSizeInMicrons*1E-3)^2);
+            nonImagedSqMM);
 
         fprintf(msg)
         txtReport = [txtReport,msg];
 
+        % Add to cumulative total
+        report.nonImagedTiles(ii)=nonImagedTiles;
+        report.nonImagedPixels(ii)=nonImagedPixels;
+        report.nonImagedSqMM(ii)=nonImagedSqMM;
     end
+
+    % Add this information to the output structure
+
+
 
 
     % Calculate how many pixels were imaged more than once. Weight each by the number of extra times it was imaged.
@@ -209,8 +225,11 @@ for ii=1:length(stats)
         fprintf(msg)
         txtReport = [txtReport,msg];
     end
+    report.extraSqMM(ii)=totalExtraSqmm;
 
 end %for ii=1:length(stats)
+
+report.nPlanesWithMissingBrain=nPlanesWithMissingBrain;
 
 if nPlanesWithMissingBrain==0
     msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...

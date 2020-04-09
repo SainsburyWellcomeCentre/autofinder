@@ -122,6 +122,9 @@ fprintf(fid,'Finished at %s. Processed %d acquisitions in %d seconds\n\n', ...
 fclose(fid);
 
 
+% Now we generate the summary table in that directory
+boundingBoxesFromLastSection.evaluate.genSummaryTable(testDirThisSession)
+
 % internal functions 
 function pStack=pstack_loader(fname)
     load(fname)
