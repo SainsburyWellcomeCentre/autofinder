@@ -1,12 +1,14 @@
-function out=evaluateBoundingBoxes(stats,pStack)
+function report=evaluateBoundingBoxes(stats,pStack)
 % Evaluate how well the bounding boxes capture the brain
 %
-%  function out=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats)
+%  function txtReport=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats)
 %
 % Purpose
-% Report accuracy of brain finding. Shows images of failed sections
+% Report accuracy of brain finding with a text report. Shows images of failed sections
 % if no outputs were requested. NOTE: evaluates based on the border
 % defined in pStack.borders and not on the binarised image.
+% This function is run automatically by test.runOnStackStruct once
+% it has finished processing all of the data.
 %
 % Inputs
 % The pStackLog file in test directory. The pStack is loaded automatically.
@@ -19,19 +21,17 @@ function out=evaluateBoundingBoxes(stats,pStack)
 % Example
 % testLog  = boundingBoxesFromLastSection.test.runOnStackStruct(testLog)
 % boundingBoxesFromLastSection.test.evaluateBoundingBoxes(testLog)
+% boundingBoxesFromLastSection.test.evaluateBoundingBoxes(testLog,pStack)
 %
 % Outputs
-% out - A string describing how well this sample registered. This
-%       is so we can write text files for multiple sumples to summarize
-%       the performance of the algorithm. 
-
+% report - A structure describing how well this sample registered. 
 
 % Look for pStack file to load
 if nargin==1
     pStackFname = stats(1).stackFname;
     if ~exist(pStackFname,'file')
-        out = sprintf('No pStack file found at %s\n', pStackFname);
-        fprintf(out)
+        txtReport = sprintf('No pStack file found at %s\n', pStackFname);
+        fprintf(txtReport)
         return
     else
         fprintf('Loading stack file %s\n',pStackFname)
@@ -42,32 +42,31 @@ end
 
 nPlanesWithMissingBrain=0;
 
-out = '';
-
+txtReport = '';
 
 
 if length(stats)~=size(pStack.binarized,3)
     msg=sprintf('WARNING -- There are %d sections in the image stack but only %d were processed.\n', ...
         size(pStack.binarized,3), length(stats));
     fprintf(msg)
-    out = [out,msg];
+    txtReport = [txtReport,msg];
 end
 
 % Look for cases where the bounding box covers more than 95% of the FOV
-pArea = sum([stats.propImagedAreaCoveredByBoundingBox]>0.99);
-if pArea>0
+numSectionsWithHighCoverage = sum([stats.propImagedAreaCoveredByBoundingBox]>0.99);
+if numSectionsWithHighCoverage>0
     msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 0.99 in %d sections\n', ...
-        pArea);
+        numSectionsWithHighCoverage);
     fprintf(msg)
-    out = [out,msg];
+    txtReport = [txtReport,msg];
 end
 
 %Report the average proportion of pixels within a boundingbox that have tissue
-medCoverage=median(([stats.nForegroundPix]./[stats.totalBoundingBoxPixels]));
+medPropPixelsInRoiThatAreTissue=median(([stats.nForegroundPix]./[stats.totalBoundingBoxPixels]));
 msg=sprintf('Median area of ROIs filled with tissue: %0.2f (run at %d micron border size).\n', ...
-    medCoverage, stats(1).settings.mainBin.expansionSize);
+    medPropPixelsInRoiThatAreTissue, stats(1).settings.mainBin.expansionSize);
 fprintf(msg)
-out = [out,msg];
+txtReport = [txtReport,msg];
 
 %Report the total imaged area, summing over all ROIs
 totalImagedArea=sum([stats.totalBoundingBoxPixels]);
@@ -75,7 +74,7 @@ totalImagedArea = totalImagedArea * (stats(1).rescaledPixelSize * 1E-3)^2;
 msg=sprintf('Total imaged sq mm in this acquisition: %0.2f\n', ...
     totalImagedArea);
 fprintf(msg)
-out = [out,msg];
+txtReport = [txtReport,msg];
 
 
 %Report the proportion of the original FOV that was imaged. 
@@ -85,9 +84,16 @@ propImagedArea = totalImagedArea/imSizeSqmm;
 msg=sprintf('Proportion of original area imaged by ROIs: %0.4f\n', ...
     propImagedArea);
 fprintf(msg)
-out = [out,msg];
+txtReport = [txtReport,msg];
 
 
+
+% Build an output structure
+report.numSectionsWithHighCoverage=numSectionsWithHighCoverage;
+report.medPropPixelsInRoiThatAreTissue=medPropPixelsInRoiThatAreTissue;
+report.totalImagedArea=totalImagedArea;
+report.propImagedArea=propImagedArea;
+report.txtReport=txtReport;
 
 
 
@@ -185,7 +191,7 @@ for ii=1:length(stats)
             nonImagedPixels * (pStack.voxelSizeInMicrons*1E-3)^2);
 
         fprintf(msg)
-        out = [out,msg];
+        txtReport = [txtReport,msg];
 
     end
 
@@ -201,7 +207,7 @@ for ii=1:length(stats)
         msg = sprintf('Section %03d/%03d has %0.3f extra sq mm due to multiple-imaging of pixels\n', ...
             ii, size(pStack.binarized,3), totalExtraSqmm);
         fprintf(msg)
-        out = [out,msg];
+        txtReport = [txtReport,msg];
     end
 
 end %for ii=1:length(stats)
@@ -210,5 +216,5 @@ if nPlanesWithMissingBrain==0
     msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
         length(stats));
     fprintf(msg)
-    out = [out,msg];
+    txtReport = [txtReport,msg];
 end

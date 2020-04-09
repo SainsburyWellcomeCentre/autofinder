@@ -158,6 +158,9 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
     stats(1).runOnStackStructArgs = argIn;
     stats(1).settings = settings;
 
+    % Add a text report
+    stats(1).report = boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats,pStack);
+
     %Add the tThreshSD setting to everything
     for ii=1:length(stats)
         stats(ii).tThreshSD=tThreshSD;
