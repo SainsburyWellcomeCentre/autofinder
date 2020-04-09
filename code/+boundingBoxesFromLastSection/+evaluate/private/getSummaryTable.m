@@ -3,15 +3,22 @@ function summaryTable = getSummaryTable(testDir)
 % Avoids boilerplate. 
 
 
+summaryTable = [];
+
 if nargin<1 || isempty(testDir)
     testDir=pwd;
 end
 
-fname = fullfile(testDir,'summary_table.mat');
+if ~exist(testDir,'dir')
+    fprintf('The test directory %s does not exist.\n',testDir);
+    return
+end
+
+fname = fullfile(testDir,'summary_table.mat')
 
 if ~exist(fname,'file')
     fprintf('No summary_table.mat file found.\n');
-    summaryTable = [];
+
     return
 else
     load(fname)

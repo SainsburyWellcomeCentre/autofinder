@@ -35,8 +35,9 @@ f=find(summaryTable.numUnprocessedSections>0);
 if ~isempty(f)
     fprintf('\n\n ** The following recordings have unprocessed sections:\n')
     for ii=1:length(f)
-            fprintf('%d/%d. %s -- %d unprocessed sections.\n', f(ii), size(summaryTable,1), ...
-        summaryTable.fileName{f(ii)}, summaryTable.numUnprocessedSections(f(ii)));
+            fprintf('%d/%d. %s -- %d unprocessed sections. tThresh SD=%0.2f\n', f(ii), size(summaryTable,1), ...
+        summaryTable.fileName{f(ii)}, summaryTable.numUnprocessedSections(f(ii)), ...
+        summaryTable.tThreshSD(f(ii))     );
     end
 end
 

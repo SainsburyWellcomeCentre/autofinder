@@ -1,7 +1,7 @@
-function compareResultsFiles(dirReference,dirTest)
+function compareResults(dirReference,dirTest)
 % Compare fnameB to fnameA using plots and stats printed to screen
 %
-%  function boundingBoxesFromLastSection.test.compareResultsFiles(dirReference,dirTest)
+%  function boundingBoxesFromLastSection.test.compareResults(dirReference,dirTest)
 %
 % 
 % Inputs
