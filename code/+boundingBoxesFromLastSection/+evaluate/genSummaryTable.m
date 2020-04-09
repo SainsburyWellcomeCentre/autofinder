@@ -61,6 +61,9 @@ autothresh_SNR = zeros(n,1);
 autothresh_tThreshSD = zeros(n,1);
 
 
+
+% Loop through the testLog files. Load each in turn and 
+% populate above variables.
 fprintf('\nGenerating summary table:\n')
 for ii=1:n
     fname=fullfile(dirToProcess,fileName{ii});
@@ -99,6 +102,7 @@ for ii=1:n
 end
 
 
+% Construct table
 summaryTable = table(fileName, tThreshSD, rollingThreshold, autoThreshold, numSectionsWithHighCoverage, ...
     medPropPixelsInRoiThatAreTissue, totalImagedSqMM, propImagedArea,nSamples,isProblemCase, ...
     numUnprocessedSections, autothresh_notes, autothresh_tThreshSD, autothresh_SNR, ...
@@ -110,9 +114,12 @@ summaryTable = table(fileName, tThreshSD, rollingThreshold, autoThreshold, numSe
 % Save the table to disk
 save(fullfile(dirToProcess,'summary_table.mat'),'summaryTable')
 
+
 if nargout>0
     varargout{1}=summaryTable;
 end
+
+
 
 
 function [notes, tThreshSD, SNR] = returnAutoThreshSummaryStats(testLog)

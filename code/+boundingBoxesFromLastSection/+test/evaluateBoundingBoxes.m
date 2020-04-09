@@ -103,7 +103,9 @@ report.nonImagedTiles=zeros(1,length(stats));
 report.nonImagedPixels=zeros(1,length(stats));
 report.nonImagedSqMM=zeros(1,length(stats));
 report.extraSqMM=zeros(1,length(stats));
-for ii=1:length(stats)
+
+
+for ii=1:size(pStack.imStack,3)
 
     %Empty image. We will fill with ones all regions where the ground-truth brain was found.
     tB = pStack.borders{1}{ii}; % Ground truth brain borders
@@ -130,10 +132,17 @@ for ii=1:length(stats)
     % HOWEVER: we get the bounding boxes from the preceeding section for all but
     % the first section
     if ii>1
-        bBoxes = stats(ii-1).BoundingBoxes;
+        if length(stats)>=ii
+            bBoxes = stats(ii-1).BoundingBoxes;
+        else
+            % The auto-finding must have ended prematurely. We make blank data
+            bBoxes={};
+        end
+            
     else
         bBoxes = stats(ii).BoundingBoxes;
     end
+
     for jj=1:length(bBoxes)
         % All pixels that are within the bounding box should be zero
         bb=bBoxes{jj};
@@ -193,7 +202,7 @@ for ii=1:length(stats)
             warnStr, ...
             ii, ...
             size(pStack.binarized,3), ...
-            length(stats(ii).BoundingBoxes), ...
+            length(bBoxes), ...
             nonImagedPixels, ...
             nonImagedTiles, ...
             nonImagedSqMM);
@@ -227,7 +236,7 @@ for ii=1:length(stats)
     end
     report.extraSqMM(ii)=totalExtraSqmm;
 
-end %for ii=1:length(stats)
+end %for ii=1:size(pStack.imStack,3)
 
 report.nPlanesWithMissingBrain=nPlanesWithMissingBrain;
 
