@@ -52,7 +52,7 @@ if length(stats)~=size(pStack.binarized,3)
     txtReport = [txtReport,msg];
 end
 
-% Look for cases where the bounding box covers more than 95% of the FOV
+% Look for cases where the bounding box covers more than 99% of the FOV
 numSectionsWithHighCoverage = sum([stats.propImagedAreaCoveredByBoundingBox]>0.99);
 if numSectionsWithHighCoverage>0
     msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 0.99 in %d sections\n', ...
@@ -60,6 +60,16 @@ if numSectionsWithHighCoverage>0
     fprintf(msg)
     txtReport = [txtReport,msg];
 end
+
+numSectionsWithOverFlowingCoverage = sum([stats.propImagedAreaCoveredByBoundingBox]>1);
+if numSectionsWithOverFlowingCoverage>0
+    msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 1.0 in %d sections\n', ...
+        numSectionsWithOverFlowingCoverage);
+    fprintf(msg)
+    txtReport = [txtReport,msg];
+end
+
+
 
 %Report the average proportion of pixels within a boundingbox that have tissue
 medPropPixelsInRoiThatAreTissue=median(([stats.nForegroundPix]./[stats.totalBoundingBoxPixels]));
@@ -90,6 +100,7 @@ txtReport = [txtReport,msg];
 
 % Build an output structure
 report.numSectionsWithHighCoverage=numSectionsWithHighCoverage;
+report.numSectionsWithOverFlowingCoverage=numSectionsWithOverFlowingCoverage;
 report.medPropPixelsInRoiThatAreTissue=medPropPixelsInRoiThatAreTissue;
 report.totalImagedSqMM=totalImagedSqMM;
 report.propImagedArea=propImagedArea;

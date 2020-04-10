@@ -41,8 +41,8 @@ pStackFname = cell(n,1);
 tThreshSD = zeros(n,1);
 rollingThreshold = zeros(n,1);
 autoThreshold = zeros(n,1);
-numSectionsWithHighCoverage = zeros(n,1);
-numUnprocessedSections = zeros(n,1);
+numSectionsWithHighCoverage = zeros(n,1); %See evluateBoundingBoxes. Should be with coverage of over 0.99
+numSectionsWithOverFlowingCoverage = zeros(n,1); %See evluateBoundingBoxes. ROI coverage larger then FOV.
 medPropPixelsInRoiThatAreTissue = zeros(n,1);
 totalImagedSqMM = zeros(n,1);
 propImagedArea = zeros(n,1); %Proportion of the original FOV that was imaged
@@ -77,6 +77,7 @@ for ii=1:n
     rollingThreshold(ii) = testLog(1).rollingThreshold;
     autoThreshold(ii) = testLog(1).autothresh;
     numSectionsWithHighCoverage(ii) = testLog(1).report.numSectionsWithHighCoverage;
+    numSectionsWithOverFlowingCoverage(ii) = testLog(1).report.numSectionsWithOverFlowingCoverage;
     numUnprocessedSections(ii) = testLog(1).numUnprocessedSections;
 
     medPropPixelsInRoiThatAreTissue(ii) = testLog(1).report.medPropPixelsInRoiThatAreTissue;
@@ -104,10 +105,11 @@ end
 
 
 % Construct table
+isProblemCase = logical(isProblemCase);
 summaryTable = table(fileName, tThreshSD, rollingThreshold, autoThreshold, numSectionsWithHighCoverage, ...
-    medPropPixelsInRoiThatAreTissue, totalImagedSqMM, propImagedArea,nSamples,isProblemCase, ...
-    numUnprocessedSections, autothresh_notes, autothresh_tThreshSD, autothresh_SNR, ...
-    totalNonImagedTiles, totalNonImagedSqMM, totalExtraSqMM, ...
+    numSectionsWithOverFlowingCoverage, medPropPixelsInRoiThatAreTissue, totalImagedSqMM, ... 
+    propImagedArea, nSamples, isProblemCase, numUnprocessedSections, autothresh_notes, autothresh_tThreshSD, ...
+    autothresh_SNR, totalNonImagedTiles, totalNonImagedSqMM, totalExtraSqMM, ...
     maxNonImagedTiles, maxNonImagedSqMM, maxExtraSqMM,nPlanesWithMissingBrain, ...
     pStackFname);
 
