@@ -43,6 +43,7 @@ rollingThreshold = zeros(n,1);
 autoThreshold = zeros(n,1);
 numSectionsWithHighCoverage = zeros(n,1); %See evluateBoundingBoxes. Should be with coverage of over 0.99
 numSectionsWithOverFlowingCoverage = zeros(n,1); %See evluateBoundingBoxes. ROI coverage larger then FOV.
+numUnprocessedSections = zeros(n,1);
 medPropPixelsInRoiThatAreTissue = zeros(n,1);
 totalImagedSqMM = zeros(n,1);
 propImagedArea = zeros(n,1); %Proportion of the original FOV that was imaged
@@ -105,6 +106,7 @@ end
 
 
 % Construct table
+fprintf('\nBuilding table\n')
 isProblemCase = logical(isProblemCase);
 summaryTable = table(fileName, tThreshSD, rollingThreshold, autoThreshold, numSectionsWithHighCoverage, ...
     numSectionsWithOverFlowingCoverage, medPropPixelsInRoiThatAreTissue, totalImagedSqMM, ... 
@@ -115,7 +117,9 @@ summaryTable = table(fileName, tThreshSD, rollingThreshold, autoThreshold, numSe
 
 
 % Save the table to disk
-save(fullfile(dirToProcess,'summary_table.mat'),'summaryTable')
+fname=fullfile(dirToProcess,'summary_table.mat');
+fprintf('Saving table to %s\n', fname)
+save(fname,'summaryTable')
 
 
 if nargout>0
@@ -140,3 +144,11 @@ function [notes, tThreshSD, SNR] = returnAutoThreshSummaryStats(testLog)
     [~,ind] = min(d);
     tThreshSD = tTvec(ind);
     SNR = testLog(1).autothreshStats(ind).SNR_medThreshRatio;
+
+
+
+function checkSize(varargin)
+    % Used for debugging if one variable is a different size. Otherwise ignore this function. 
+    for ii=1:length(varargin)
+        fprintf('%d/%d - %dx%d\n', ii, length(varargin), size(varargin{ii},1), size(varargin{ii},2))
+    end

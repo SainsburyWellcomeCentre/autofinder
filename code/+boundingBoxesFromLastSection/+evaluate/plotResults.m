@@ -42,13 +42,14 @@ end
 [~,ind] = sort(summaryTable.totalNonImagedSqMM);
 summaryTable = summaryTable(ind,:);
 
-    summaryTable(excludeIndex,:)
+
+summaryTable(excludeIndex,:)
 if ~isempty(excludeIndex)
 
     summaryTable(excludeIndex,:)=[];
 end
     
-    
+
 %report to screen the file name and index of each recording
 for ii=1:size(summaryTable,1)
     fprintf('%d/%d. %s\n', ii, size(summaryTable,1), ...
@@ -66,15 +67,26 @@ if ~isempty(f)
     end
 end
 
+
+% Get the plot settings
+pS = plotSettings;
+
+
 clf
 
 subplot(4,2,1)
-plot(summaryTable.totalNonImagedSqMM, '.r-')
+x=1:length(summaryTable.totalNonImagedSqMM);
+plot(summaryTable.totalNonImagedSqMM, pS.basePlotStyle{:})
+
+% Overlay circles onto problem cases
 hold on 
-plot(xlim,[0,0],'k:')
-grid on
+plot(x(summaryTable.isProblemCase), ...
+    summaryTable.totalNonImagedSqMM(summaryTable.isProblemCase), ...
+    pS.highlightProblemCases{:}) 
 hold off
 ylabel('Square mm missed')
+
+grid on
 %cap really large values and plot again
 f=find(summaryTable.totalNonImagedSqMM>100);
 if ~isempty(f)
@@ -87,12 +99,12 @@ if ~isempty(f)
 end
 xlabel('Acquisition #')
 
-title('Total square mm missed (lower better)')
+title('Total square mm missed (lower better). Problem cases highlighted.')
 xlim([1,size(summaryTable,1)])
 
 
 subplot(4,2,2)
-plot(summaryTable.totalNonImagedSqMM, '.r-')
+plot(summaryTable.totalNonImagedSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -102,20 +114,42 @@ ylabel('Aquare mm missed')
 title('Worst section square mm missed (lower better)')
 xlim([1,size(summaryTable,1)])
 
+
+
 subplot(4,2,3)
-plot(summaryTable.totalImagedSqMM, '.r-')
+plot(summaryTable.totalExtraSqMM, pS.basePlotStyle{:})
 hold on 
+
+% Highlight problem cases
+plot(x(summaryTable.isProblemCase), ...
+    summaryTable.totalExtraSqMM(summaryTable.isProblemCase), ...
+    pS.highlightProblemCases{:}) 
+
+% Highlight cases with many sections having high coverage
+f = find(summaryTable.numSectionsWithOverFlowingCoverage>0);
+plot(x(f), ...
+    summaryTable.totalExtraSqMM(f), ...
+    pS.highlightHighCoverage{:}) 
+
 plot(xlim,[0,0],'k:')
 grid on
 hold off
 xlabel('Acquisition #')
 ylabel('Square mm extra')
-title('Total square mm extra (lower better)')
+title('Total square mm extra (lower better). red: problem. green: overflowing coverage.')
 xlim([1,size(summaryTable,1)])
 
+%Report to terminal cases where we have high coverage
+fprintf('\nThe following have overflowing ROIs:\n')
+for ii=1:length(f)
+    fprintf('%d/%d %s -- %d sections\n', ...
+        f(ii),size(summaryTable,1), summaryTable.fileName{f(ii)}, ...
+        summaryTable.numSectionsWithOverFlowingCoverage(f(ii)) )
+end
+fprintf('\n')
 
 subplot(4,2,4)
-plot(summaryTable.maxExtraSqMM, '.r-')
+plot(summaryTable.maxExtraSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -125,9 +159,10 @@ ylabel('Aquare mm extra')
 title('Section with most extra square mm (lower better)')
 xlim([1,size(summaryTable,1)])
 
+
+
 subplot(4,2,5)
-plot(summaryTable.totalImagedSqMM,summaryTable.totalNonImagedSqMM,'.r')
-hold on
+plot(summaryTable.totalImagedSqMM,summaryTable.totalNonImagedSqMM, pS.basePlotStyle{:},'linestyle','none')
 xoffset = diff(xlim)*0.0075;
 yoffset = diff(ylim)*0.02;
 for ii=1:length(summaryTable.totalImagedSqMM)
@@ -137,23 +172,27 @@ hold off
 xlabel('Extra sq mm')
 ylabel('Missed sq mm')
 
+
 subplot(4,2,6)
 nBins=round(length(summaryTable.totalNonImagedSqMM)/5);
 if nBins<5
     nBins=5;
 end
 hist(summaryTable.totalNonImagedSqMM,nBins)
-x=xlim;
-xlim([0,x(2)]);
+xl=xlim;
+xlim([0,xl(2)]);
 xlabel('Missed sq mm')
 ylabel('# acquisitions')
 
 
 
 subplot(4,2,7)
-plot(summaryTable.propImagedArea,'.r-')
+plot(summaryTable.propImagedArea, pS.basePlotStyle{:})
 mu=mean(summaryTable.propImagedArea);
 hold on
+plot(x(summaryTable.isProblemCase), ...
+    summaryTable.propImagedArea(summaryTable.isProblemCase), ...
+    pS.highlightProblemCases{:}) 
 plot([xlim],[mu,mu],'--b')
 hold off
 xlabel('Acquisition #')
@@ -164,8 +203,9 @@ grid on
 xlim([1,size(summaryTable,1)])
 
 
+
 subplot(4,2,8)
-plot(summaryTable.medPropPixelsInRoiThatAreTissue,'.r-')
+plot(summaryTable.medPropPixelsInRoiThatAreTissue, pS.basePlotStyle{:})
 mu = mean(summaryTable.medPropPixelsInRoiThatAreTissue);
 hold on
 plot([xlim],[mu,mu],'--b')
