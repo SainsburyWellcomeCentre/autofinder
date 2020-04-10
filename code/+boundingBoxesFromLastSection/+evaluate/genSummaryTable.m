@@ -34,6 +34,7 @@ end
 
 
 % Pre-allocate the variables that we will later use to build the table
+% Most of these numbers come from evaluateBoundingBoxes. Some from runOnStackStruct or runOnAllInDir.
 n=length(tLogs);
 fileName = {tLogs.name}';
 pStackFname = cell(n,1);
@@ -44,7 +45,7 @@ numSectionsWithHighCoverage = zeros(n,1);
 numUnprocessedSections = zeros(n,1);
 medPropPixelsInRoiThatAreTissue = zeros(n,1);
 totalImagedSqMM = zeros(n,1);
-propImagedArea = zeros(n,1);
+propImagedArea = zeros(n,1); %Proportion of the original FOV that was imaged
 nSamples = zeros(n,1);
 isProblemCase = zeros(n,1);
 

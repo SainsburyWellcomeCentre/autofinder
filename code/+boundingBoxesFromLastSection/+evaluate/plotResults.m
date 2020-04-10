@@ -1,4 +1,4 @@
-function plotResults(testDir)
+function plotResults(testDir,varargin)
 % Make summary plots of all data in a test directory
 %
 %  function boundingBoxesFromLastSection.test.plotResults(testDir)
@@ -8,7 +8,10 @@ function plotResults(testDir)
 % run with no input argument, it works in the current directory. 
 %
 % Inputs
-% testDir - path test directory. Optional. 
+% testDir - path test directory. Optional. If missing or empty, current directory.
+%
+% Inputs (param/val pairs)
+% excludeIndex - vector of acquisition idexes to exclude from plotting.
 %
 %
 % Outputs
@@ -17,15 +20,35 @@ function plotResults(testDir)
 %
 % Rob Campbell - SWC 2020
 
-if nargin<1
+if nargin<1 || isempty(testDir)
     testDir=[];
 end
+
+params = inputParser;
+params.CaseSensitive=false;
+params.addParameter('excludeIndex',[],@isnumeric)
+
+params.parse(varargin{:})
+excludeIndex = params.Results.excludeIndex;
+
+
+
 summaryTable = getSummaryTable(testDir);
 if isempty(summaryTable)
     return 
 end
 
+% Sort by sqmm missed
+[~,ind] = sort(summaryTable.totalNonImagedSqMM);
+summaryTable = summaryTable(ind,:);
 
+    summaryTable(excludeIndex,:)
+if ~isempty(excludeIndex)
+
+    summaryTable(excludeIndex,:)=[];
+end
+    
+    
 %report to screen the file name and index of each recording
 for ii=1:size(summaryTable,1)
     fprintf('%d/%d. %s\n', ii, size(summaryTable,1), ...
@@ -51,10 +74,22 @@ hold on
 plot(xlim,[0,0],'k:')
 grid on
 hold off
-xlabel('Acquisition #')
 ylabel('Square mm missed')
+%cap really large values and plot again
+f=find(summaryTable.totalNonImagedSqMM>100);
+if ~isempty(f)
+    capped = summaryTable.totalNonImagedSqMM;
+    capped(capped>50)=nan;
+    yyaxis('right');
+    plot(capped, '.-','color',[0,0,1,0.35])
+    ylabel('Capped at 50 sq mm')
+    set(gca,'YColor','b')
+end
+xlabel('Acquisition #')
+
 title('Total square mm missed (lower better)')
 xlim([1,size(summaryTable,1)])
+
 
 subplot(4,2,2)
 plot(summaryTable.totalNonImagedSqMM, '.r-')
@@ -126,7 +161,7 @@ ylabel('Total imaged sq mm')
 title(sprintf('Prop orig area covered by ROIs (mean=%0.3f)', mu))
 ylim([0,1])
 grid on
-
+xlim([1,size(summaryTable,1)])
 
 
 subplot(4,2,8)
@@ -136,11 +171,9 @@ hold on
 plot([xlim],[mu,mu],'--b')
 hold off
 xlim([1,size(summaryTable,1)])
-
-
 ylim([0,1])
 xlabel('Acquisition #')
 ylabel('Prop ROI area filled')
 title('Proportion of imaged ROI that is filled with tissue')
 grid on
-xlim([1,size(summaryTable,1)])
+
