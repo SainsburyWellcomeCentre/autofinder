@@ -142,6 +142,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         if any(findsAgar)
             tF = find(findsAgar);
             stats(1:tF(end))=[];
+            tT=[stats.tThreshSD];
             fprintf(' ** DELETED FIRST %d entries because we see tiling artifacts there. **\n', tF(end))
         end
 
