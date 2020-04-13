@@ -54,7 +54,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params = inputParser;
     params.CaseSensitive = false;
 
-    params.addParameter('pixelSize', 7, @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('pixelSize', 20, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('tileSize', 1000, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
