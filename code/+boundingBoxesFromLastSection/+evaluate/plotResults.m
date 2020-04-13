@@ -73,10 +73,12 @@ pS = plotSettings;
 
 
 clf
+nRows=6;
+nCols=3;
 
-subplot(4,2,1)
+subplot(nRows,nCols,1)
 x=1:length(summaryTable.totalNonImagedSqMM);
-plot(summaryTable.totalNonImagedSqMM, pS.basePlotStyle{:})
+plot(x,summaryTable.totalNonImagedSqMM, pS.basePlotStyle{:})
 
 % Overlay circles onto problem cases
 hold on 
@@ -91,7 +93,7 @@ grid on
 f=find(summaryTable.totalNonImagedSqMM>100);
 if ~isempty(f)
     capped = summaryTable.totalNonImagedSqMM;
-    capped(capped>50)=nan;
+    capped(capped>100)=nan;
     yyaxis('right');
     plot(capped, '.-','color',[0,0,1,0.35])
     ylabel('Capped at 50 sq mm')
@@ -103,7 +105,7 @@ title('Total square mm missed (lower better). Problem cases highlighted.')
 xlim([1,size(summaryTable,1)])
 
 
-subplot(4,2,2)
+subplot(nRows,nCols,2)
 plot(summaryTable.totalNonImagedSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
@@ -116,7 +118,7 @@ xlim([1,size(summaryTable,1)])
 
 
 
-subplot(4,2,3)
+subplot(nRows,nCols,3)
 plot(summaryTable.totalExtraSqMM, pS.basePlotStyle{:})
 hold on 
 
@@ -148,7 +150,7 @@ for ii=1:length(f)
 end
 fprintf('\n')
 
-subplot(4,2,4)
+subplot(nRows,nCols,4)
 plot(summaryTable.maxExtraSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
@@ -161,7 +163,7 @@ xlim([1,size(summaryTable,1)])
 
 
 
-subplot(4,2,5)
+subplot(nRows,nCols,5)
 plot(summaryTable.totalImagedSqMM,summaryTable.totalNonImagedSqMM, pS.basePlotStyle{:},'linestyle','none')
 xoffset = diff(xlim)*0.0075;
 yoffset = diff(ylim)*0.02;
@@ -173,7 +175,7 @@ xlabel('Extra sq mm')
 ylabel('Missed sq mm')
 
 
-subplot(4,2,6)
+subplot(nRows,nCols,6)
 nBins=round(length(summaryTable.totalNonImagedSqMM)/5);
 if nBins<5
     nBins=5;
@@ -186,7 +188,7 @@ ylabel('# acquisitions')
 
 
 
-subplot(4,2,7)
+subplot(nRows,nCols,7)
 plot(summaryTable.propImagedArea, pS.basePlotStyle{:})
 mu=mean(summaryTable.propImagedArea);
 hold on
@@ -197,14 +199,14 @@ plot([xlim],[mu,mu],'--b')
 hold off
 xlabel('Acquisition #')
 ylabel('Total imaged sq mm')
-title(sprintf('Prop orig area covered by ROIs (mean=%0.3f)', mu))
+title(sprintf('Prop orig area covered by ROIs (mean=%0.3f). highlights are problem cases', mu))
 ylim([0,1])
 grid on
 xlim([1,size(summaryTable,1)])
 
 
 
-subplot(4,2,8)
+subplot(nRows,nCols,8)
 plot(summaryTable.medPropPixelsInRoiThatAreTissue, pS.basePlotStyle{:})
 mu = mean(summaryTable.medPropPixelsInRoiThatAreTissue);
 hold on
@@ -215,5 +217,28 @@ ylim([0,1])
 xlabel('Acquisition #')
 ylabel('Prop ROI area filled')
 title('Proportion of imaged ROI that is filled with tissue')
+grid on
+
+
+
+subplot(nRows,nCols,9)
+plot(summaryTable.totalNonImagedSqMM, summaryTable.autothresh_SNR,'ok')
+xlabel('Non-imaged SqMM')
+ylabel('SNR From auto-thresh')
+grid on
+
+
+
+subplot(nRows,nCols,10)
+plot(summaryTable.autothresh_SNR, summaryTable.tThreshSD,'ok')
+xlabel('SNR From auto-thresh')
+ylabel('tThreshSD')
+grid on
+
+
+subplot(nRows,nCols,11)
+plot(x,summaryTable.tThreshSD, pS.basePlotStyle{:})
+xlabel('Acquisition #')
+ylabel('tThreshSD')
 grid on
 
