@@ -12,7 +12,7 @@ function BW = binarizeImage(im,pixelSize,tThresh,showImages)
     % tThresh - the threshold between brain and no brain
     %
     % Inputs (optional)
-    % showImages - false by default
+    % showImages - false by default. If true, images are shown. User has to press return to continue.
     %
     % Output
     % BW - the binarised imaged. 
@@ -34,6 +34,11 @@ function BW = binarizeImage(im,pixelSize,tThresh,showImages)
         title('Before medfilt2')
     end
 
+
+
+
+    BW=bwpropfilt(BW,'Eccentricity',[0,0.99]); %Get rid of line-like things
+
     BW = medfilt2(BW,[settings.mainBin.medFiltBW,settings.mainBin.medFiltBW]);
 
     if showImages
@@ -49,11 +54,17 @@ function BW = binarizeImage(im,pixelSize,tThresh,showImages)
     SE = strel(settings.mainBin.primaryShape, ...
         round(settings.mainBin.primaryFiltSize/pixelSize));
     BW = imerode(BW,SE);
+    BW=bwpropfilt(BW,'Eccentricity',[0,0.99]); %Get rid of line-like things
+    BW=bwpropfilt(BW,'MinorAxisLength',[2,inf]); %Get rid of things that are thin
     BW = imdilate(BW,SE);
+
+
     if showImages
         subplot(2,2,3)
         imagesc(BW)
         title('After morph filter')
+        %subplot(2,2,4)
+       %hist([r.MinorAxisLength],100)
     end
 
 
@@ -67,7 +78,7 @@ function BW = binarizeImage(im,pixelSize,tThresh,showImages)
         imagesc(BW)
         drawnow
         title('After expansion')
-        pause
+        %pause
     end
 
     if verbose
