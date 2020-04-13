@@ -1,5 +1,16 @@
 # autofinder
 Test of algorithm to image only a sample and not surrounding tissue using serial-section 2-photon imaging. 
+We have over 150 acquisitions, many have multiple samples so in total there are over 300 samples. 
+Almost all samples are rat or mouse brains.
+Testing proceeds in phases:
+
+* **Phase One** is brains that have few or no obvious problems for the auto-ROI and are 100% expected to work without unusual user intervention.
+
+* **Phase Two** Are samples which are particularly awkward but we would like to get working before moving on to implementing this in BakingTray. Once Phase Two is complete, we move to the BakingTray implementation. Phase Two includes cases where the  laser intensity changed during acquisition, spinal cord acquisitions, low SNR acquisitions. 
+
+* **Phase Three** samples are those where user intervention of some sort is necessary. This includes acquisitions where one or more samples is not visible at all initially. It also includes acquisitions where the sample legitimately vanishes (e.g. PMT switched off due to user error, sample block unglued, etc). 
+
+* **Deferred Samples** are those that we will worry about once everything above worked. e.g. this includes BS data with large numbers of duplicate tiles. Hopefully this can be fixed by Vidrio. 
 
 
 # Generating pStack files
@@ -164,3 +175,6 @@ Generally pretty good performance. Increased the pool of acquisitions from 65 to
 * v7
 Increase to 127 samples in main pool plus another 25 in the phase 2 pool, which we'll worry about later. That includes 7 where there was just one or more samples not visible at the start, 2 where the sample vanishes part way due to an acquisition problem, the eye, and 7 which simply have too many duplicate tiles due to BS with large number of averages.  
 What we need to do right now is address the problem with [low SNR acquisitions](https://github.com/raacampbell/autofinder/issues/40).
+
+* v8
+Deals with lowSNR acquisitions and also enables the rolling threshold, which sorts out a few other problems. The main sticking point now is what to do with brains such as `SW_BY319_2_3_4`, which do badly beuse [the laser power was changed mid-way](https://github.com/raacampbell/autofinder/issues/33) through the acquisition. The rolling threshold does not cover this adquately as implemented. Working on the [occluded brain issue](https://github.com/raacampbell/autofinder/issues/33) might help the low laser power. In some ways they are related. 
