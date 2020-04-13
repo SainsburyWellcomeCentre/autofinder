@@ -31,7 +31,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
 
     stats=calcStatsFromThreshold(0);
-    maxThresh=12;
+    maxThresh=15;
 
 
 
