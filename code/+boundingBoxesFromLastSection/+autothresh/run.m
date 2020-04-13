@@ -107,7 +107,8 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
         x = maxThresh;
         tThreshSD=nan;
-        while x>2 %Very small thresholds tend to be bad news
+        minThresh=2;
+        while x>minThresh %Very small thresholds tend to be bad news
             fprintf(' ---> thresh = %0.3f\n', x(end))
             stats(end+1)=calcStatsFromThreshold(x(end));
 
@@ -128,6 +129,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         tT=[stats.tThreshSD];
         [tT,ind] = sort(tT,'ascend');
         stats = stats(ind);
+        stats(1)=[]; %Remove zero
 
         % If the median SNR is low, we get rid tThresh values above 8
         % This helps with certain low SNR samples
@@ -188,8 +190,19 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         end
 
         if isnan(tThreshSD)
-            fprintf('Bounding box always stays small. Sticking with default threshold of %0.2f\n', defaultThresh)
-            tThreshSD=defaultThresh;
+            fprintf('Bounding box always stays small. Setting based on SNR\n')
+            vSNR = ([stats.SNR_medThreshRatio]);
+            med_vSNR = median(vSNR);
+            if med_vSNR<minThresh
+                fprintf('Capping at min\n')
+                tThreshSD=minThresh;
+            elseif med_vSNR>maxThresh
+                fprintf('Capping at max\n')
+                tThreshSD=maxThresh;
+            else
+                fprintf('Setting to median\n')
+                tThreshSD=med_vSNR;
+            end
         end
     end %getThreshAlg
 
