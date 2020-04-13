@@ -30,7 +30,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
 
     stats=calcStatsFromThreshold(0);
-    maxThresh=40;
+    maxThresh=12;
 
 
 
@@ -107,7 +107,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
         x = maxThresh;
         tThreshSD=nan;
-        while x>0.75 %Very small thresholds tend to be bad news
+        while x>2 %Very small thresholds tend to be bad news
             fprintf(' ---> thresh = %0.3f\n', x(end))
             stats(end+1)=calcStatsFromThreshold(x(end));
 
@@ -121,7 +121,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
                 end
                 break
             end
-            x(end+1)= x(end) * 0.8; % Unwise if this is too fine. 0.9 is slightly too fine and can bias us to having a low threshold.
+            x(end+1)= x(end) * 0.85; % Unwise if this is too fine. 0.9 is slightly too fine and can bias us to having a low threshold.
         end
 
         %Now sort because 0 is at the start

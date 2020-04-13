@@ -42,9 +42,21 @@ missingFileInds = cellfun(@(x) isempty(strmatch(x,refTable.fileName)), ...
 missingFileInds = cell2mat(missingFileInds);
 
 if any(missingFileInds)
-    fprintf('Removing %d test acquisitions not present in reference\n', sum(missingFileInds));
+    fprintf('Removing %d test acquisitions not present in reference table\n', sum(missingFileInds));
     testTable(find(missingFileInds),:)=[];
 end
+
+% Now remove any samples in the reference table that aren't in the test table
+missingFileInds = cellfun(@(x) isempty(strmatch(x,testTable.fileName)), ...
+    refTable.fileName,'uniformoutput',false);
+missingFileInds = cell2mat(missingFileInds);
+
+if any(missingFileInds)
+    fprintf('Removing %d reference acquisitions not present in test table\n', sum(missingFileInds));
+    refTable(find(missingFileInds),:)=[];
+end
+
+
 
 %Sort both tables alphabetically so we have data from the same sample on each row
 %Then sort by sqmm missed in ref table
@@ -92,11 +104,14 @@ if isempty(f)
 end
 
 
+% Get the plot settings
+pS = plotSettings;
+
 
 clf
 
 subplot(3,2,1)
-plot(refTable.totalNonImagedSqMM - testTable.totalNonImagedSqMM, '.r-')
+plot(refTable.totalNonImagedSqMM - testTable.totalNonImagedSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -117,7 +132,7 @@ subplot(3,2,2)
 %title('Worst section square mm missed (lower better)')
 
 subplot(3,2,3)
-plot(refTable.totalExtraSqMM - testTable.totalExtraSqMM, '.r-')
+plot(refTable.totalExtraSqMM - testTable.totalExtraSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -128,7 +143,7 @@ title('Total square mm extra (lower better)')
 xlim([1,size(refTable,1)])
 
 subplot(3,2,4)
-plot(refTable.maxExtraSqMM - testTable.maxExtraSqMM, '.r-')
+plot(refTable.maxExtraSqMM - testTable.maxExtraSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -140,7 +155,7 @@ xlim([1,size(refTable,1)])
 
 
 subplot(3,2,5)
-plot(refTable.medPropPixelsInRoiThatAreTissue - testTable.medPropPixelsInRoiThatAreTissue, '.r-')
+plot(refTable.medPropPixelsInRoiThatAreTissue - testTable.medPropPixelsInRoiThatAreTissue, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -152,7 +167,7 @@ xlim([1,size(refTable,1)])
 
 
 subplot(3,2,6)
-plot(refTable.totalImagedSqMM - testTable.totalImagedSqMM, '.r-')
+plot(refTable.totalImagedSqMM - testTable.totalImagedSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on

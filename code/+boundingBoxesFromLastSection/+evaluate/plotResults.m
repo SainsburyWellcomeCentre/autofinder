@@ -241,4 +241,6 @@ plot(x,summaryTable.tThreshSD, pS.basePlotStyle{:})
 xlabel('Acquisition #')
 ylabel('tThreshSD')
 grid on
+xlim([1,size(summaryTable,1)])
+
 
