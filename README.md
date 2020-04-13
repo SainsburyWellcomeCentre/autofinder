@@ -1,5 +1,16 @@
 # autofinder
 Test of algorithm to image only a sample and not surrounding tissue using serial-section 2-photon imaging. 
+We have over 150 acquisitions, many have multiple samples so in total there are over 300 samples. 
+Almost all samples are rat or mouse brains.
+Testing proceeds in phases:
+
+* **Phase One** is brains that have few or no obvious problems for the auto-ROI and are 100% expected to work without unusual user intervention.
+
+* **Phase Two** Are samples which are particularly awkward but we would like to get working before moving on to implementing this in BakingTray. Once Phase Two is complete, we move to the BakingTray implementation. Phase Two includes cases where the  laser intensity changed during acquisition, spinal cord acquisitions, low SNR acquisitions. 
+
+* **Phase Three** samples are those where user intervention of some sort is necessary. This includes acquisitions where one or more samples is not visible at all initially. It also includes acquisitions where the sample legitimately vanishes (e.g. PMT switched off due to user error, sample block unglued, etc). 
+
+* **Deferred Samples** are those that we will worry about once everything above worked. e.g. this includes BS data with large numbers of duplicate tiles. Hopefully this can be fixed by Vidrio. 
 
 
 # Generating pStack files
