@@ -120,7 +120,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     if isempty(lastSectionStats)
 
         % We run on the whole image
-        BW    = boundingBoxFromLastSection.binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
+        BW    = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
 
@@ -143,7 +143,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
-            BW         = boundingBoxFromLastSection.binarizeImage(tIm,pixelSize,tThresh);
+            BW         = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
 
@@ -248,7 +248,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % Store statistics in output structure
-    BW = boundingBoxFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
+    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
     inverseBW = ~BW; %Pixels outside of brain
 
     % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
