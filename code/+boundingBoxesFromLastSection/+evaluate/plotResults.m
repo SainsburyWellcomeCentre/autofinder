@@ -141,14 +141,16 @@ ylabel('Square mm extra')
 title('Total square mm extra (lower better). red: problem. green: overflowing coverage.')
 xlim([1,size(summaryTable,1)])
 
-%Report to terminal cases where we have high coverage
-fprintf('\nThe following have overflowing ROIs:\n')
-for ii=1:length(f)
-    fprintf('%d/%d %s -- %d sections\n', ...
-        f(ii),size(summaryTable,1), summaryTable.fileName{f(ii)}, ...
-        summaryTable.numSectionsWithOverFlowingCoverage(f(ii)) )
+%Report to terminal cases where we have over-flowing ROIs
+if ~isempty(f)
+    fprintf('\nThe following have overflowing ROIs:\n')
+    for ii=1:length(f)
+        fprintf('%d/%d %s -- %d sections\n', ...
+            f(ii),size(summaryTable,1), summaryTable.fileName{f(ii)}, ...
+            summaryTable.numSectionsWithOverFlowingCoverage(f(ii)) )
+    end
+    fprintf('\n')
 end
-fprintf('\n')
 
 subplot(nRows,nCols,4)
 plot(summaryTable.maxExtraSqMM, pS.basePlotStyle{:})

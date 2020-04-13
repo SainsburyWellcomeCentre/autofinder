@@ -26,7 +26,8 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
     tileSize = pStack.tileSizeInMicrons;
     voxSize = pStack.voxelSizeInMicrons;
-    argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,'skipMergeNROIThresh',10};
+    argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,'skipMergeNROIThresh',10,...
+    'doBinaryExpansion',true};
 
 
     stats=calcStatsFromThreshold(0);
@@ -61,7 +62,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     % Nested functions follow
     function stats = calcStatsFromThreshold(tThreshSD)
         % Calculate a bunch of stats from a threshold
-        OUT = boundingBoxesFromLastSection(imTMP, argIn{:},'tThreshSD',tThreshSD);
+        [OUT,bwStats] = boundingBoxesFromLastSection(imTMP, argIn{:},'tThreshSD',tThreshSD);
 
         if isempty(OUT)
             stats.nRois=nan;
@@ -73,6 +74,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.SNR_medAboveThresh=nan;
             stats.SNR_medBelowThresh=nan;
             stats.SNR_medThreshRatio=nan;
+            stats.bwStats = struct;
         else
             stats.nRois = length(OUT.BoundingBoxes);
             stats.boundingBoxPixels=OUT.totalBoundingBoxPixels;
@@ -88,6 +90,9 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.SNR_medAboveThresh = single(median(aboveThresh));
             stats.SNR_medBelowThresh = single(median(belowThresh));
             stats.SNR_medThreshRatio = stats.SNR_medAboveThresh/stats.SNR_medBelowThresh;
+
+
+            stats.bwStats = bwStats;
         end
         stats.tThreshSD=tThreshSD;
 
@@ -130,6 +135,15 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         [tT,ind] = sort(tT,'ascend');
         stats = stats(ind);
         stats(1)=[]; %Remove zero
+        tT=[stats.tThreshSD];
+
+
+        [findsAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSize,voxSize);
+        if any(findsAgar)
+            tF = find(findsAgar);
+            stats(1:tF(end))=[];
+            fprintf(' ** DELETED FIRST %d entries because we see tiling artifacts there. **\n', tF(end))
+        end
 
         % If the median SNR is low, we get rid tThresh values above 8
         % This helps with certain low SNR samples
@@ -284,6 +298,56 @@ function ind = findLowestThreshStretch(nR,thresh)
         passNum = passNum + 1;
     end %while
 
-end
+end %findLowestThreshStretch
 
+
+function [isFindingAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSizeInMicrons,micsPix)
+    % Examines each threshold in turns and determines whether the is evidence that it's
+    % treating agar as a ROIs. This can happen when the user has a huge ROI that includes
+    % regions outside of the agar.
+    verbose=false;
+
+    propTileSizeROIs = zeros(1,length(stats));
+    nROIs = zeros(1,length(stats));
+    seemsLikeGrid = zeros(1,length(stats));
+
+    tileArea = (tileSizeInMicrons * 1E-3)^2;
+
+    for ii = 1:length(stats)
+        tmp=stats(ii).bwStats.step_three.Area_sqmm;
+        % How many ROIs have a size that looks like it could be a single tile?
+        propTileSizeROIs(ii) = mean(tmp>tileArea*0.125 & tmp<tileArea*0.5);
+        nROIs(ii) = length(tmp);
+
+        % Does there seem to be a grid pattern in the centroid locations?
+        c=stats(ii).bwStats.step_two.Centroid;
+        c=round(c/10)*10 ;
+        dx=diff(sort(c(:,1)));
+        dy=diff(sort(c(:,1)));
+        d=[dx;dy];
+
+        if (sum(d==0)/length(d))>0.4
+            seemsLikeGrid(ii)=1;
+        end
+
+    end
+
+    % TODO: nROIs threshold shoudld be smarter than this. 
+
+    isFindingAgar = nROIs>30  &  propTileSizeROIs>0.45 &  seemsLikeGrid;
+    % insert these values into the stats array
+    for ii=1:length(stats)
+        stats(ii).thinksAgarIsAROI = isFindingAgar(ii);
+    end
+
+    if verbose
+        fprintf('\nIs thresh treating agar as sample?\n')
+        disp([stats.tThreshSD])
+        disp(propTileSizeROIs)
+        disp(nROIs)
+        disp(seemsLikeGrid)
+        disp(isFindingAgar)
+    end
+
+end %isThreshTreatingAgarAsSample
 

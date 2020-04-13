@@ -33,12 +33,15 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     %                         By default this is infinity, so we always try to merge.
     % rescaleTo - number of microns per pixel to which we will re-scale. By default 
     %             uses value from settings file.
+    % showBinaryImages - shows results from the binarization step
+    % doBinaryExpansion - default from setings file. If true, run the expansion of 
+    %                     binarized image routine. 
     %
     %
     % Outputs
     % stats - borders and so forth
+    % binaryImageStats - detailed stats on the binary image step (see binarizeImage)
     % H - plot handles
-    % im - the image that was analysed 
     %
     %
     % Rob Campbell - SWC, 2019
@@ -64,6 +67,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
     params.addParameter('skipMergeNROIThresh',inf, @(x) isnumeric(x) )
     params.addParameter('rescaleTo',settings.stackStr.rescaleTo, @(x) isnumeric(x) )    
+    params.addParameter('showBinaryImages', false, @(x) islogical(x) || x==1 || x==0)
+    params.addParameter('doBinaryExpansion', settings.mainBin.doExpansion, @(x) islogical(x) || x==1 || x==0)
+
 
     params.parse(varargin{:})
     pixelSize = params.Results.pixelSize;
@@ -76,6 +82,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     lastSectionStats = params.Results.lastSectionStats;
     skipMergeNROIThresh = params.Results.skipMergeNROIThresh;
     rescaleTo = params.Results.rescaleTo;
+    showBinaryImages = params.Results.showBinaryImages;
+    doBinaryExpansion = params.Results.doBinaryExpansion;
+
+    % These are the arguments we feed into the binarization function
+    binArgs = {'showImages',showBinaryImages,'doExpansion',doBinaryExpansion};
 
     if size(im,3)>1
         fprintf('%s requires a single image not a stack\n',mfilename)
@@ -120,7 +131,16 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     if isempty(lastSectionStats)
 
         % We run on the whole image
-        BW    = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
+        % Binarize, clean, add a border.
+        if nargout>1
+            [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
+        else
+            BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
+        end
+        if showBinaryImages
+            disp('Press return')
+            pause
+        end
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
 
@@ -143,7 +163,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
-            BW         = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh);
+            if nargout>1
+                [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
+            else
+                BW         = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
+            end
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
 
@@ -311,12 +335,13 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     end
 
     if nargout>1
-        varargout{2}=H;
+        varargout{2}=binStats;
     end
 
     if nargout>2
-        varargout{3}=im;
+        varargout{3}=H;
     end
+
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
