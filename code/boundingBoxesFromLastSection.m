@@ -120,7 +120,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     if isempty(lastSectionStats)
 
         % We run on the whole image
-        BW    = binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
+        BW    = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); % Binarize, clean, add a border.
         stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
 
@@ -143,7 +143,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
-            BW         = binarizeImage(tIm,pixelSize,tThresh);
+            BW         = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh);
             tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
 
@@ -248,7 +248,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % Store statistics in output structure
-    BW = binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
+    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
     inverseBW = ~BW; %Pixels outside of brain
 
     % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
@@ -321,63 +321,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 %% Internal functions follow
-function BW = binarizeImage(im,pixelSize,tThresh)
-    % Binarise and clean image. Adding a border before returning
-    verbose = false;
-    showImages = false; %Set to true to display binarized images and force step-through with return key
-
-    settings = boundingBoxesFromLastSection.readSettings;
-
-    BW = im>tThresh;
-    if showImages
-        subplot(2,2,1)
-        imagesc(BW)
-        title('Before medfilt2')
-    end
-
-    BW = medfilt2(BW,[settings.mainBin.medFiltBW,settings.mainBin.medFiltBW]);
-
-    if showImages
-        subplot(2,2,2)
-        imagesc(BW)
-        title('After medfilt2')
-    end
-    if verbose
-        fprintf('Binarized size before dilation: %d by %d\n',size(BW));
-    end
-
-    % Remove crap using spatial filtering
-    SE = strel(settings.mainBin.primaryShape, ...
-        round(settings.mainBin.primaryFiltSize/pixelSize));
-    BW = imerode(BW,SE);
-    BW = imdilate(BW,SE);
-    if showImages
-        subplot(2,2,3)
-        imagesc(BW)
-        title('After morph filter')
-    end
-
-
-    % EXPAND IMAGED AREA: Add a small border around the brain
-    SE = strel(settings.mainBin.expansionShape, ...
-        round(settings.mainBin.expansionSize/pixelSize));
-    BW = imdilate(BW,SE);
-
-    if showImages
-        subplot(2,2,4)
-        imagesc(BW)
-        drawnow
-        title('After expansion')
-        pause
-    end
-
-    if verbose
-        fprintf('Binarized size after dilation: %d by %d\n',size(BW));
-            [~,tmp] = boundingBoxesFromLastSection.boundingBoxAreaFromImage(BW);
-        fprintf('ROI size within binarized image: %d by %d\n',tmp);
-    end
-
-
 
 function stats = getBoundingBoxes(BW,im,pixelSize)
     % Get bounding boxes in binarized image, BW. 

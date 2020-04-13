@@ -157,6 +157,11 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
     % Log settings to the first element of the structure
     stats(1).runOnStackStructArgs = argIn;
     stats(1).settings = settings;
+    stats(1).nSamples = pStack.nSamples;
+    stats(1).numUnprocessedSections = size(pStack.imStack,3)-length(stats);
+
+    % Add a text report to the first element
+    stats(1).report = boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats,pStack);
 
     %Add the tThreshSD setting to everything
     for ii=1:length(stats)
