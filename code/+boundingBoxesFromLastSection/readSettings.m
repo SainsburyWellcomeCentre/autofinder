@@ -55,6 +55,7 @@ function settings = returnSettings
 
     % The following are used in boundingBoxesFromLastSection.runOnStackStruct
     settings.stackStr.rescaleTo=50; 
+    settings.stackStr.rollingThreshold=true;
 
 
     settings.autoThresh.skipMergeNROIThresh=10;

@@ -98,7 +98,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
 
-    rollingThreshold=true; %If true we base the threshold on the last few slices
+    rollingThreshold=settings.stackStr.rollingThreshold; %If true we base the threshold on the last few slices
 
 
     % Enter main for loop in which we process each section one at a time using the ROIs from the previous section
@@ -118,7 +118,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         % boundingBoxesFromLastSection is fed the ROI structure from the **previous section**
         % It runs the sample-detection code within these ROIs only and returns the results.
         [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
-            argIn{:}, 'lastSectionStats',stats(ii-1));
+            argIn{:}, ...
+            'tThresh',thresh,...
+            'lastSectionStats',stats(ii-1));
 
         if ~isempty(tmp)
             stats(ii)=tmp;
