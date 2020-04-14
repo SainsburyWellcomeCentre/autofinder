@@ -118,7 +118,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         % boundingBoxesFromLastSection is fed the ROI structure from the **previous section**
         % It runs the sample-detection code within these ROIs only and returns the results.
         [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
-            argIn{:}, 'lastSectionStats',stats(ii-1));
+            argIn{:}, ...
+            'tThresh',thresh,...
+            'lastSectionStats',stats(ii-1));
 
         if ~isempty(tmp)
             stats(ii)=tmp;
