@@ -58,4 +58,7 @@ function settings = returnSettings
 
 
     settings.autoThresh.skipMergeNROIThresh=10;
-    settings.autoThresh.doBinaryExpansion=true;
+    settings.autoThresh.doBinaryExpansion=false;
+    settings.autoThresh.minThreshold=2;
+    settings.autoThresh.maxThreshold=15;
+    settings.autoThresh.decreaseThresholdBy=0.85;

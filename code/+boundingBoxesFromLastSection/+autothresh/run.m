@@ -8,7 +8,8 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     %
     % Inputs
     % pStack - the pStack structure
-    % runSeries - just runs a series of thresholds and plots the result. False by default.
+    % runSeries - Just runs a series of thresholds and plots the result. False by default.
+    %             This option runs a finer set of thresholds than the actual thresh finder.
 
 
     % For most samples, if the threshold is too low this usually causes the whole FOV to imaged.
@@ -16,7 +17,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     % sample vanishes at high threshold values but might go through a peak with many ROIs. At low
     % threshold a low SNR sample is fine. 
 
-    if nargin<2
+    if nargin<2 || isempty(runSeries)
         runSeries=false;
     end
 
@@ -33,15 +34,18 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     'doBinaryExpansion',settings.autoThresh.doBinaryExpansion};
 
 
-    stats=calcStatsFromThreshold(0);
-    maxThresh=15;
+
+    minThresh=settings.autoThresh.minThreshold;
+    maxThresh=settings.autoThresh.maxThreshold;
+    stats=calcStatsFromThreshold(minThresh);
+
 
 
 
     % Produce a curve
     if runSeries
         t=tic;
-        x=0.015;
+        x=minThresh*1.1;
         while x<maxThresh
             fprintf('Running for tThreshSD * %0.2f\n',x);
             stats(end+1)=calcStatsFromThreshold(x);
@@ -94,7 +98,6 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats.SNR_medBelowThresh = single(median(belowThresh));
             stats.SNR_medThreshRatio = stats.SNR_medAboveThresh/stats.SNR_medBelowThresh;
 
-
             stats.bwStats = bwStats;
         end
         stats.tThreshSD=tThreshSD;
@@ -115,7 +118,10 @@ function [tThreshSD,stats] = run(pStack, runSeries)
 
         x = maxThresh;
         tThreshSD=nan;
-        minThresh=2;
+        decreaseBy = settings.autoThresh.decreaseThresholdBy;
+
+        fprintf('\n\ngetThreshAlg working over tThreshSD range %0.1f to %0.1f and decreasing by %0.2f on each pass through loop\n', ...
+            minThresh,maxThresh, decreaseBy)
         while x>minThresh %Very small thresholds tend to be bad news
             fprintf(' ---> thresh = %0.3f\n', x(end))
             stats(end+1)=calcStatsFromThreshold(x(end));
@@ -130,7 +136,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
                 end
                 break
             end
-            x(end+1)= x(end) * 0.85; % Unwise if this is too fine. 0.9 is slightly too fine and can bias us to having a low threshold.
+            x(end+1)= x(end) * decreaseBy; % Unwise if this is too fine. 0.9 is slightly too fine and can bias us to having a low threshold.
         end
 
         %Now sort because 0 is at the start
@@ -335,6 +341,13 @@ function [isFindingAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSizeInMi
     tileArea = (tileSizeInMicrons * 1E-3)^2;
 
     for ii = 1:length(stats)
+
+        if isnan(stats(ii).nRois)
+            if verbose
+                fprintf('isThreshTreatingAgarAsSample loop %d/%d finds NaNs. skipping.\n', ii, length(stats))
+            end
+            continue
+        end
         tmp=stats(ii).bwStats.step_three.Area_sqmm;
         % How many ROIs have a size that looks like it could be a single tile?
         propTileSizeROIs(ii) = mean(tmp>tileArea*0.125 & tmp<tileArea*0.5);
