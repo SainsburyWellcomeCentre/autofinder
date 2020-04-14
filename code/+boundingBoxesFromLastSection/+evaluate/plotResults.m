@@ -43,17 +43,29 @@ end
 summaryTable = summaryTable(ind,:);
 
 
-summaryTable(excludeIndex,:)
 if ~isempty(excludeIndex)
-
     summaryTable(excludeIndex,:)=[];
 end
-    
 
 %report to screen the file name and index of each recording
 for ii=1:size(summaryTable,1)
     fprintf('%d/%d. %s\n', ii, size(summaryTable,1), ...
         summaryTable.fileName{ii});
+end
+
+
+% Report if any samples failed
+failedSamples = dir(fullfile(testDir,'FAIL_*'));
+if ~isempty(failedSamples)
+    if length(failedSamples)==1
+        fprintf('\n** THERE IS %d FAILED ACQUISITON IN FOLDER %s:\n', ...
+            length(failedSamples), testDir)
+    else
+        fprintf('\n** THERE ARE %d FAILED ACQUISITONS IN FOLDER %s:\n', ...
+            length(failedSamples), testDir)
+    end
+    cellfun(@(x) fprintf(' %s\n',strrep(x,'FAIL_','')), {failedSamples.name})
+    fprintf('\n')
 end
 
 % Report recordings with unprocessed sections
@@ -141,14 +153,16 @@ ylabel('Square mm extra')
 title('Total square mm extra (lower better). red: problem. green: overflowing coverage.')
 xlim([1,size(summaryTable,1)])
 
-%Report to terminal cases where we have high coverage
-fprintf('\nThe following have overflowing ROIs:\n')
-for ii=1:length(f)
-    fprintf('%d/%d %s -- %d sections\n', ...
-        f(ii),size(summaryTable,1), summaryTable.fileName{f(ii)}, ...
-        summaryTable.numSectionsWithOverFlowingCoverage(f(ii)) )
+%Report to terminal cases where we have over-flowing ROIs
+if ~isempty(f)
+    fprintf('\nThe following have overflowing ROIs:\n')
+    for ii=1:length(f)
+        fprintf('%d/%d %s -- %d sections\n', ...
+            f(ii),size(summaryTable,1), summaryTable.fileName{f(ii)}, ...
+            summaryTable.numSectionsWithOverFlowingCoverage(f(ii)) )
+    end
+    fprintf('\n')
 end
-fprintf('\n')
 
 subplot(nRows,nCols,4)
 plot(summaryTable.maxExtraSqMM, pS.basePlotStyle{:})

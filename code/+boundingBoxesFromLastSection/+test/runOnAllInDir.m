@@ -1,7 +1,7 @@
-function runOnAllInDir(runDir,doAutoThreshold)
+function runOnAllInDir(runDir,settings)
     % Run auto-find test on all structures in runDir
     %
-    % function boundingBoxesFromLastSection.tests.runOnAllInDir(runDir,doAutoThreshold)
+    % function boundingBoxesFromLastSection.tests.runOnAllInDir(runDir,settings)
     %
     % Purpose
     % Batch run of boundingBoxesFromLastSection.test.runOnStackStruc
@@ -10,10 +10,12 @@ function runOnAllInDir(runDir,doAutoThreshold)
     % in the current directory.
     %
     %
+    % Inputs
+    % runDir - directory in which to look for files and run.
+    %
     % Inputs (optional)
-    % runDir - directory in which to look for files and run. If missing, 
-    %          the current directory is used.
-    % doAutoThreshold - true by default
+    % settings - Structure based on the output of the readSettings file. 
+    %            Otherwise, it reads from this file directly.
     %
     %
     % Example
@@ -27,15 +29,13 @@ function runOnAllInDir(runDir,doAutoThreshold)
 
 
 if nargin<1
-    runDir='stacks';
+    fprintf('Please supply directory on which to run\n')
+    return
 end
 
-
-if nargin<2 || isempty(doAutoThreshold)
-    % Auto find the threshold?
-    doAutoThreshold = true;
+if nargin<2 || isempty(settings)
+    settings = boundingBoxesFromLastSection.readSettings;
 end
-
 
 
 
@@ -76,6 +76,10 @@ fprintf(fid,'Starting at %s\n', datestr(now,'yyyy-mm-dd, HH:MM:SS'));
 [~, hostname] = system('hostname'); 
 fprintf(fid,'Running on machine %s\n', strtrim(hostname));
 
+% Write settings to directory
+yaml.WriteYaml(fullfile(testDirThisSession,'settings.yml'),settings);
+
+
 gitinfo = boundingBoxesFromLastSection.tools.getGitInfo;
 fprintf(fid,'Commit %s on %s branch\n', gitinfo.hash, gitinfo.branch);
 fclose(fid);
@@ -96,7 +100,7 @@ parfor ii=1:length(pStack_list)
 
     try
         % Run
-        testLog = boundingBoxesFromLastSection.test.runOnStackStruct(pStack,true,doAutoThreshold);
+        testLog = boundingBoxesFromLastSection.test.runOnStackStruct(pStack,true,settings);
 
         % Log useful info in first element
         testLog(1).stackFname = tFile; %Into the first element add the file name

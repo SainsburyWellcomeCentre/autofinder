@@ -38,10 +38,12 @@ function settings = returnSettings
     settings.main.defaultThreshSD=7; %This appears both in boundingBoxesFromLastSection and in runOnStackStruct
 
     % The following are used in boundingBoxesFromLastSection > binarizeImage
+    settings.mainBin.removeNoise = true; % Noise removal: targets electrical noise
     settings.mainBin.medFiltBW = 5;
     settings.mainBin.primaryShape = 'disk';
     settings.mainBin.primaryFiltSize = 50; %in microns
     settings.mainBin.expansionShape = 'square';
+    settings.mainBin.doExpansion = true; % Expand binarized image 
     settings.mainBin.expansionSize = 600;  %in microns
 
     % The following are used in boundingBoxesFromLastSection > getBoundingBoxes
@@ -53,3 +55,10 @@ function settings = returnSettings
 
     % The following are used in boundingBoxesFromLastSection.runOnStackStruct
     settings.stackStr.rescaleTo=50; 
+
+
+    settings.autoThresh.skipMergeNROIThresh=10;
+    settings.autoThresh.doBinaryExpansion=false;
+    settings.autoThresh.minThreshold=2;
+    settings.autoThresh.maxThreshold=20;
+    settings.autoThresh.decreaseThresholdBy=0.85; % Dangerous to go above this. Likely should leave as is. 

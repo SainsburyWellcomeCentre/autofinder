@@ -1,7 +1,7 @@
-function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
+function varargout=runOnStackStruct(pStack,noPlot,settings)
     % Run the brain-finding algorithm on a stack processed by genGroundTruthBorders
     %
-    % function boundingBoxesFromLastSection.test.runOnStackStruct(pStack,noPlot,doAutoThreshold)
+    % function boundingBoxesFromLastSection.test.runOnStackStruct(pStack,noPlot,settings)
     %
     % Purpose
     % Simulate the behavior of an imaging system seeking to image only
@@ -18,8 +18,7 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
     % Inputs
     % pStack - preview stack structure
     % noPlot - false by default
-    % doAutoThreshold - false by default. If true, figure out the tThreshSD
-    %                   threshold automatically for the first section.
+    % settings - if empty or missing we get from the file
     %
     % Outputs
     % stats structure
@@ -40,16 +39,13 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
         noPlot=false;
     end
 
-
-    if nargin<3 || isempty(noPlot)
-        % Auto find the threshold?
-        doAutoThreshold = true;
+    if nargin<3 || isempty(settings)
+        settings = boundingBoxesFromLastSection.readSettings;
     end
 
 
 
 
-    settings = boundingBoxesFromLastSection.readSettings;
     pauseBetweenSections=false;
 
     % Step one: process the initial image (first section) and find the bounding boxes
@@ -60,7 +56,8 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
 
     argIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
              'tileSize', pStack.tileSizeInMicrons, ...
-             'doPlot', ~noPlot};
+             'doPlot', ~noPlot, ...
+             'settings', settings};
 
     if isfield(pStack,'tThreshSD')
         % Start with a threshold hard-coded into the pStack file
@@ -68,24 +65,15 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
         argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
         fprintf('%s is starting with a custom SD threshold of %0.1f\n', ...
             mfilename, tThreshSD)
-        if doAutoThreshold
-            fprintf('**** YOU ASKED FOR AUTO-THRESH BUT pStack has a tThreshSD field. USING THAT INSTEAD!\n\n')
-            doAutoThreshold=false;
+            fprintf('**** NOT PERFORMING AUTO-THRESH: pStack has a tThreshSD field. USING THAT INSTEAD!\n\n')
             pause(0.75)
-        end
-
-    elseif doAutoThreshold
-        % Determine the threshold automatically
-        fprintf('%s is running auto-thresh\n', mfilename)
-        [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack,false);
-        argIn = [argIn,{'tThreshSD',tThreshSD}];
-
+        doAutoThreshold=false;
     else
-        % Use the default value in the settings file
-        tThreshSD=settings.main.defaultThreshSD;
-        fprintf('%s is starting with a default SD threshold of %0.1f\n', ...
-            mfilename, tThreshSD)
-
+        % Determine the threshold automatically
+        doAutoThreshold=true;
+        fprintf('%s is running auto-thresh\n', mfilename)
+        [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack, false, settings);
+        argIn = [argIn,{'tThreshSD',tThreshSD}];
     end
 
 
@@ -130,16 +118,14 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
         % boundingBoxesFromLastSection is fed the ROI structure from the **previous section**
         % It runs the sample-detection code within these ROIs only and returns the results.
         [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
-            'pixelSize', pStack.voxelSizeInMicrons,...
-            'tileSize',pStack.tileSizeInMicrons, ...
-            'tThresh',thresh,...
-            'doPlot',~noPlot, ...
-            'lastSectionStats',stats(ii-1));
+            argIn{:}, 'lastSectionStats',stats(ii-1));
 
         if ~isempty(tmp)
             stats(ii)=tmp;
-            set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.imStack,3)))
-            drawnow
+            if ~noPlot
+                set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.imStack,3)))
+                drawnow
+            end
             if pauseBetweenSections
                 fprintf(' -> Press return\n')
                 pause
