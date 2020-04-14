@@ -153,12 +153,25 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         % This helps with certain low SNR samples
         medSNR = nanmedian([stats.SNR_medThreshRatio]);
         clipVal=8;
+
+
         if medSNR<=4
-            fprintf(' ---> Median SNR is low: %0.1f -- Clipping tThreshSD to values below %d. <---\n', ...
-                medSNR, clipVal)
-            ind = find([stats.tThreshSD]<=clipVal);
-            stats = stats(ind);
+          ind = find([stats.tThreshSD]<=clipVal);
+          if ~isempty(ind)
+              fprintf(' ---> Median SNR is low: %0.1f -- Clipping tThreshSD to values below %d. <---\n', ...
+                    medSNR, clipVal)
+               stats = stats(ind);
+           else
+              fprintf(' ---> Median SNR is low: %0.1f -- but all thresholds are above the clipping value of %d. NOT CLIPPING. <---\n', ...
+                    medSNR, clipVal)
+           end
+
+            % TODO: this sort of thing needs to be more formally logged. To a file or something like that. 
+            if length(stats)==0
+                fprintf(' ** VERY BAD: after clipping due to low SNR are no more threshold values.\n')
+            end
         end
+
 
         % Before finally bailing out, see if we can improve the threshold. If many 
         % points have the same number of ROIs, choose the middle of this range instead. 
