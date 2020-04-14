@@ -1,7 +1,7 @@
 function varargout=runOnStackStruct(pStack,noPlot,settings)
     % Run the brain-finding algorithm on a stack processed by genGroundTruthBorders
     %
-    % function boundingBoxesFromLastSection.test.runOnStackStruct(pStack,noPlot,doAutoThreshold)
+    % function boundingBoxesFromLastSection.test.runOnStackStruct(pStack,noPlot,settings)
     %
     % Purpose
     % Simulate the behavior of an imaging system seeking to image only
@@ -122,8 +122,10 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
         if ~isempty(tmp)
             stats(ii)=tmp;
-            set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.imStack,3)))
-            drawnow
+            if ~noPlot
+                set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.imStack,3)))
+                drawnow
+            end
             if pauseBetweenSections
                 fprintf(' -> Press return\n')
                 pause
