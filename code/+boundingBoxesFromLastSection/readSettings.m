@@ -58,7 +58,7 @@ function settings = returnSettings
 
 
     settings.autoThresh.skipMergeNROIThresh=10;
-    settings.autoThresh.doBinaryExpansion=false;
+    settings.autoThresh.doBinaryExpansion=true;
     settings.autoThresh.minThreshold=2;
-    settings.autoThresh.maxThreshold=15;
-    settings.autoThresh.decreaseThresholdBy=0.85;
+    settings.autoThresh.maxThreshold=20;
+    settings.autoThresh.decreaseThresholdBy=0.85; % Dangerous to go above this. Likely should leave as is. 

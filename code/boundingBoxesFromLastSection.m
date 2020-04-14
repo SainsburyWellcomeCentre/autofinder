@@ -36,7 +36,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % showBinaryImages - shows results from the binarization step
     % doBinaryExpansion - default from setings file. If true, run the expansion of 
     %                     binarized image routine. 
-    %
+    % settings - the settings structure. If empty or missing, we read from the file itself
     %
     % Outputs
     % stats - borders and so forth
@@ -52,7 +52,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         return
     end
 
-    settings = boundingBoxesFromLastSection.readSettings;
     % Parse input arguments
     params = inputParser;
     params.CaseSensitive = false;
@@ -62,13 +61,16 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
-    params.addParameter('tThreshSD',settings.main.defaultThreshSD, @(x) isnumeric(x) && isscalar(x))
+    params.addParameter('showBinaryImages', false, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
     params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
     params.addParameter('skipMergeNROIThresh',inf, @(x) isnumeric(x) )
-    params.addParameter('rescaleTo',settings.stackStr.rescaleTo, @(x) isnumeric(x) )    
-    params.addParameter('showBinaryImages', false, @(x) islogical(x) || x==1 || x==0)
-    params.addParameter('doBinaryExpansion', settings.mainBin.doExpansion, @(x) islogical(x) || x==1 || x==0)
+
+    params.addParameter('settings',boundingBoxesFromLastSection.readSettings, @(x) isstruct(x) )
+
+    params.addParameter('tThreshSD',[], @(x) isnumeric(x) && isscalar(x) || isempty(x))
+    params.addParameter('doBinaryExpansion', [], @(x) islogical(x) || x==1 || x==0 || isempty(x))
+    params.addParameter('rescaleTo',[], @(x) isnumeric(x) || isempty(x))
 
 
     params.parse(varargin{:})
@@ -81,12 +83,25 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     borderPixSize = params.Results.borderPixSize;
     lastSectionStats = params.Results.lastSectionStats;
     skipMergeNROIThresh = params.Results.skipMergeNROIThresh;
+    settings = params.Results.settings;
     rescaleTo = params.Results.rescaleTo;
     showBinaryImages = params.Results.showBinaryImages;
     doBinaryExpansion = params.Results.doBinaryExpansion;
 
+    % Get defaults from settings file if needed
+    if isempty(tThreshSD)
+        tThreshSD = settings.main.defaultThreshSD;
+    end
+    if isempty(doBinaryExpansion)
+        doBinaryExpansion = settings.mainBin.doExpansion;
+    end
+    if isempty(rescaleTo)
+        rescaleTo = settings.stackStr.rescaleTo;
+    end
+
+
     % These are the arguments we feed into the binarization function
-    binArgs = {'showImages',showBinaryImages,'doExpansion',doBinaryExpansion};
+    binArgs = {'showImages',showBinaryImages,'doExpansion',doBinaryExpansion,'settings',settings};
 
     if size(im,3)>1
         fprintf('%s requires a single image not a stack\n',mfilename)

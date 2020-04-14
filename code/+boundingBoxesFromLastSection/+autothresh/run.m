@@ -1,4 +1,4 @@
-function [tThreshSD,stats] = run(pStack, runSeries)
+function [tThreshSD,stats] = run(pStack, runSeries, settings)
     % Search a range of thresholds and find the best one. 
     %
     % function [tThreshSD,stats] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries)
@@ -10,7 +10,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     % pStack - the pStack structure
     % runSeries - Just runs a series of thresholds and plots the result. False by default.
     %             This option runs a finer set of thresholds than the actual thresh finder.
-
+    % settings - optional. The settings structure. If empty or missing, we read from the file itself.
 
     % For most samples, if the threshold is too low this usually causes the whole FOV to imaged.
     % With the SNR of most samples, as a high threshold is never a problem. With low SNR, the
@@ -21,10 +21,15 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         runSeries=false;
     end
 
+    if nargin<3 || isempty(settings)
+        settings = boundingBoxesFromLastSection.readSettings;
+    end
+
+
     % This is the image we will use to obtain the threshold
     imTMP = pStack.imStack(:,:,1);
 
-    settings = boundingBoxesFromLastSection.readSettings;
+
 
     tileSize = pStack.tileSizeInMicrons;
     voxSize = pStack.voxelSizeInMicrons;
