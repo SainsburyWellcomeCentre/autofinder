@@ -98,7 +98,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     tileBoxCoords=cell(1,size(pStack.imStack,3));
     tB=[];
 
-    rollingThreshold=true; %If true we base the threshold on the last few slices
+    rollingThreshold=settings.stackStr.rollingThreshold; %If true we base the threshold on the last few slices
 
 
     % Enter main for loop in which we process each section one at a time using the ROIs from the previous section
