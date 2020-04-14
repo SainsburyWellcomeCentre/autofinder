@@ -22,12 +22,13 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     imTMP = pStack.imStack(:,:,1);
 
     settings = boundingBoxesFromLastSection.readSettings;
-    defaultThresh = settings.main.defaultThreshSD;
 
     tileSize = pStack.tileSizeInMicrons;
     voxSize = pStack.voxelSizeInMicrons;
-    argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,'skipMergeNROIThresh',10,...
-    'doBinaryExpansion',true};
+
+    argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,...
+    'skipMergeNROIThresh',settings.autoThresh.skipMergeNROIThresh,...
+    'doBinaryExpansion',settings.autoThresh.doBinaryExpansion};
 
 
     stats=calcStatsFromThreshold(0);
@@ -199,7 +200,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             stats(1).notes=msg;
 
         else
-            fprintf(' ---> Choosing based on exit point value where ROI got large.\n')
+            fprintf(' ---> Choosing based on exit point value where ROI got large. (THIS IS PROBABLY NOT AN IDEAL SITUATION)\n')
             stats(1).notes='Value near full size ROI';
 
         end
@@ -275,7 +276,7 @@ function ind = findLowestThreshStretch(nR,thresh)
 
             %Delete this short stretch
             if verbose
-                fprintf('Chopping first sequene of length %d\n\n',length(splt{1})+1)
+                fprintf('Chopping first sequence of length %d\n\n',length(splt{1})+1)
             end
             dF(1:f(1)) = [];
             F(1:f(1)) = [];
