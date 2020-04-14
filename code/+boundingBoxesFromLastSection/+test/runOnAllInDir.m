@@ -76,6 +76,11 @@ fprintf(fid,'Starting at %s\n', datestr(now,'yyyy-mm-dd, HH:MM:SS'));
 [~, hostname] = system('hostname'); 
 fprintf(fid,'Running on machine %s\n', strtrim(hostname));
 
+% Write settings to directory
+settings = boundingBoxesFromLastSection.readSettings;
+yaml.WriteYaml(fullfile(testDirThisSession,'settings.yml'),settings);
+
+
 gitinfo = boundingBoxesFromLastSection.tools.getGitInfo;
 fprintf(fid,'Commit %s on %s branch\n', gitinfo.hash, gitinfo.branch);
 fclose(fid);
