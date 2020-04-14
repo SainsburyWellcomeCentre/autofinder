@@ -1,12 +1,14 @@
 function [tThreshSD,stats] = run(pStack, runSeries)
     % Search a range of thresholds and find the best one. 
     %
-    % function [tThreshSD,stats] = boundingBoxFromLastSection.autoThresh.run(pStack)
+    % function [tThreshSD,stats] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries)
     %
     % Purpose
     % Choose threshold based on the number of ROIs it produces. 
     %
-    %
+    % Inputs
+    % pStack - the pStack structure
+    % runSeries - just runs a series of thresholds and plots the result. False by default.
 
 
     % For most samples, if the threshold is too low this usually causes the whole FOV to imaged.
@@ -15,7 +17,7 @@ function [tThreshSD,stats] = run(pStack, runSeries)
     % threshold a low SNR sample is fine. 
 
     if nargin<2
-        runSeries=true;
+        runSeries=false;
     end
 
     % This is the image we will use to obtain the threshold
@@ -219,6 +221,10 @@ function [tThreshSD,stats] = run(pStack, runSeries)
                 fprintf('Setting to median\n')
                 tThreshSD=med_vSNR;
             end
+        end
+
+        if isnan(tThreshSD)
+            fprintf('\n ** autoThresh.run ends with a NaN threshold. VERY BAD! **\n\n')
         end
     end %getThreshAlg
 

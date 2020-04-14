@@ -77,7 +77,7 @@ function varargout=runOnStackStruct(pStack,noPlot,doAutoThreshold)
     elseif doAutoThreshold
         % Determine the threshold automatically
         fprintf('%s is running auto-thresh\n', mfilename)
-        [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack,false);
+        [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack);
         argIn = [argIn,{'tThreshSD',tThreshSD}];
 
     else
