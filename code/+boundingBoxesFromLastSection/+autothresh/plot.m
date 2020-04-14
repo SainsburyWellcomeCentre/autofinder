@@ -60,10 +60,12 @@ function plot(stats)
     ylabel('Num ROIs')
 
 
-    subplot(nRows,2,7)
-    plot([stats.tThreshSD],[stats.thinksAgarIsAROI],'-ok')
-    xlabel('threshold')
-    ylabel('thinksAgarIsAROI')
-    grid on
+    if isfield(stats,'thinksAgarIsAROI')
+        subplot(nRows,2,7)
+        plot([stats.tThreshSD],[stats.thinksAgarIsAROI],'-ok')
+        xlabel('threshold')
+        ylabel('thinksAgarIsAROI')
+        grid on
+    end
 
 end % main function

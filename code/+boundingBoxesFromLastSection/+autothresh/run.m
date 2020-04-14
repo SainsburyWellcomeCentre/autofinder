@@ -139,20 +139,27 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             x(end+1)= x(end) * decreaseBy; % Unwise if this is too fine. 0.9 is slightly too fine and can bias us to having a low threshold.
         end
 
-        %Now sort because 0 is at the start
-        tT=[stats.tThreshSD];
-        [tT,ind] = sort(tT,'ascend');
+        %Now sort just to be sure
+        [tThreshSD_vec,ind] = sort([stats.tThreshSD],'ascend');
         stats = stats(ind);
-        stats(1)=[]; %Remove zero
-        tT=[stats.tThreshSD];
+
 
 
         [findsAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSize,voxSize);
         if any(findsAgar)
             tF = find(findsAgar);
+            fprintf(' ** DELETED FIRST %d entries up to tThreshSD = %0.2f because we see tiling artifacts there. **\n', ...
+             tF(end), stats(tF(end)).tThreshSD )
+
             stats(1:tF(end))=[];
-            tT=[stats.tThreshSD];
-            fprintf(' ** DELETED FIRST %d entries because we see tiling artifacts there. **\n', tF(end))
+
+            % TODO: this sort of thing needs to be more formally logged. To a file or something like that. 
+            if length(stats)==0
+                fprintf(' ** VERY BAD: after removing thresholds due to tiling artifacts there are no more threshold values.\n')
+            end
+            clippedDueToAgar=true;
+        else
+            clippedDueToAgar=false;
         end
 
         % If the median SNR is low, we get rid tThresh values above 8
@@ -189,11 +196,11 @@ function [tThreshSD,stats] = run(pStack, runSeries)
         % If there are more than three of them and all are in a row, then we use the mean of these as the threshold
         fprintf('\n\nFinishing up.\nNumber of ROIs have mode value of %d which occurs %d times\n', theMode, numOccurances)
 
-
+        tThreshSD_vec = [stats.tThreshSD];
         if numOccurances>3 && all(diff(fM)==1)
             fprintf(' --->  Choosing based on uninterupted mode of %d.\n', theMode)
             ind = find(nR==theMode);
-            tThreshSD = mean(tT(ind));
+            tThreshSD = mean(tThreshSD_vec(ind));
             stats(1).notes=sprintf('Mean of values at nROI=%d', theMode);
 
         elseif numOccurances>8 && (length(fM)/length(fM(1):fM(end)))>0.8
@@ -201,9 +208,9 @@ function [tThreshSD,stats] = run(pStack, runSeries)
                 length(fM), length(fM(1):fM(end))-length(fM) )
 
             % Remove thresholds that are very low. Clip out low values, in other words.
-            tT = tT(find(nR==theMode));
-            tT(tT<=0.5)=[];
-            tThreshSD = mean(tT);
+            tThreshSD_vec = tThreshSD_vec(find(nR==theMode));
+            tThreshSD_vec(tThreshSD_vec<=0.5)=[];
+            tThreshSD = mean(tThreshSD_vec);
 
             stats(1).notes=sprintf('Mean of %d values at nROI=%d. %d missing.', ...
                 numOccurances, theMode, length(fM(1):fM(end))-length(fM) );
@@ -212,9 +219,9 @@ function [tThreshSD,stats] = run(pStack, runSeries)
             ind = findLowestThreshStretch(nR,4);
 
             % Remove thresholds that are very low. Clip out low values, in other words.
-            tT = tT(ind);
-            tT(tT<=0.5)=[];
-            tThreshSD = mean(tT);
+            tThreshSD_vec = tThreshSD_vec(ind);
+            tThreshSD_vec(tThreshSD_vec<=0.5)=[];
+            tThreshSD = mean(tThreshSD_vec);
 
             msg=sprintf('Choosing using findLowestThreshStretch with thresh of 4: tThreshSD=%0.2f\n',tThreshSD);
             fprintf(msg)
