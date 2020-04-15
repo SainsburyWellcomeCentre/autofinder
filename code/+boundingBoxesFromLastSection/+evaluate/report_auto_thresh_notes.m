@@ -18,7 +18,7 @@ function report_auto_thresh_notes(testDir)
 % Rob Campbell - SWC 2020
 
 
-summaryTable = getSummaryTable;
+summaryTable = boundingBoxesFromLastSection.evaluate.getSummaryTable;
 if isempty(summaryTable)
     return 
 end

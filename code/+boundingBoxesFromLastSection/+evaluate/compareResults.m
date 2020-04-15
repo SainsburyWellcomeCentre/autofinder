@@ -19,10 +19,9 @@ function compareResults(dirReference,dirTest,varargin)
 % Rob Campbell - SWC 2020
 
 
-refTable = getSummaryTable(dirReference);
-testTable = getSummaryTable(dirTest);
+[cTable,refTable,testTable] = boundingBoxesFromLastSection.evaluate.genComparisonTable(dirReference,dirTest);
 
-if isempty(refTable) || isempty(testTable)
+if isempty(cTable)
     return
 end
 
@@ -35,57 +34,16 @@ params.parse(varargin{:})
 excludeIndex = params.Results.excludeIndex;
 
 
-% Remove any samples in the test table that don't exist in the reference table
-% and then sort them both alphabetically .
-missingFileInds = cellfun(@(x) isempty(strmatch(x,refTable.fileName)), ...
-    testTable.fileName,'uniformoutput',false);
-missingFileInds = cell2mat(missingFileInds);
-
-if any(missingFileInds)
-    fprintf('Removing %d test acquisitions not present in reference table\n', sum(missingFileInds));
-    testTable(find(missingFileInds),:)=[];
-end
-
-% Now remove any samples in the reference table that aren't in the test table
-missingFileInds = cellfun(@(x) isempty(strmatch(x,testTable.fileName)), ...
-    refTable.fileName,'uniformoutput',false);
-missingFileInds = cell2mat(missingFileInds);
-
-if any(missingFileInds)
-    fprintf('Removing %d reference acquisitions not present in test table\n', sum(missingFileInds));
-    refTable(find(missingFileInds),:)=[];
-end
-
-
-
-%Sort both tables alphabetically so we have data from the same sample on each row
-%Then sort by sqmm missed in ref table
-[~,ind] = sort(refTable.fileName);
-refTable = refTable(ind,:);
-testTable = testTable(ind,:);
-
-[~,ind] = sort(refTable.totalNonImagedSqMM);
-refTable = refTable(ind,:);
-testTable = testTable(ind,:);
-
-
 % Optionally exclude indexes
 if ~isempty(excludeIndex)
+    cTable(excludeIndex,:)=[];
     refTable(excludeIndex,:)=[];
     testTable(excludeIndex,:)=[];
 end
 
 
-%report to screen the file name and index of each recording
-for ii=1:size(refTable,1)
-    fprintf('%d/%d. %s\n', ii, size(refTable,1), ...
-        refTable.fileName{ii});
-end
-
-
 % Issue some reports to screen
-d=refTable.numUnprocessedSections - testTable.numUnprocessedSections;
-f=find(d>0);
+f=find(cTable.d_numUnprocessedSections>0);
 if isempty(f)
     for ii=1:length(f)
         fprintf('GOOD -- %d/%d. %s now has fewer unprocessed sections: %d -> %d\n', ...
@@ -94,7 +52,7 @@ if isempty(f)
     end
 end
 
-f=find(d<0);
+f=find(cTable.d_numUnprocessedSections<0);
 if isempty(f)
     for ii=1:length(f)
         fprintf('BAD -- %d/%d. %s now has more unprocessed sections: %d -> %d\n', ...
@@ -111,7 +69,7 @@ pS = plotSettings;
 clf
 
 subplot(3,2,1)
-plot(refTable.totalNonImagedSqMM - testTable.totalNonImagedSqMM, pS.basePlotStyle{:})
+plot(cTable.d_totalNonImagedSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -132,7 +90,7 @@ subplot(3,2,2)
 %title('Worst section square mm missed (lower better)')
 
 subplot(3,2,3)
-plot(refTable.totalExtraSqMM - testTable.totalExtraSqMM, pS.basePlotStyle{:})
+plot(cTable.d_totalExtraSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -140,10 +98,10 @@ hold off
 xlabel('Acquisition #')
 ylabel('ref minus test square mm extra')
 title('Total square mm extra (lower better)')
-xlim([1,size(refTable,1)])
+xlim([1,size(cTable,1)])
 
 subplot(3,2,4)
-plot(refTable.maxExtraSqMM - testTable.maxExtraSqMM, pS.basePlotStyle{:})
+plot(cTable.d_maxExtraSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -151,11 +109,11 @@ hold off
 xlabel('Acquisition #')
 ylabel('ref minus test square mm extra')
 title('Largest square mm increase (lower better)')
-xlim([1,size(refTable,1)])
+xlim([1,size(cTable,1)])
 
 
 subplot(3,2,5)
-plot(refTable.medPropPixelsInRoiThatAreTissue - testTable.medPropPixelsInRoiThatAreTissue, pS.basePlotStyle{:})
+plot(cTable.d_medPropPixelsInRoiThatAreTissue, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -163,11 +121,11 @@ hold off
 xlabel('Acquisition #')
 ylabel('ref minus test ROI pixels that contain tissue')
 title('Median square mm increase (higher better)')
-xlim([1,size(refTable,1)])
+xlim([1,size(cTable,1)])
 
 
 subplot(3,2,6)
-plot(refTable.totalImagedSqMM - testTable.totalImagedSqMM, pS.basePlotStyle{:})
+plot(cTable.d_totalImagedSqMM, pS.basePlotStyle{:})
 hold on 
 plot(xlim,[0,0],'k:')
 grid on
@@ -175,7 +133,7 @@ hold off
 xlabel('Acquisition #')
 ylabel('ref minus test total ROI sq mm')
 title('Total ROI sq mm')
-xlim([1,size(refTable,1)])
+xlim([1,size(cTable,1)])
 
 
 
