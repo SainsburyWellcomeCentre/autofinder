@@ -135,7 +135,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to exract a threshold of %0.1f based on threshSD of %0.2f\n', ...
+        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold of %0.1f based on threshSD of %0.2f\n', ...
          mfilename, tThresh, tThreshSD)
 
     else
@@ -284,10 +284,13 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Finish up: generate all relevant stats to return as an output argument
     out.BoundingBoxes = {stats.BoundingBox};
-    out.globalBoundingBox={}; % Filled in later 
+
+    % Variables associated with pixel size
+    out.origPixelSize = origPixelSize;
+    out.rescaledPixelSize = rescaleTo;
+    out.rescaledRatio = origPixelSize/rescaleTo;
 
 
-    % Store statistics in output structure
     BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
     inverseBW = ~BW; %Pixels outside of brain
 
@@ -337,13 +340,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.BoundingBoxes,'UniformOutput',false);
     end
 
-    % Determine the size of the overall box that would include all boxes
-    if length(out.BoundingBoxes)==1
-        out.globalBoundingBox = out.BoundingBoxes{1};
-    elseif length(out.BoundingBoxes)>1
-        tmp = cell2mat(out.BoundingBoxes');
-        out.globalBoundingBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
-    end
 
     % Optionally return coords of each box
     if nargout>0
