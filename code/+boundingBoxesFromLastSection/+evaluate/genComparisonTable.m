@@ -1,4 +1,4 @@
-function [cTable,refTable,testTable] = genComparisonTable(dirReference,dirTest)
+function [cTable,refTable,testTable] = genComparisonTable(dirReference,dirTest,quiet)
 % Generate a table of variables that can be used to compare two test directories
 %
 %  function cTable = boundingBoxesFromLastSection.test.genComparisonTable(dirReference,dirTest)
@@ -19,6 +19,9 @@ function [cTable,refTable,testTable] = genComparisonTable(dirReference,dirTest)
 % dirReference - path to first file, which will correspond to the "initial" data
 % dirTest - path to second file, which will correspond to the "new" state. 
 %
+% Inputs
+% optional - quiet. False by default. If true, don't report import status and filenames to screen
+%
 %
 % Outputs
 % cTable - Comparison structure
@@ -28,6 +31,10 @@ function [cTable,refTable,testTable] = genComparisonTable(dirReference,dirTest)
 %
 % Rob Campbell - SWC 2020
 
+
+if nargin<3 || isempty(quiet)
+    quiet=false;
+end
 
 cTable = [];
 
@@ -49,14 +56,16 @@ missingFileInds = cellfun(@(x) isempty(strmatch(x,refTable.fileName)), ...
 missingFileInds = cell2mat(missingFileInds);
 
 if any(missingFileInds)
-    if sum(missingFileInds)>1
-        fprintf('Removing %d acquisitions from test table because they are not present in the reference table:\n', sum(missingFileInds));
-    else
-        fprintf('Removing %d acquisition from test table because it is not present in the reference table:\n', sum(missingFileInds));
+    if ~quiet
+        if sum(missingFileInds)>1
+            fprintf('Removing %d acquisitions from test table because they are not present in the reference table:\n', sum(missingFileInds));
+        else
+            fprintf('Removing %d acquisition from test table because it is not present in the reference table:\n', sum(missingFileInds));
+        end
+        cellfun(@(x) fprintf(' %s\n',x),testTable.fileName(missingFileInds))
+        fprintf('\n')
     end
-    cellfun(@(x) fprintf(' %s\n',x),testTable.fileName(missingFileInds))
     testTable(find(missingFileInds),:)=[];
-    fprintf('\n')
     acquisitionsExcluded=true;
 end
 
@@ -66,33 +75,36 @@ missingFileInds = cellfun(@(x) isempty(strmatch(x,testTable.fileName)), ...
 missingFileInds = cell2mat(missingFileInds);
 
 if any(missingFileInds)
-    if sum(missingFileInds)>1
-        fprintf('Removing %d acquisitions from reference table because they are not present in the test table:\n', sum(missingFileInds));
-    else
-        fprintf('Removing %d acquisition from reference table because it is not present in the test table:\n', sum(missingFileInds));
+    if ~quiet
+        if sum(missingFileInds)>1
+            fprintf('Removing %d acquisitions from reference table because they are not present in the test table:\n', sum(missingFileInds));
+        else
+            fprintf('Removing %d acquisition from reference table because it is not present in the test table:\n', sum(missingFileInds));
+        end
+        cellfun(@(x) fprintf(' %s\n',x),refTable.fileName(missingFileInds))
+        fprintf('\n')
     end
-    cellfun(@(x) fprintf(' %s\n',x),refTable.fileName(missingFileInds))
     refTable(find(missingFileInds),:)=[];
-    fprintf('\n')
     acquisitionsExcluded=true;
 end
 
 
 %report to screen the file name and index of each recording.
 %the weirdness below is because we make a two-column list.
-maxLengthFname = max(cellfun(@length,{refTable.fileName{:}}));
-for ii= 1 : 2 : size(refTable,1)-mod(size(refTable,1),2);
-    spacesToAdd = maxLengthFname-length(refTable.fileName{ii}) + 2;
-    fprintf('%03d/%03d. %s%s%03d/%03d. %s\n', ...
-        ii, size(refTable,1),refTable.fileName{ii}, ...
-        repmat(' ',1,spacesToAdd), ...
-        ii+1, size(refTable,1),refTable.fileName{ii+1} )
-end
+if ~quiet
+    maxLengthFname = max(cellfun(@length,{refTable.fileName{:}}));
+    for ii= 1 : 2 : size(refTable,1)-mod(size(refTable,1),2);
+        spacesToAdd = maxLengthFname-length(refTable.fileName{ii}) + 2;
+        fprintf('%03d/%03d. %s%s%03d/%03d. %s\n', ...
+            ii, size(refTable,1),refTable.fileName{ii}, ...
+            repmat(' ',1,spacesToAdd), ...
+            ii+1, size(refTable,1),refTable.fileName{ii+1} )
+    end
 
-if acquisitionsExcluded
-    fprintf('\nSome acquisitions were excluded. See text above acquisition list.\n\n')
+    if acquisitionsExcluded
+        fprintf('\nSome acquisitions were excluded. See text above acquisition list.\n\n')
+    end
 end
-
 
 %Sort both tables alphabetically so we have data from the same sample on each row
 %Then sort by sqmm missed in ref table once they share index values.
@@ -131,7 +143,8 @@ d_medPropPixelsInRoiThatAreTissue = refTable.medPropPixelsInRoiThatAreTissue - t
 % difference in the total imaged sq mm
 d_totalImagedSqMM = refTable.totalImagedSqMM - testTable.totalImagedSqMM;
 
-
+% difference in the number of ROIs that overflow the original FOV
+d_numSectionsWithOverFlowingCoverage = refTable.numSectionsWithOverFlowingCoverage -  testTable.numSectionsWithOverFlowingCoverage;
 
 cTable = table(fileName, ...
             d_numUnprocessedSections, ...
@@ -139,6 +152,7 @@ cTable = table(fileName, ...
             d_totalExtraSqMM, ...
             d_maxExtraSqMM, ...
             d_medPropPixelsInRoiThatAreTissue, ...
-            d_totalImagedSqMM);
+            d_totalImagedSqMM, ...
+            d_numSectionsWithOverFlowingCoverage);
 
 
