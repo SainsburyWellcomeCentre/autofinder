@@ -13,6 +13,13 @@ Testing proceeds in phases:
 * **Deferred Samples** are those that we will worry about once everything above worked. e.g. this includes BS data with large numbers of duplicate tiles. Hopefully this can be fixed by Vidrio. 
 
 
+# Installation
+* Add the `code` directory to the MATLAB path. 
+* You don't need to add with sub-directories. 
+* You don't need to add the `tests` directory to the MATLAB path.
+* Toolboxes: Image Processing (maybe others such as Stats)
+
+
 # Generating pStack files
 The command `boundingBoxesFromLastSection.test.runOnStackStruct(pStack)` calculates bounding boxes for 
 a whole image stack. 
@@ -139,3 +146,22 @@ It also: removes very small boxes, provides a hackish fix for the missing corner
 `boundingBoxesFromLastSection.test.evaluateBoundingBoxes` works on a stats structure saved by 
 `boundingBoxesFromLastSection.test.runOnAllInDir`. We can do the whole test directory with
 `boundingBoxesFromLastSection.test.evaluateDir`. 
+
+
+## Unit tests
+The only test right now is also the most important. 
+It checks whether the current commit produces a result directory at least as good as the last good reference run. 
+This reference run should be stored in directory called `test_reference`:
+
+
+```
+previewStacks/stacks
+previewStacks/test_reference
+previewStacks/tests
+```
+
+To run the test `cd` to the `tests` directory in the repo and run `evaluatePerformance(PATH_TO_previewStacks)`. 
+
+Currently this is somewhat hard-coded in that it uses the `pStack` paths found in `test_reference/summary_table.mat`
+
+
