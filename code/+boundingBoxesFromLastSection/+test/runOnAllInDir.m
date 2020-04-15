@@ -1,7 +1,7 @@
-function runOnAllInDir(runDir,testDir,settings)
+function varargout = runOnAllInDir(runDir,testDir,settings)
     % Run auto-find test on all structures in runDir
     %
-    % function boundingBoxesFromLastSection.tests.runOnAllInDir(runDir,settings)
+    % function testDirThisSession = boundingBoxesFromLastSection.tests.runOnAllInDir(runDir,settings)
     %
     % Purpose
     % Batch run of boundingBoxesFromLastSection.test.runOnStackStruc
@@ -19,6 +19,10 @@ function runOnAllInDir(runDir,testDir,settings)
     %           directory called "tests" in the current directory.
     % settings - Structure based on the output of the readSettings file. 
     %            Otherwise, it reads from this file directly.
+    %
+    %
+    % Outputs
+    % testDirThisSession - the location of the test directory itself: where data were saved to.
     %
     %
     % Example
@@ -146,6 +150,10 @@ fclose(fid);
 
 % Now we generate the summary table in that directory
 boundingBoxesFromLastSection.evaluate.genSummaryTable(testDirThisSession)
+
+if nargout>0
+    varargout{1}=testDirThisSession;
+end
 
 % internal functions 
 function pStack=pstack_loader(fname)
