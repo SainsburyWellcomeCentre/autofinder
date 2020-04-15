@@ -11,7 +11,7 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     % Inputs (required)
     % im - a single image from an image stack
     % pixelSize - the number of microns per pixel
-    % tThresh - the threshold between brain and no brain
+    % tThresh - the threshold between sample tissue and background
     %
     % Inputs (optional param/val pairs)
     % showImages - false by default. If true, images are shown.

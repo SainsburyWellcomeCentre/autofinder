@@ -1,13 +1,13 @@
 function pStack = genGroundTruthBorders(pStack,threshSTD)
-% Determines the ground truth pixels which contain brain for each slice 
+% Determines the ground truth pixels which contain the sample for each slice 
 %
 % function pStack = boundingBoxesFromLastSection.groundTruth.genGroundTruthBorders(pStack,threshSTD)
 %
 %
 % Purpose
-% This function produces ground truth data indicating where the brain is. 
-% This can then be used to assess how well the auto brain finder is going.
-% The auto brain finder will use a different algorithm, as it can't see into
+% This function produces ground truth data indicating where the sample is. 
+% This can then be used to assess how well the auto-ROI code is performing.
+% The auto-ROI will use a different algorithm, as it can't see into
 % the future, which is what this function does. 
 % NOTE: the user must validate output of this manually. You may need to 
 % do things like copy the border from one section to an adjacent one.
@@ -40,14 +40,14 @@ for ii=1:size(pStack.imStack,3)
     end
     im = medfilt2(pStack.imStack(:,:,ii),[5,5]);
     im = single(im);
-    [pStack.binarized(:,:,ii), pStack.borders{1}{ii}] = findBrainInSection(im, pStack.voxelSizeInMicrons, pStack.nSamples,threshSTD);
+    [pStack.binarized(:,:,ii), pStack.borders{1}{ii}] = findSampleInSection(im, pStack.voxelSizeInMicrons, pStack.nSamples,threshSTD);
 
 end
 fprintf('\n')
 
 
 
-function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
+function [BW,L] = findSampleInSection(im, pixelSize, nSamples, threshSTD)
 
     % Find pixels within b pixels of a border
     b=10;
@@ -69,10 +69,6 @@ function [BW,L] = findBrainInSection(im, pixelSize, nSamples, threshSTD)
     BW = imerode(BW,SE);
     BW = imdilate(BW,SE);
 
-
-    % Add a border around the brain
-    %SE = strel('square',round(50/pixelSize));
-    %BW = imdilate(BW,SE);
 
     %Look for objects at that occupy least a certain proportion of the image area
     minSize=0.0015;

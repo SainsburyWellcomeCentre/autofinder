@@ -1,10 +1,10 @@
 function report=evaluateBoundingBoxes(stats,pStack)
-% Evaluate how well the bounding boxes capture the brain
+% Evaluate how well the bounding boxes capture the sample tissue
 %
 %  function txtReport=boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats)
 %
 % Purpose
-% Report accuracy of brain finding with a text report. Shows images of failed sections
+% Report accuracy of tissue (sample) finding with a text report. Shows images of failed sections
 % if no outputs were requested. NOTE: evaluates based on the border
 % defined in pStack.borders and not on the binarised image.
 % This function is run automatically by test.runOnStackStruct once
@@ -40,7 +40,7 @@ if nargin==1
 end
 
 
-nPlanesWithMissingBrain=0;
+nPlanesWithMissingTissue=0;
 
 txtReport = '';
 
@@ -117,8 +117,8 @@ report.extraSqMM=zeros(1,length(stats));
 
 for ii=1:size(pStack.imStack,3)
 
-    %Empty image. We will fill with ones all regions where the ground-truth brain was found.
-    tB = pStack.borders{1}{ii}; % Ground truth brain borders
+    %Empty image. We will fill with ones all regions where the ground-truth tissue was found.
+    tB = pStack.borders{1}{ii}; % Ground truth tissueborders
 
     % Create an empty binary image
     BW = zeros(size(pStack.binarized,[1,2])); 
@@ -138,7 +138,7 @@ for ii=1:size(pStack.imStack,3)
 
 
     % Now we get the bounding boxes and set all pixels within those to zero.
-    % So if all the brain was found the BW image will be full of zeros.
+    % So if all the tissue was found the BW image will be full of zeros.
     % HOWEVER: we get the bounding boxes from the preceeding section for all but
     % the first section
     if ii>1
@@ -167,12 +167,12 @@ for ii=1:size(pStack.imStack,3)
 
 
     if nonImagedPixels>0
-        nPlanesWithMissingBrain = nPlanesWithMissingBrain + 1;
+        nPlanesWithMissingTissue = nPlanesWithMissingTissue + 1;
 
         if nargout==0
             imagesc(pStack.imStack(:,:,ii));
 
-            % Overlay the brain border
+            % Overlay the sample border
             hold on
             for jj=1:length(pStack.borders{1}{ii})
                 tBorder = pStack.borders{1}{ii}{jj};
@@ -248,9 +248,9 @@ for ii=1:size(pStack.imStack,3)
 
 end %for ii=1:size(pStack.imStack,3)
 
-report.nPlanesWithMissingBrain=nPlanesWithMissingBrain;
+report.nPlanesWithMissingTissue=nPlanesWithMissingTissue;
 
-if nPlanesWithMissingBrain==0
+if nPlanesWithMissingTissue==0
     msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
         length(stats));
     fprintf(msg)

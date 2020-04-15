@@ -1,5 +1,5 @@
 function varargout=runOnStackStruct(pStack,noPlot,settings)
-    % Run the brain-finding algorithm on a stack processed by genGroundTruthBorders
+    % Run the ROI-finding algorithm on a stack processed by genGroundTruthBorders
     %
     % function boundingBoxesFromLastSection.test.runOnStackStruct(pStack,noPlot,settings)
     %
@@ -105,7 +105,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % Enter main for loop in which we process each section one at a time using the ROIs from the previous section
     for ii=2:size(pStack.imStack,3)
         fprintf('\nDoing section %d/%d\n', ii, size(pStack.imStack,3))
-        % Use a rolling threshold based on the last nImages to drive brain/background
+        % Use a rolling threshold based on the last nImages to drive sample/background
         % segmentation in the next image. If set to zero it uses the preceeding section.
         nImages=5;
         if rollingThreshold==false
