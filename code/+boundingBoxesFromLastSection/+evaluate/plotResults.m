@@ -33,7 +33,7 @@ excludeIndex = params.Results.excludeIndex;
 
 
 
-summaryTable = getSummaryTable(testDir);
+summaryTable = boundingBoxesFromLastSection.evaluate.getSummaryTable(testDir);
 if isempty(summaryTable)
     return 
 end

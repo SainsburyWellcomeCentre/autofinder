@@ -105,13 +105,20 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     for ii=2:size(pStack.imStack,3)
         fprintf('\nDoing section %d/%d\n', ii, size(pStack.imStack,3))
         % Use a rolling threshold based on the last nImages to drive brain/background
-        % segmentation in the next image. 
+        % segmentation in the next image. If set to zero it uses the preceeding section.
         nImages=5;
         if rollingThreshold==false
-           thresh = median( [stats(1).medianBackground] + [stats(1).stdBackground]*tThreshSD);
+            % Do not update the threshold at all
+            thresh = stats(1).medianBackground + stats(1).stdBackground*tThreshSD;
+        elseif nImages==0
+            % Use the threshold from the last section
+            thresh = stats(ii-1).medianBackground + stats(ii-1).stdBackground*tThreshSD;
         elseif ii<=nImages
+            % Attempt to take the median value from the last nImages: take as many as possible 
+            % until we have nImages worth of sections 
             thresh = median( [stats.medianBackground] + [stats.stdBackground]*tThreshSD);
         else
+            % Take the median value from the last nImages 
             thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*tThreshSD);
         end
 

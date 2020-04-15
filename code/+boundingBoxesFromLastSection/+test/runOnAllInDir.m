@@ -1,7 +1,7 @@
-function runOnAllInDir(runDir,settings)
+function varargout = runOnAllInDir(runDir,testDir,settings)
     % Run auto-find test on all structures in runDir
     %
-    % function boundingBoxesFromLastSection.tests.runOnAllInDir(runDir,settings)
+    % function testDirThisSession = boundingBoxesFromLastSection.tests.runOnAllInDir(runDir,settings)
     %
     % Purpose
     % Batch run of boundingBoxesFromLastSection.test.runOnStackStruc
@@ -11,11 +11,18 @@ function runOnAllInDir(runDir,settings)
     %
     %
     % Inputs
-    % runDir - directory in which to look for files and run.
+    % runDir - Either: a) Directory in which to look for files and run.
+    %              Or: b) A dir structure with a list of files to process
     %
     % Inputs (optional)
+    % testDir - where to save the test data. If missing or empty, goes into in to a 
+    %           directory called "tests" in the current directory.
     % settings - Structure based on the output of the readSettings file. 
     %            Otherwise, it reads from this file directly.
+    %
+    %
+    % Outputs
+    % testDirThisSession - the location of the test directory itself: where data were saved to.
     %
     %
     % Example
@@ -25,7 +32,9 @@ function runOnAllInDir(runDir,settings)
     %
     % Or run on all sub-directories:
     % >> boundingBoxesFromLastSection.tests.runOnAllInDir('stacks')
-
+    %
+    % Run with a defined path for the output directory
+    % >> boundingBoxesFromLastSection.tests.runOnAllInDir('stacks','/tmp/')
 
 
 if nargin<1
@@ -33,13 +42,15 @@ if nargin<1
     return
 end
 
-if nargin<2 || isempty(settings)
+if nargin<2 || isempty(testDir)
+    testDir = fullfile(pwd,'tests');
+end
+
+if nargin<3 || isempty(settings)
     settings = boundingBoxesFromLastSection.readSettings;
 end
 
 
-
-testDir = fullfile('tests');
 if ~exist(testDir,'dir')
     success=mkdir(testDir);
     if ~success
@@ -49,14 +60,25 @@ if ~exist(testDir,'dir')
 end
 
 
+if ischar(runDir)
+    % runDir should be a path to directory that contains pStack files.
+    % Find those files and assign them to a dir structure.
+    if ~exist(runDir,'dir')
+        fprintf('%s is not a valid directory in the path\n', runDir)
+        return
+    end
+    pStack_list = dir(fullfile(runDir, '/**/*_previewStack.mat'));
 
-pStack_list = dir(fullfile(runDir, '/**/*_previewStack.mat'));
-
-if isempty(pStack_list)
-    fprintf('Found no preview stacks in %s\n',runDir)
-    return
+    if isempty(pStack_list)
+        fprintf('Found no preview stacks in %s\n',runDir)
+        return
+    end
+elseif isstruct(runDir)
+    % runDir is a directory structure containing paths to pStack files
+    fprintf('%s is running analysis over %d files provided in dir structure\n', ...
+        mfilename, length(runDir))
+    pStack_list = runDir;
 end
-
 
 testDirThisSession = fullfile(testDir,datestr(now,'yymmdd_HHMM'));
 success=mkdir(testDirThisSession);
@@ -128,6 +150,10 @@ fclose(fid);
 
 % Now we generate the summary table in that directory
 boundingBoxesFromLastSection.evaluate.genSummaryTable(testDirThisSession)
+
+if nargout>0
+    varargout{1}=testDirThisSession;
+end
 
 % internal functions 
 function pStack=pstack_loader(fname)
