@@ -163,5 +163,3 @@ previewStacks/tests
 To run the test `cd` to the `tests` directory in the repo and run `evaluatePerformance(PATH_TO_previewStacks)`. 
 
 Currently this is somewhat hard-coded in that it uses the `pStack` paths found in `test_reference/summary_table.mat`
-
-
