@@ -78,9 +78,8 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
 
         if isempty(OUT)
             stats.nRois=nan;
-            stats.boundingBoxPixels=nan;
-            stats.meanBoundingBoxPixels=nan;
-            stats.boundingBoxSqMM=nan;
+            stats.totalBoundingBoxSqMM=nan;
+            stats.meanBoundingBoxSqMM=nan;
             stats.propImagedAreaUnderBoundingBox=nan;
             stats.notes='';
             stats.SNR_medAboveThresh=nan;
@@ -89,9 +88,8 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
             stats.bwStats = struct;
         else
             stats.nRois = length(OUT.BoundingBoxes);
-            stats.boundingBoxPixels=OUT.totalBoundingBoxPixels;
-            stats.meanBoundingBoxPixels=mean(OUT.BoundingBoxPixels);
-            stats.boundingBoxSqMM = OUT.totalBoundingBoxPixels * (voxSize * 1E-3)^2;
+            stats.totalBoundingBoxSqMM = OUT.totalBoundingBoxSqMM;
+            stats.meanBoundingBoxSqMM = OUT.meanBoundingBoxSqMM;
             stats.propImagedAreaUnderBoundingBox=OUT.propImagedAreaCoveredByBoundingBox;
             stats.notes='';
 

@@ -72,15 +72,14 @@ end
 
 
 %Report the average proportion of pixels within a boundingbox that have tissue
-medPropPixelsInRoiThatAreTissue=median(([stats.nForegroundPix]./[stats.totalBoundingBoxPixels]));
+medPropPixelsInRoiThatAreTissue=median(([stats.foregroundSqMM]./[stats.totalBoundingBoxSqMM]));
 msg=sprintf('Median area of ROIs filled with tissue: %0.2f (run at %d micron border size).\n', ...
     medPropPixelsInRoiThatAreTissue, stats(1).settings.mainBin.expansionSize);
 fprintf(msg)
 txtReport = [txtReport,msg];
 
 %Report the total imaged area, summing over all ROIs
-totalImagedArea=sum([stats.totalBoundingBoxPixels]);
-totalImagedSqMM = totalImagedArea * (stats(1).rescaledPixelSize * 1E-3)^2;
+totalImagedSqMM=sum([stats.totalBoundingBoxSqMM]);
 msg=sprintf('Total imaged sq mm in this acquisition: %0.2f\n', ...
     totalImagedSqMM);
 fprintf(msg)

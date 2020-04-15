@@ -284,53 +284,63 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Finish up: generate all relevant stats to return as an output argument
     out.BoundingBoxes = {stats.BoundingBox};
+    out.BoundingBox=[]; % TODO -- runOnStackStruct writes to this but I'm not sure why
+    out.notes=''; % Observations and so on can go here
+    out.tThresh = tThresh;
 
-    % Variables associated with pixel size
+    % Variables associated with pixel size and the original image
     out.origPixelSize = origPixelSize;
     out.rescaledPixelSize = rescaleTo;
     out.rescaledRatio = origPixelSize/rescaleTo;
+    out.imSize = sizeIm;
 
 
     BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
+
     inverseBW = ~BW; %Pixels outside of brain
+    %imagesc(BW), drawnow, pause
+    %imagesc(inverseBW), drawnow, pause
 
     % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
     b = borderPixSize;
     inverseBW(b+1:end-b,b+1:end-b)=0;
+    %imagesc(inverseBW), drawnow, pause
     backgroundPix = im(find(inverseBW));
-    out.origPixelSize = origPixelSize;
-    out.rescaledPixelSize = rescaleTo;
-    out.rescaledRatio = origPixelSize/rescaleTo;
 
     out.meanBackground = mean(backgroundPix(:));
     out.medianBackground = median(backgroundPix(:));
     out.stdBackground = std(backgroundPix(:));
 
-    out.nBackgroundPix = sum(~BW(:));
-    out.nBackgroundSqMM = out.nBackgroundPix * (pixelSize*1E-3)^2;
+    % Calculate area of background and foreground in sq mm
+    % CARE! If downsampling was peformed we are still in downsampled pixels sizes here. 
+    % "pixelSize" is the downsampled size, if downsampling was conducted. Otherwise
+    % it is the original size.
+    nBackgroundPix = sum(~BW(:)); % Do not return to avoid confusion due to differing pixel sizes
+    out.backgroundSqMM = nBackgroundPix * (pixelSize*1E-3)^2;
 
     foregroundPix = im(find(BW));
     out.meanForeground = mean(foregroundPix(:));
     out.medianForeground = median(foregroundPix(:));
     out.stdForeground = std(foregroundPix(:));
 
-    out.nForegroundPix = sum(BW(:));
-    out.nForegroundSqMM = out.nForegroundPix * (pixelSize*1E-3)^2;
-    out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
-    out.notes=''; %Anything odd can go in here
-    out.tThresh = tThresh;
-    out.imSize = size(im);
+    nForegroundPix = sum(BW(:)); % Do not return to avoid confusion due to differing pixel sizes
+    out.foregroundSqMM = nForegroundPix * (pixelSize*1E-3)^2;
+
+
+
 
     % Calculate the number of pixels in the bounding boxes
     for ii=1:length(out.BoundingBoxes)
-        out.BoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4));
+        totalBoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4)); % Do not return
     end
-    out.totalBoundingBoxPixels = sum(out.BoundingBoxPixels);
+    out.BoundingBoxSqMM = totalBoundingBoxPixels * (pixelSize*1E-3)^2;
+    out.meanBoundingBoxSqMM = mean(out.BoundingBoxSqMM);
+    out.totalBoundingBoxSqMM = sum(out.BoundingBoxSqMM);
 
     % What proportion of the whole FOV is covered by the bounding boxes?
     % This number is only available in test datasets. In real acquisitions with the 
     % auto-finder we won't have this number. 
-    out.propImagedAreaCoveredByBoundingBox = out.totalBoundingBoxPixels / prod(size(im));
+    out.propImagedAreaCoveredByBoundingBox = totalBoundingBoxPixels / prod(sizeIm);
 
 
     % Finally: return bounding boxes to original size

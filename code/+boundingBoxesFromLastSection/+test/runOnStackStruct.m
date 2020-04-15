@@ -74,7 +74,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         doAutoThreshold=true;
         fprintf('%s is running auto-thresh\n', mfilename)
         [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack, false, settings);
-        argIn = [argIn,{'tThreshSD',tThreshSD}];
+        argIn = [argIn,{'tThreshSD',tThreshSD}]; % Add the tThresh SD here
     end
 
     fprintf('\nTHRESHOLD OBTAINED!\n')
