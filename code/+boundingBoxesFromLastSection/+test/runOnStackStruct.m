@@ -59,6 +59,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
              'doPlot', ~noPlot, ...
              'settings', settings};
 
+    fprintf('\n ** GETTING A THRESHOLD\n')
     if isfield(pStack,'tThreshSD')
         % Start with a threshold hard-coded into the pStack file
         tThreshSD = pStack.tThreshSD;
@@ -76,8 +77,8 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         argIn = [argIn,{'tThreshSD',tThreshSD}];
     end
 
-
-
+    fprintf('\nTHRESHOLD OBTAINED!\n')
+    fprintf('%s\n\n',repmat('-',1,100))
 
     % In the first section the user should have acquired a preview that captures the whole sample
     % and has a generous border area. We therefore extract the ROIs from the whole of the first section.

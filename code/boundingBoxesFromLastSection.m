@@ -90,6 +90,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Get defaults from settings file if needed
     if isempty(tThreshSD)
+        fprintf('%s is using a default threshold of %0.2f\n',mfilename,tThreshSD)
         tThreshSD = settings.main.defaultThreshSD;
     end
     if isempty(doBinaryExpansion)
@@ -134,7 +135,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('No threshold provided to %s - Choosing a threshold of %0.1f based on threshSD of %0.2f\n', ...
+        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to exract a threshold of %0.1f based on threshSD of %0.2f\n', ...
          mfilename, tThresh, tThreshSD)
 
     else
