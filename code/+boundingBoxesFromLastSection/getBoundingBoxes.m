@@ -12,6 +12,8 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     end
 
     % Delete very small objects and ensure we have no non-integers
+    % TODO - could use bwprop filt at this point. 
+    % In fact, could use something closer to what the auto thresh does.
     sizeThresh = settings.mainGetBB.minSizeInSqMicrons / pixelSize;
 
     for ii=length(stats):-1:1
