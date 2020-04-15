@@ -48,10 +48,8 @@ if ~isempty(excludeIndex)
 end
 
 %report to screen the file name and index of each recording
-for ii=1:size(summaryTable,1)
-    fprintf('%d/%d. %s\n', ii, size(summaryTable,1), ...
-        summaryTable.fileName{ii});
-end
+boundingBoxesFromLastSection.evaluate.printFileNamesAsDoubleColumnTable(summaryTable.fileName)
+
 
 
 % Report if any samples failed

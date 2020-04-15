@@ -92,14 +92,7 @@ end
 %report to screen the file name and index of each recording.
 %the weirdness below is because we make a two-column list.
 if ~quiet
-    maxLengthFname = max(cellfun(@length,{refTable.fileName{:}}));
-    for ii= 1 : 2 : size(refTable,1)-mod(size(refTable,1),2);
-        spacesToAdd = maxLengthFname-length(refTable.fileName{ii}) + 2;
-        fprintf('%03d/%03d. %s%s%03d/%03d. %s\n', ...
-            ii, size(refTable,1),refTable.fileName{ii}, ...
-            repmat(' ',1,spacesToAdd), ...
-            ii+1, size(refTable,1),refTable.fileName{ii+1} )
-    end
+    boundingBoxesFromLastSection.evaluate.printFileNamesAsDoubleColumnTable(refTable.fileName)
 
     if acquisitionsExcluded
         fprintf('\nSome acquisitions were excluded. See text above acquisition list.\n\n')
