@@ -20,14 +20,14 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % Inputs (Optional param/val pairs)
     % pixelSize - 7 (microns/pixel) by default
     % tileSize - 1000 (microns) by default. Size of tile FOV in microns.
-    % tThresh - Threshold for brain/no brain. By default this is auto-calculated
+    % tThresh - Threshold for tissue/no tissue. By default this is auto-calculated
     % tThreshSD - Used to do the auto-calculation of tThresh.
     % doPlot - if true, display image and overlay boxes. false by default
     % doTiledRoi - if true (default) return the ROI we would have if tile scanning. 
     % lastSectionStats - By default the whole image is used. If this argument is 
     %               present it should be the output of image2boundingBoxes from a
     %               previous sectionl
-    % borderPixSize - number of pixels from border to user for background calc. 5 by default
+    % borderPixSize - number of pixels from border to user for background calc. 4 by default
     % skipMergeNROIThresh - If more than this number of ROIs is found, do not attempt
     %                         to merge. Just return them. Used to speed up auto-finding.
     %                         By default this is infinity, so we always try to merge.
@@ -175,7 +175,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         nT=1;
 
         for ii = 1:length(lastSectionStats.BoundingBoxes)
-            % Scale daown the bounding boxes
+            % Scale down the bounding boxes
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
@@ -295,38 +295,32 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.imSize = sizeIm;
 
 
-    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
+    % GET STATS OF EACH ROI
+    for ii=1:length(out.BoundingBoxes)
+        tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,out.BoundingBoxes{ii});
+        imStats(ii) = boundingBoxesFromLastSection.getImageStats(im,pixelSize,borderPixSize,tThresh);
+    end
 
-    inverseBW = ~BW; %Pixels outside of brain
-    %imagesc(BW), drawnow, pause
-    %imagesc(inverseBW), drawnow, pause
+    % Get the foreground and background pixel stats from the ROIs (not the whole image)
+    out.meanBackground = mean([imStats.backgroundPix]);
+    out.medianBackground = median([imStats.backgroundPix]);
+    out.stdBackground = std([imStats.backgroundPix]);
 
-    % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
-    b = borderPixSize;
-    inverseBW(b+1:end-b,b+1:end-b)=0;
-    %imagesc(inverseBW), drawnow, pause
-    backgroundPix = im(find(inverseBW));
+    out.meanForeground = mean([imStats.foregroundPix]);
+    out.medianForeground = median([imStats.foregroundPix]);
+    out.stdForeground = std([imStats.foregroundPix]);
 
-    out.meanBackground = mean(backgroundPix(:));
-    out.medianBackground = median(backgroundPix(:));
-    out.stdBackground = std(backgroundPix(:));
 
     % Calculate area of background and foreground in sq mm
     % CARE! If downsampling was peformed we are still in downsampled pixels sizes here. 
     % "pixelSize" is the downsampled size, if downsampling was conducted. Otherwise
     % it is the original size.
+    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold0
     nBackgroundPix = sum(~BW(:)); % Do not return to avoid confusion due to differing pixel sizes
     out.backgroundSqMM = nBackgroundPix * (pixelSize*1E-3)^2;
 
-    foregroundPix = im(find(BW));
-    out.meanForeground = mean(foregroundPix(:));
-    out.medianForeground = median(foregroundPix(:));
-    out.stdForeground = std(foregroundPix(:));
-
     nForegroundPix = sum(BW(:)); % Do not return to avoid confusion due to differing pixel sizes
     out.foregroundSqMM = nForegroundPix * (pixelSize*1E-3)^2;
-
-
 
 
     % Calculate the number of pixels in the bounding boxes

@@ -6,6 +6,9 @@ function subIm = getSubImageUsingBoundingBox(im,BoundingBox,maintainSize)
     % BoundingBox - in the form: [left corner pos, bottom corner pos, width, height]
     % maintainSize - false by default. If true, the output (subIM), is the same size as im
     %                but all pixels outside BoundingBox are zero.
+    %
+    % Outputs
+    % subIm - the sub-image as a 2D matrix
 
     if nargin<3
         maintainSize=false;
