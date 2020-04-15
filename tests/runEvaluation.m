@@ -18,8 +18,18 @@ function runEvaluation(dataPath)
     %            works on that.
     %
     %
-    % Example usage
+    % Example Usage
+    % $ cd ~/Desktop/
+    % $ git clone https://github.com/raacampbell/autofinder.git
+    % >> cd ~/Desktop/autofinder/
+    % >> addToPath
+    % Removing /home/user/work/code/autoFindBrain/code from MATLAB path.
+    % Adding /home/user/Desktop/autofinder/code to MATLAB path.
+    % >> cd tests
+    % >> runEvaluation('/Volumes/data/previewStacks')
     %
+    %
+    % Rob Campbell - April 2020
 
 
 
