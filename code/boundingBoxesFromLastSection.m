@@ -144,18 +144,21 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
 
-    if isempty(lastSectionStats)
-
-        % We run on the whole image
-        % Binarize, clean, add a border around the sample
+    % Binarize, clean, add a border around the sample
+    if nargout>1
+       [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
+    else
         BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
-        if showBinaryImages
-            disp('Press return')
-            pause
-        end
+    end
+    % We run on the whole image
+    if showBinaryImages
+        disp('Press return')
+        pause
+    end
+
+    if isempty(lastSectionStats)
         stats = boundingBoxesFromLastSection.getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
-
         if length(stats) < skipMergeNROIThresh
             stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
         end
@@ -174,9 +177,12 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             % Scale down the bounding boxes
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
+            % TODO -- we run binarization each time. Otherwise boundingboxes tha merge don't unmerge for some reason.
+            %         see Issue 58. 
             tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
-            BW = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
-            tStats{ii} = boundingBoxesFromLastSection.getBoundingBoxes(BW,im,pixelSize);
+            %tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
+            tBW = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
+            tStats{ii} = boundingBoxesFromLastSection.getBoundingBoxes(tBW,tIm,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
 
             if ~isempty(tStats{ii})
@@ -288,12 +294,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % GET STATS OF EACH ROI
-    if nargout>1
-        [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
-    else
-        BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
-    end
-
     for ii=1:length(out.BoundingBoxes)
         tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,out.BoundingBoxes{ii});
         tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,out.BoundingBoxes{ii});
