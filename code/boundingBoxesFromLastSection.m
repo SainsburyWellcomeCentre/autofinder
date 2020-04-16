@@ -285,6 +285,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.BoundingBox=[]; % TODO -- runOnStackStruct writes to this but I'm not sure why
     out.notes=''; % Observations and so on can go here
     out.tThresh = tThresh;
+    out.tThreshSD = tThreshSD;
 
     % Variables associated with pixel size and the original image
     out.origPixelSize = origPixelSize;
