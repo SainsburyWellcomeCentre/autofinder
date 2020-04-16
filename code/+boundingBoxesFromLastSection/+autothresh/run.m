@@ -66,7 +66,7 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
 
 
     % Find the threshold
-    [tThreshSD,stats] = getThreshAlg(stats);
+    [tThreshSD,stats] = getThreshAlg(stats,maxThresh);
 
 
     boundingBoxesFromLastSection(imTMP, argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
@@ -109,7 +109,7 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
 
 
 
-    function [tThreshSD,stats] = getThreshAlg(stats)
+    function [tThreshSD,stats] = getThreshAlg(stats,maxThresh)
         % Start with a high threshold and decrease
         % A sharp increase in ROI number means that we're too low
         % Filling the whole FOV means we're too low
@@ -160,6 +160,16 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
             if length(stats)==0
                 fprintf(' ** VERY BAD: after removing thresholds due to tiling artifacts there are no more threshold values.\n')
             end
+
+            % If we have very threshold values left, we a slightly larger range.
+            if length(stats)<5 && settings.autoThresh.allowMaxExtensionIfFewThreshLeft
+                newMaxThresh = maxThresh+5;
+                if maxThresh < settings.autoThresh.maxThreshold*4 % to avoid infinite recursion
+                    fprintf('TOO FEW THRESHOLDS: DOING ANOTHER RUN UP TO NEW MAXTHRESH OF %d\n',newMaxThresh)
+                    stats=calcStatsFromThreshold(minThresh);
+                    [~,stats]=getThreshAlg(stats,newMaxThresh);
+                end
+            end
             clippedDueToAgar=true;
         else
             clippedDueToAgar=false;
@@ -167,6 +177,7 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
 
         % If the median SNR is low, we get rid tThresh values above 8
         % This helps with certain low SNR samples
+
         medSNR = nanmedian([stats.SNR_medThreshRatio]);
         clipVal=8;
 
@@ -342,7 +353,7 @@ function [isFindingAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSizeInMi
     % Examines each threshold in turns and determines whether the is evidence that it's
     % treating agar as a ROIs. This can happen when the user has a huge ROI that includes
     % regions outside of the agar.
-    verbose=false;
+    verbose=true;
 
     propTileSizeROIs = zeros(1,length(stats));
     nROIs = zeros(1,length(stats));

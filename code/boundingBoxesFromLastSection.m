@@ -324,7 +324,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.meanBoundingBoxSqMM = mean(out.BoundingBoxSqMM);
     out.totalBoundingBoxSqMM = sum(out.BoundingBoxSqMM);
 
-
     % What proportion of the whole FOV is covered by the bounding boxes?
     % This number is only available in test datasets. In real acquisitions with the 
     % auto-finder we won't have this number. 
@@ -337,7 +336,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         out.BoundingBoxes = ...
             cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.BoundingBoxes,'UniformOutput',false);
     end
-
 
 
 
