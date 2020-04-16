@@ -353,7 +353,7 @@ function [isFindingAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSizeInMi
     % Examines each threshold in turns and determines whether the is evidence that it's
     % treating agar as a ROIs. This can happen when the user has a huge ROI that includes
     % regions outside of the agar.
-    verbose=true;
+    verbose=false;
 
     propTileSizeROIs = zeros(1,length(stats));
     nROIs = zeros(1,length(stats));
