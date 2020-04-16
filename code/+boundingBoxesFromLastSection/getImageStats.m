@@ -29,7 +29,7 @@ function imStats = getImageStats(im,pixelSize,borderPixSize,tThresh)
         imStats.medianForeground = median(foregroundPix(:));
         imStats.stdForeground = std(foregroundPix(:));
     end
-    imStats.foregroundPix = foregroundPix;
+    imStats.foregroundPix = foregroundPix';
 
 
     % Get background pixels and their stats. We treat as the background
@@ -47,5 +47,5 @@ function imStats = getImageStats(im,pixelSize,borderPixSize,tThresh)
         imStats.medianBackground = median(backgroundPix(:));
         imStats.stdBackground = std(backgroundPix(:));
     end
-    imStats.backgroundPix = backgroundPix;
+    imStats.backgroundPix = backgroundPix';
 
