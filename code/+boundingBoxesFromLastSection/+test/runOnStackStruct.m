@@ -138,7 +138,8 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         if ~isempty(tmp)
             FG_ratio_this_section = tmp.foregroundSqMM/tmp.backgroundSqMM;
             FG_ratio_previous_section = stats(end).foregroundSqMM/stats(end).backgroundSqMM;
-            if (FG_ratio_this_section / FG_ratio_previous_section)>5
+            if (FG_ratio_this_section / FG_ratio_previous_section)>10
+                (FG_ratio_this_section / FG_ratio_previous_section)
                 [tThreshSD,~,thresh]=boundingBoxesFromLastSection.autothresh.run(pStack,[],[],tmp,ii);
                 [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
                     argIn{:}, ...
