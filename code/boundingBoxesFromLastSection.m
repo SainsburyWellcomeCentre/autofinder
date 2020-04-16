@@ -320,10 +320,10 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Calculate the number of pixels in the bounding boxes
     for ii=1:length(out.BoundingBoxes)
-        totalBoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4)); % Do not return total pixels: they are downsampled
+        nBoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4)); % Do not return total pixels: they are downsampled
     end
     % Convert bounding box sizes to meaningful units and return those.
-    out.BoundingBoxSqMM = totalBoundingBoxPixels * (pixelSize*1E-3)^2;
+    out.BoundingBoxSqMM = nBoundingBoxPixels * (pixelSize*1E-3)^2;
     out.meanBoundingBoxSqMM = mean(out.BoundingBoxSqMM);
     out.totalBoundingBoxSqMM = sum(out.BoundingBoxSqMM);
 
@@ -331,7 +331,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % What proportion of the whole FOV is covered by the bounding boxes?
     % This number is only available in test datasets. In real acquisitions with the 
     % auto-finder we won't have this number. 
-    out.propImagedAreaCoveredByBoundingBox = totalBoundingBoxPixels / prod(sizeIm);
+    out.propImagedAreaCoveredByBoundingBox = sum(nBoundingBoxPixels) / prod(sizeIm);
 
 
     % Finally: return bounding boxes to original size
