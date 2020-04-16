@@ -1,7 +1,7 @@
-function [tThreshSD,stats] = run(pStack, runSeries, settings)
+function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings,BBstats,ind)
     % Search a range of thresholds and find the best one. 
     %
-    % function [tThreshSD,stats] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries)
+    % function [tThreshSD,stats,tThresh] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries)
     %
     % Purpose
     % Choose threshold based on the number of ROIs it produces. 
@@ -11,7 +11,15 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
     % runSeries - Just runs a series of thresholds and plots the result. False by default.
     %             This option runs a finer set of thresholds than the actual thresh finder.
     % settings - optional. The settings structure. If empty or missing, we read from the file itself.
-
+    %
+    %
+    % Outputs
+    % tThreshSD - SD threshold value
+    % stats - a structure of statistics associated with the run
+    % tThresh - the absolute threshold value
+    %
+    %
+    % Notes
     % For most samples, if the threshold is too low this usually causes the whole FOV to imaged.
     % With the SNR of most samples, as a high threshold is never a problem. With low SNR, the
     % sample vanishes at high threshold values but might go through a peak with many ROIs. At low
@@ -26,18 +34,37 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
     end
 
 
-    % This is the image we will use to obtain the threshold
-    imTMP = pStack.imStack(:,:,1);
-
 
 
     tileSize = pStack.tileSizeInMicrons;
     voxSize = pStack.voxelSizeInMicrons;
-
-    argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,...
+    BB_argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,...
     'skipMergeNROIThresh',settings.autoThresh.skipMergeNROIThresh,...
     'doBinaryExpansion',settings.autoThresh.doBinaryExpansion};
 
+
+    if nargin>4 && ~isempty(BBstats) && length(BBstats)==1
+        if isstruct(BBstats) && isfield(BBstats,'BoundingBoxes')
+            origIM = pStack.imStack(:,:,ind);
+            BB = BBstats.BoundingBoxes;
+            for ii=1:length(BB)
+                tmpIm=boundingBoxesFromLastSection.getSubImageUsingBoundingBox(origIM,BB{ii});
+                pStack.imStack = tmpIm;
+                [tThreshSD(ii),stats{ii}] = boundingBoxesFromLastSection.autothresh.run(pStack,false,settings);
+            end
+            tThreshSD = mean(tThreshSD);
+            out=boundingBoxesFromLastSection(origIM, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+            tThresh = out.tThresh;
+            stats=[];
+            fprintf('DID SUB-ROIS!\n')
+            return
+        end
+    end
+
+
+
+    % This is the image we will use to obtain the threshold
+    imTMP = pStack.imStack(:,:,1);
 
 
     minThresh=settings.autoThresh.minThreshold;
@@ -69,12 +96,13 @@ function [tThreshSD,stats] = run(pStack, runSeries, settings)
     [tThreshSD,stats] = getThreshAlg(stats,maxThresh);
 
 
-    boundingBoxesFromLastSection(imTMP, argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+    out=boundingBoxesFromLastSection(imTMP, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+    tThresh = out.tThresh;
 
     % Nested functions follow
     function stats = calcStatsFromThreshold(tThreshSD)
         % Calculate a bunch of stats from a threshold
-        [OUT,bwStats] = boundingBoxesFromLastSection(imTMP, argIn{:},'tThreshSD',tThreshSD);
+        [OUT,bwStats] = boundingBoxesFromLastSection(imTMP, BB_argIn{:},'tThreshSD',tThreshSD);
 
         if isempty(OUT)
             stats.nRois=nan;
