@@ -34,18 +34,18 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     %If so delete. TODO: longer term we want to get rid of the problem at acquisition. 
 
     for ii=length(stats):-1:1
-        boxArea = prod(stats(ii).BoundingBox(3:4)*pixelSize*1E-3);
-        if boxArea>2
-            % TODO: could use the actual tile size
+        % If it's large, we skip analysing it
+        boxAreaInSqMM = prod(stats(ii).BoundingBox(3:4)) * (pixelSize*1E-3)^2;
+        if boxAreaInSqMM>4
             continue
         end
 
 
         % Ask if most pixels the median value.
         tmp=boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,stats(ii).BoundingBox);
-        tMed=median(tmp(:));
-        propMedPix=length(find(tmp==tMed)) / length(tmp(:));
-        if propMedPix>0.5
+        tMod=mode(tmp(:));
+        propMedPix=length(find(tmp==tMod)) / length(tmp(:));
+        if propMedPix>0.25
             %Then delete the ROI
             fprintf('Removing corner ROI\n')
             stats(ii)=[];
