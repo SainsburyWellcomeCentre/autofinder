@@ -51,3 +51,6 @@ This has fixed two cases of rat brains where the whole agar block is being image
 In the process of doing this, the four samples where we changed laser power a lot just magically work. So that's good. 
 However, it turns out that one of the spinal cord samples balloons due to a large laser power increase. This is described in [Issue #50](https://github.com/raacampbell/autofinder/issues/50). 
 To fix that, I think we need to first address [Issue #38](https://github.com/raacampbell/autofinder/issues/38), which is that for initially setting the `tThreshSD` based upon ROI edge pixels not FOV edge pixels. 
+
+* v10
+All stacks that are needed now pass criteria! We have 133 acquisitions that are acquired perfectly or "good enough". 120 of them lose no more than two or three tiles of tissue. Three of them lose about thirty tiles. We will now move to Phase 3. The first job will be to tidy the code and refactor so it can be incorporated into BT. 
