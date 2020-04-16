@@ -148,11 +148,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
         % We run on the whole image
         % Binarize, clean, add a border around the sample
-        if nargout>1
-            [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
-        else
-            BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
-        end
+        BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
         if showBinaryImages
             disp('Press return')
             pause
@@ -179,11 +175,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
             tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
-            if nargout>1
-                [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
-            else
-                BW = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
-            end
+            BW = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
             tStats{ii} = boundingBoxesFromLastSection.getBoundingBoxes(BW,im,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
 
@@ -296,7 +288,12 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % GET STATS OF EACH ROI
-    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,'doExpansion',doBinaryExpansion,'settings',settings);
+    if nargout>1
+        [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
+    else
+        BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
+    end
+
     for ii=1:length(out.BoundingBoxes)
         tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,out.BoundingBoxes{ii});
         tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,out.BoundingBoxes{ii});
