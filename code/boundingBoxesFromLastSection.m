@@ -296,9 +296,11 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % GET STATS OF EACH ROI
+    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,'doExpansion',doBinaryExpansion,'settings',settings);
     for ii=1:length(out.BoundingBoxes)
         tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,out.BoundingBoxes{ii});
-        imStats(ii) = boundingBoxesFromLastSection.getImageStats(im,pixelSize,borderPixSize,tThresh);
+        tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,out.BoundingBoxes{ii});
+        imStats(ii) = boundingBoxesFromLastSection.getImageStats(tIm,pixelSize,borderPixSize,tThresh,tBW);
     end
 
     % Get the foreground and background pixel stats from the ROIs (not the whole image)

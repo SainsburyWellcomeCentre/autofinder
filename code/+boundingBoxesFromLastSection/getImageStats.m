@@ -1,4 +1,4 @@
-function imStats = getImageStats(im,pixelSize,borderPixSize,tThresh)
+function imStats = getImageStats(im,pixelSize,borderPixSize,tThresh,BW)
     % Get key image stats, such as background/foreground pixel info
     %
     % function imStats = getImageStats(im,pixelSize,borderPix,tThresh)
@@ -19,8 +19,10 @@ function imStats = getImageStats(im,pixelSize,borderPixSize,tThresh)
 
     calcFullStats=false; %In case we ever need more detailed stats. For now we don't
 
-    %Get the binary image again so it includes all tissue above the threshold
-    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); 
+    if nargin<5 || isempty(BW)
+        %Get the binary image again so it includes all tissue above the threshold
+        BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); 
+    end
 
     % Get foreground pixels and their stats
     foregroundPix = im(find(BW));
