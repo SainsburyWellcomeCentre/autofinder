@@ -12,3 +12,10 @@ function printFileNamesAsDoubleColumnTable(fnames)
             repmat(' ',1,spacesToAdd), ...
             ii+1, length(fnames),fnames{ii+1} )
     end
+
+    % Print last name if we have an odd number of cases
+    if mod(length(fnames),2) == 1
+        fprintf('%03d/%03d. %s\n', ...
+            length(fnames), length(fnames),fnames{end})
+
+    end
