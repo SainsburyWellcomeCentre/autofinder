@@ -135,18 +135,20 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         % indicates that something like a change in laser power or wavelength has happened.
         % If this happens we need to re-run the finder. For now we place the code for this here
         % but in future it should be in boundingBoxesFromLastSection -- TODO!!
-        FG_ratio_this_section = tmp.foregroundSqMM/tmp.backgroundSqMM;
-        FG_ratio_previous_section = stats(end).foregroundSqMM/stats(end).backgroundSqMM;
-        if (FG_ratio_this_section / FG_ratio_previous_section)>5
-            [tThreshSD,~,thresh]=boundingBoxesFromLastSection.autothresh.run(pStack,[],[],tmp,ii);
-            [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
-                argIn{:}, ...
-                'tThreshSD',tThreshSD, ...
-                'tThresh',thresh,...
-                'lastSectionStats',stats(ii-1));
-            tmp.LASER_CHANGED=true;
-        else
-            tmp.LASER_CHANGED=false;
+        if ~isempty(tmp)
+            FG_ratio_this_section = tmp.foregroundSqMM/tmp.backgroundSqMM;
+            FG_ratio_previous_section = stats(end).foregroundSqMM/stats(end).backgroundSqMM;
+            if (FG_ratio_this_section / FG_ratio_previous_section)>5
+                [tThreshSD,~,thresh]=boundingBoxesFromLastSection.autothresh.run(pStack,[],[],tmp,ii);
+                [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
+                    argIn{:}, ...
+                    'tThreshSD',tThreshSD, ...
+                    'tThresh',thresh,...
+                    'lastSectionStats',stats(ii-1));
+                tmp.LASER_CHANGED=true;
+            else
+                tmp.LASER_CHANGED=false;
+            end
         end
 
         if ~isempty(tmp)
