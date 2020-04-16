@@ -25,15 +25,15 @@ function plot(stats)
 
 
     subplot(nRows,2,3)
-    plot([stats.tThreshSD],[stats.meanBoundingBoxPixels],'-ok')
+    plot([stats.tThreshSD],[stats.totalBoundingBoxSqMM],'-ok')
     xlabel('threshold')
-    ylabel('Mean pixels per bounding box')
+    ylabel('Total sq mm of bounding boxes')
     grid on
 
     subplot(nRows,2,4)
-    plot([stats.tThreshSD],[stats.meanBoundingBoxPixels]./[stats.nRois],'-ok')
+    plot([stats.tThreshSD],[stats.meanBoundingBoxSqMM],'-ok')
     xlabel('threshold')
-    ylabel('Mean pixels per bounding box')
+    ylabel('Mean sq mm per bounding box')
     grid on
 
     subplot(nRows,2,5)

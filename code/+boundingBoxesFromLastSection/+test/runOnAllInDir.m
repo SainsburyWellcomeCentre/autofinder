@@ -109,7 +109,12 @@ t=tic;
 
 parfor ii=1:length(pStack_list)
     tFile = fullfile(pStack_list(ii).folder,pStack_list(ii).name);
+    if ~exist(tFile,'file')
+        fprintf('File %s does not exist. Skipping\n', tFile)
+        continue
+    end
     fprintf('Loading %s\n',tFile)
+
     pStack = pstack_loader(tFile);
     [~,nameWithoutExtension] = fileparts(pStack_list(ii).name);
 

@@ -56,7 +56,7 @@ totalExtraSqMM = zeros(n,1);
 maxNonImagedTiles = zeros(n,1);
 maxNonImagedSqMM = zeros(n,1);
 maxExtraSqMM = zeros(n,1);
-nPlanesWithMissingBrain = zeros(n,1);
+nPlanesWithMissingTissue = zeros(n,1);
 
 autothresh_notes = cell(n,1);
 autothresh_SNR = zeros(n,1);
@@ -104,7 +104,7 @@ for ii=1:n
     maxNonImagedSqMM(ii) = max(testLog(1).report.nonImagedSqMM);
     maxExtraSqMM(ii) = max(testLog(1).report.extraSqMM);
 
-    nPlanesWithMissingBrain(ii) = max(testLog(1).report.nPlanesWithMissingBrain);
+    nPlanesWithMissingTissue(ii) = max(testLog(1).report.nPlanesWithMissingTissue);
 end
 
 
@@ -116,7 +116,7 @@ summaryTable = table(fileName, tThreshSD, rollingThreshold, autoThreshold, numSe
     numSectionsWithOverFlowingCoverage, medPropPixelsInRoiThatAreTissue, totalImagedSqMM, ... 
     propImagedArea, nSamples, isProblemCase, numUnprocessedSections, autothresh_notes, autothresh_tThreshSD, ...
     autothresh_SNR, autothresh_thinksAgarIsAROI, totalNonImagedTiles, totalNonImagedSqMM, totalExtraSqMM, ...
-    maxNonImagedTiles, maxNonImagedSqMM, maxExtraSqMM,nPlanesWithMissingBrain, ...
+    maxNonImagedTiles, maxNonImagedSqMM, maxExtraSqMM,nPlanesWithMissingTissue, ...
     pStackFname);
 
 

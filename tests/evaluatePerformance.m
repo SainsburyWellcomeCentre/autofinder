@@ -36,18 +36,18 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     refTable  = boundingBoxesFromLastSection.evaluate.getSummaryTable(referenceDir);
     testTable = boundingBoxesFromLastSection.evaluate.getSummaryTable(testDir);
 
-    missingFileInds = cellfun(@(x) isempty(strmatch(x,refTable.fileName)), ...
-            testTable.fileName,'uniformoutput',false);
-    missingFileInds = cell2mat(missingFileInds);
+    missingFileInds = cellfun(@(x) isempty(strmatch(x,testTable.fileName)), ...
+            refTable.fileName,'UniformOutput',false);
+    missingFileInds = find(cell2mat(missingFileInds));
 
     if any(missingFileInds)
-        if sum(missingFileInds)>1
-            reportString = [reportString, sprintf('FAIL: %d test acquisitions not present in reference table:\n', sum(missingFileInds))];
+        if length(missingFileInds)>1
+            reportString = [reportString, sprintf('FAIL: %d test acquisitions not present in reference table:\n', length(missingFileInds))];
         else
-            reportString = [reportString, sprintf('FAIL: %d test acquisition not present in reference table:\n', sum(missingFileInds))];
+            reportString = [reportString, sprintf('FAIL: %d test acquisition not present in reference table:\n', length(missingFileInds))];
         end
         for ii=1:length(missingFileInds)
-            reportString = [reportString, sprintf(' %s\n',refTable.fileName(missingFileInds(ii)))];
+            reportString = [reportString, sprintf(' %s\n',refTable.fileName{missingFileInds(ii)})];
         end
         reportString = [reportString, sprintf('\n')];
         passedAllTests=false;

@@ -1,5 +1,5 @@
 function varargout=runOnStackStruct(pStack,noPlot,settings)
-    % Run the brain-finding algorithm on a stack processed by genGroundTruthBorders
+    % Run the ROI-finding algorithm on a stack processed by genGroundTruthBorders
     %
     % function boundingBoxesFromLastSection.test.runOnStackStruct(pStack,noPlot,settings)
     %
@@ -59,6 +59,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
              'doPlot', ~noPlot, ...
              'settings', settings};
 
+    fprintf('\n ** GETTING A THRESHOLD\n')
     if isfield(pStack,'tThreshSD')
         % Start with a threshold hard-coded into the pStack file
         tThreshSD = pStack.tThreshSD;
@@ -73,17 +74,16 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         doAutoThreshold=true;
         fprintf('%s is running auto-thresh\n', mfilename)
         [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack, false, settings);
-        argIn = [argIn,{'tThreshSD',tThreshSD}];
     end
 
-
-
+    fprintf('\nTHRESHOLD OBTAINED!\n')
+    fprintf('%s\n\n',repmat('-',1,100))
 
     % In the first section the user should have acquired a preview that captures the whole sample
     % and has a generous border area. We therefore extract the ROIs from the whole of the first section.
     fprintf('\nDoing section %d/%d\n', 1, size(pStack.imStack,3))
     fprintf('Finding bounding box in first section\n')
-    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:});
+    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:},'tThreshSD',tThreshSD);
     drawnow
 
     if pauseBetweenSections
@@ -100,11 +100,11 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
     rollingThreshold=settings.stackStr.rollingThreshold; %If true we base the threshold on the last few slices
 
-
+    stats.tThreshSD_recalc=false; %To signal if we had to re-calc the threshold
     % Enter main for loop in which we process each section one at a time using the ROIs from the previous section
     for ii=2:size(pStack.imStack,3)
         fprintf('\nDoing section %d/%d\n', ii, size(pStack.imStack,3))
-        % Use a rolling threshold based on the last nImages to drive brain/background
+        % Use a rolling threshold based on the last nImages to drive sample/background
         % segmentation in the next image. If set to zero it uses the preceeding section.
         nImages=5;
         if rollingThreshold==false
@@ -122,12 +122,36 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
             thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*tThreshSD);
         end
 
+
         % boundingBoxesFromLastSection is fed the ROI structure from the **previous section**
         % It runs the sample-detection code within these ROIs only and returns the results.
         [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
             argIn{:}, ...
+            'tThreshSD',tThreshSD, ...
             'tThresh',thresh,...
             'lastSectionStats',stats(ii-1));
+
+        % A large and sudden decrease in the background pixels (or haiving none at all)
+        % indicates that something like a change in laser power or wavelength has happened.
+        % If this happens we need to re-run the finder. For now we place the code for this here
+        % but in future it should be in boundingBoxesFromLastSection -- TODO!!
+        if ~isempty(tmp)
+            FG_ratio_this_section = tmp.foregroundSqMM/tmp.backgroundSqMM;
+            FG_ratio_previous_section = stats(end).foregroundSqMM/stats(end).backgroundSqMM;
+
+            % Responds to laser being turned up. In general to higher SNR. 
+            if (FG_ratio_this_section / FG_ratio_previous_section)>10
+                [tThreshSD,~,thresh]=boundingBoxesFromLastSection.autothresh.run(pStack,[],[],tmp,ii);
+                [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
+                    argIn{:}, ...
+                    'tThreshSD',tThreshSD, ...
+                    'tThresh',thresh,...
+                    'lastSectionStats',stats(ii-1));
+                tmp.tThreshSD_recalc=true;
+            else
+                tmp.tThreshSD_recalc=false;
+            end
+        end
 
         if ~isempty(tmp)
             stats(ii)=tmp;
@@ -146,10 +170,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     end
 
     %Log aspects of the run in the first element
-    stats(1).rescaleTo = settings.stackStr.rescaleTo; % Log by how much we re-scaled in boundingBoxesFromLastSection
     stats(1).rollingThreshold=rollingThreshold;
-
-    % Log settings to the first element of the structure
     stats(1).runOnStackStructArgs = argIn;
     stats(1).settings = settings;
     stats(1).nSamples = pStack.nSamples;
@@ -158,21 +179,11 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % Add a text report to the first element
     stats(1).report = boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats,pStack);
 
-    %Add the tThreshSD setting to everything
-    for ii=1:length(stats)
-        stats(ii).tThreshSD=tThreshSD;
-        if doAutoThreshold
-            stats(ii).autothresh=true;
-        else
-            stats(ii).autothresh=false;
-        end
-    end
-
-    % Log the auto-thresh stuff in the first element if present
     if doAutoThreshold
         stats(1).autothreshStats = at_stats;
+        stats(1).autothresh=true;
     else
-        stats(1).autothreshStats = [];
+        stats(1).autothresh=false;
     end
 
     if noPlot, fprintf('\n'), end

@@ -20,14 +20,14 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % Inputs (Optional param/val pairs)
     % pixelSize - 7 (microns/pixel) by default
     % tileSize - 1000 (microns) by default. Size of tile FOV in microns.
-    % tThresh - Threshold for brain/no brain. By default this is auto-calculated
+    % tThresh - Threshold for tissue/no tissue. By default this is auto-calculated
     % tThreshSD - Used to do the auto-calculation of tThresh.
     % doPlot - if true, display image and overlay boxes. false by default
     % doTiledRoi - if true (default) return the ROI we would have if tile scanning. 
     % lastSectionStats - By default the whole image is used. If this argument is 
     %               present it should be the output of image2boundingBoxes from a
     %               previous sectionl
-    % borderPixSize - number of pixels from border to user for background calc. 5 by default
+    % borderPixSize - number of pixels from border to user for background calc. 4 by default
     % skipMergeNROIThresh - If more than this number of ROIs is found, do not attempt
     %                         to merge. Just return them. Used to speed up auto-finding.
     %                         By default this is infinity, so we always try to merge.
@@ -90,6 +90,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Get defaults from settings file if needed
     if isempty(tThreshSD)
+        fprintf('%s is using a default threshold of %0.2f\n',mfilename,tThreshSD)
         tThreshSD = settings.main.defaultThreshSD;
     end
     if isempty(doBinaryExpansion)
@@ -134,7 +135,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('No threshold provided to %s - Choosing a threshold of %0.1f based on threshSD of %0.2f\n', ...
+        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold of %0.1f based on threshSD of %0.2f\n', ...
          mfilename, tThresh, tThreshSD)
 
     else
@@ -143,22 +144,21 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
 
+    % Binarize, clean, add a border around the sample
+    if nargout>1
+       [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
+    else
+        BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
+    end
+    % We run on the whole image
+    if showBinaryImages
+        disp('Press return')
+        pause
+    end
+
     if isempty(lastSectionStats)
-
-        % We run on the whole image
-        % Binarize, clean, add a border.
-        if nargout>1
-            [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
-        else
-            BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
-        end
-        if showBinaryImages
-            disp('Press return')
-            pause
-        end
-        stats = getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
+        stats = boundingBoxesFromLastSection.getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
-
         if length(stats) < skipMergeNROIThresh
             stats = boundingBoxesFromLastSection.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
         end
@@ -174,16 +174,15 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
         nT=1;
 
         for ii = 1:length(lastSectionStats.BoundingBoxes)
-            % Scale daown the bounding boxes
+            % Scale down the bounding boxes
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
-            tIm        = getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
-            if nargout>1
-                [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
-            else
-                BW         = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
-            end
-            tStats{ii} = getBoundingBoxes(BW,im,pixelSize);
+            % TODO -- we run binarization each time. Otherwise boundingboxes tha merge don't unmerge for some reason.
+            %         see Issue 58. 
+            tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
+            %tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
+            tBW = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
+            tStats{ii} = boundingBoxesFromLastSection.getBoundingBoxes(tBW,tIm,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
 
             if ~isempty(tStats{ii})
@@ -283,50 +282,53 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
     % Finish up: generate all relevant stats to return as an output argument
     out.BoundingBoxes = {stats.BoundingBox};
-    out.globalBoundingBox={}; % Filled in later 
+    out.BoundingBox=[]; % TODO -- runOnStackStruct writes to this but I'm not sure why
+    out.notes=''; % Observations and so on can go here
+    out.tThresh = tThresh;
+    out.tThreshSD = tThreshSD;
 
-
-    % Store statistics in output structure
-    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold
-    inverseBW = ~BW; %Pixels outside of brain
-
-    % Set all pixels further in than borderPix to zero (assume they contain sample anyway)
-    b = borderPixSize;
-    inverseBW(b+1:end-b,b+1:end-b)=0;
-    backgroundPix = im(find(inverseBW));
+    % Variables associated with pixel size and the original image
     out.origPixelSize = origPixelSize;
     out.rescaledPixelSize = rescaleTo;
     out.rescaledRatio = origPixelSize/rescaleTo;
+    out.imSize = sizeIm;
 
-    out.meanBackground = mean(backgroundPix(:));
-    out.medianBackground = median(backgroundPix(:));
-    out.stdBackground = std(backgroundPix(:));
 
-    out.nBackgroundPix = sum(~BW(:));
-    out.nBackgroundSqMM = out.nBackgroundPix * (pixelSize*1E-3)^2;
+    % GET STATS OF EACH ROI
+    for ii=1:length(out.BoundingBoxes)
+        tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,out.BoundingBoxes{ii});
+        tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,out.BoundingBoxes{ii});
+        imStats(ii) = boundingBoxesFromLastSection.getImageStats(tIm,pixelSize,borderPixSize,tThresh,tBW);
+    end
 
-    foregroundPix = im(find(BW));
-    out.meanForeground = mean(foregroundPix(:));
-    out.medianForeground = median(foregroundPix(:));
-    out.stdForeground = std(foregroundPix(:));
+    % Get the foreground and background pixel stats from the ROIs (not the whole image)
+    out.meanBackground = mean([imStats.backgroundPix]);
+    out.medianBackground = median([imStats.backgroundPix]);
+    out.stdBackground = std([imStats.backgroundPix]);
 
-    out.nForegroundPix = sum(BW(:));
-    out.nForegroundSqMM = out.nForegroundPix * (pixelSize*1E-3)^2;
-    out.BoundingBox=[]; % Main function fills in if the analysis was performed on a smaller ROI
-    out.notes=''; %Anything odd can go in here
-    out.tThresh = tThresh;
-    out.imSize = size(im);
+    out.meanForeground = mean([imStats.foregroundPix]);
+    out.medianForeground = median([imStats.foregroundPix]);
+    out.stdForeground = std([imStats.foregroundPix]);
+
+
+    % Calculate area of background and foreground in sq mm from the above ROIs
+    out.backgroundSqMM = length([imStats.backgroundPix]) * (pixelSize*1E-3)^2;
+    out.foregroundSqMM = length([imStats.foregroundPix]) * (pixelSize*1E-3)^2;
+
 
     % Calculate the number of pixels in the bounding boxes
     for ii=1:length(out.BoundingBoxes)
-        out.BoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4));
+        nBoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4)); % Do not return total pixels: they are downsampled
     end
-    out.totalBoundingBoxPixels = sum(out.BoundingBoxPixels);
+    % Convert bounding box sizes to meaningful units and return those.
+    out.BoundingBoxSqMM = nBoundingBoxPixels * (pixelSize*1E-3)^2;
+    out.meanBoundingBoxSqMM = mean(out.BoundingBoxSqMM);
+    out.totalBoundingBoxSqMM = sum(out.BoundingBoxSqMM);
 
     % What proportion of the whole FOV is covered by the bounding boxes?
     % This number is only available in test datasets. In real acquisitions with the 
     % auto-finder we won't have this number. 
-    out.propImagedAreaCoveredByBoundingBox = out.totalBoundingBoxPixels / prod(size(im));
+    out.propImagedAreaCoveredByBoundingBox = sum(nBoundingBoxPixels) / prod(sizeIm);
 
 
     % Finally: return bounding boxes to original size
@@ -336,13 +338,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.BoundingBoxes,'UniformOutput',false);
     end
 
-    % Determine the size of the overall box that would include all boxes
-    if length(out.BoundingBoxes)==1
-        out.globalBoundingBox = out.BoundingBoxes{1};
-    elseif length(out.BoundingBoxes)>1
-        tmp = cell2mat(out.BoundingBoxes');
-        out.globalBoundingBox = [min(tmp(:,1:2)), max(tmp(:,1)+tmp(:,3)), max(tmp(:,2)+tmp(:,4))];
-    end
+
 
     % Optionally return coords of each box
     if nargout>0
@@ -356,112 +352,3 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     if nargout>2
         varargout{3}=H;
     end
-
-
-
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-%% Internal functions follow
-
-function stats = getBoundingBoxes(BW,im,pixelSize)
-    % Get bounding boxes in binarized image, BW. 
-    verbose=true;
-    settings = boundingBoxesFromLastSection.readSettings;
-
-    % Find bounding boxes, removing very small ones and 
-    stats = regionprops(BW,'boundingbox', 'area', 'extrema');
-
-    if isempty(stats)
-        fprintf('autofindBrainsInSection.image2boundingBoxes found no sample in ROI! BAD!\n')
-        return
-    end
-
-    % Delete very small objects and ensure we have no non-integers
-    sizeThresh = settings.mainGetBB.minSizeInSqMicrons / pixelSize;
-
-    for ii=length(stats):-1:1
-        stats(ii).BoundingBox(1:2) = round(stats(ii).BoundingBox(1:2));
-        stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
-        if stats(ii).Area < sizeThresh;
-            fprintf('Removing small ROI of size %d\n', stats(ii).Area)
-            stats(ii)=[];
-        end
-    end
-    if length(stats)==0
-        fprintf('%s > getBoundingBoxes after removing small ROIs there are none left.\n',mfilename)
-    end
-
-    % -------------------
-    % TEMP UNTIL WE FIX BAKINGTRAY WE MUST REMOVE THE NON-IMAGED CORNER PIXELS
-    %Look for ROIs smaller than 2 by 2 mm and ask whether they are the un-imaged corner tile.
-    %(BakingTray currently (Dec 2019) produces these tiles and this needs sorting.)
-    %If so delete. TODO: longer term we want to get rid of the problem at acquisition. 
-
-    for ii=length(stats):-1:1
-        boxArea = prod(stats(ii).BoundingBox(3:4)*pixelSize*1E-3);
-        if boxArea>2
-            % TODO: could use the actual tile size
-            continue
-        end
-
-
-        % Ask if most pixels the median value.
-        tmp=getSubImageUsingBoundingBox(im,stats(ii).BoundingBox);
-        tMed=median(tmp(:));
-        propMedPix=length(find(tmp==tMed)) / length(tmp(:));
-        if propMedPix>0.5
-            %Then delete the ROI
-            fprintf('Removing corner ROI\n')
-            stats(ii)=[];
-        end
-    end
-    % -------------------
-
-    %Sort in ascending size order
-    [~,ind]=sort([stats.Area]);
-    stats = stats(ind);
-
-    if verbose==false
-        return
-    end
-
-    if length(stats)==1
-        fprintf('%s > getBoundingBoxes Found 1 Bounding Box\n',mfilename)
-    elseif length(stats)>1
-        fprintf('%s > getBoundingBoxes Found %d Bounding Boxes\n',mfilename,length(stats))
-    elseif length(stats)==0
-        fprintf('%s > getBoundingBoxes Found no Bounding Boxes\n',mfilename)
-    end
-
-
-    %Report clipping of ROI edges
-    for ii=1:length(stats)
-       % boundingBoxesFromLastSection.findROIEdgeClipping(BW,stats(ii).BoundingBox)
-    end
-
-
-
-function subIm = getSubImageUsingBoundingBox(im,BoundingBox,maintainSize)
-    % Pull out a sub-region of the image based on a bounding box.
-    %
-    % Inputs
-    % im - 2d image from which we will extract a sub-region
-    % BoundingBox - in the form: [left corner pos, bottom corner pos, width, height]
-    % maintainSize - false by default. If true, the output (subIM), is the same size as im
-    %                but all pixels outside BoundingBox are zero.
-
-    if nargin<3
-        maintainSize=false;
-    end
-
-
-    BoundingBox = boundingBoxesFromLastSection.validateBoundingBox(BoundingBox,size(im));
-    subIm = im(BoundingBox(2):BoundingBox(2)+BoundingBox(4), ...
-               BoundingBox(1):BoundingBox(1)+BoundingBox(3));
-
-    if maintainSize
-        tmp=zeros(size(im));
-        tmp(BoundingBox(2):BoundingBox(2)+BoundingBox(4), ...
-            BoundingBox(1):BoundingBox(1)+BoundingBox(3)) = subIm;
-        subIm =tmp;
-    end
-

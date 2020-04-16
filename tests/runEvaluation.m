@@ -55,8 +55,8 @@ function runEvaluation(dataPath)
     % by boundingBoxesFromLastSection.tests.runOnAllInDir, which will get
     % this sturcture as input
     for ii=1:size(summaryTable)
-        [folder,name] = fileparts(summaryTable.pStackFname{ii});
-        pStackDirStruct(ii).name = name;
+        [folder,name,extension] = fileparts(summaryTable.pStackFname{ii});
+        pStackDirStruct(ii).name = [name,extension];
         pStackDirStruct(ii).folder = folder;
         pStackDirStruct(ii).isdir = false;
     end

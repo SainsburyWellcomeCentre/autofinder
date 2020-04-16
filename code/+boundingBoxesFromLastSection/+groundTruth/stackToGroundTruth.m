@@ -4,10 +4,10 @@ function pStack = stackToGroundTruth(imStack,pathToRecipe,nSamples)
 % boundingBoxesFromLastSection.groundTruth.stackToGroundTruth(imStack,pathToRecipe,nSamples)
 %
 % Purpose
-% The "groundTruth" structure will be used for testing the behavior of the brain-finding
+% The "groundTruth" structure will be used for testing the behavior of the ROI-finding
 % algorithm. This function produces the structure. The structure should contain all the 
-% parameters we need to obtain a ground truth brain border against which we can go on to 
-% test whether or not the auto-brain-finder has managed to identify the whole brain. 
+% parameters we need to obtain a ground truth sample border against which we can go on to 
+% test whether or not the auto-ROI-finder has managed to identify the whole sample. 
 %
 %
 % Inputs
