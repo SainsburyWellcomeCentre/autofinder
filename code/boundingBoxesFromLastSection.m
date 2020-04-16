@@ -147,7 +147,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     if isempty(lastSectionStats)
 
         % We run on the whole image
-        % Binarize, clean, add a border.
+        % Binarize, clean, add a border around the sample
         if nargout>1
             [BW,binStats] = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
         else
@@ -311,16 +311,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     out.stdForeground = std([imStats.foregroundPix]);
 
 
-    % Calculate area of background and foreground in sq mm
-    % CARE! If downsampling was peformed we are still in downsampled pixels sizes here. 
-    % "pixelSize" is the downsampled size, if downsampling was conducted. Otherwise
-    % it is the original size.
-    BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh); %Get the binary image again so it includes all tissue above the threshold0
-    nBackgroundPix = sum(~BW(:)); % Do not return to avoid confusion due to differing pixel sizes
-    out.backgroundSqMM = nBackgroundPix * (pixelSize*1E-3)^2;
-
-    nForegroundPix = sum(BW(:)); % Do not return to avoid confusion due to differing pixel sizes
-    out.foregroundSqMM = nForegroundPix * (pixelSize*1E-3)^2;
+    % Calculate area of background and foreground in sq mm from the above ROIs
+    out.backgroundSqMM = length([imStats.backgroundPix]) * (pixelSize*1E-3)^2;
+    out.foregroundSqMM = length([imStats.foregroundPix]) * (pixelSize*1E-3)^2;
 
 
     % Calculate the number of pixels in the bounding boxes
