@@ -194,7 +194,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical initial auto-thresh tThreshSD values for all samples.\n')];
     end
 
-    if sum(abs(refTable.mean_tThresh-testTable.mean_tThresh))
+    if sum(abs(refTable.mean_tThresh-testTable.mean_tThresh))==0
         reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* mean thresholds for all samples.\n')];
     else
         reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical mean thresholds for all samples.\n')];
