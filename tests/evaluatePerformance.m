@@ -52,7 +52,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('\n')];
         passedAllTests=false;
     else
-        reportString = [reportString, sprintf('PASS: all test acquisitions are present in reference table\n\n')];
+        reportString = [reportString, sprintf('PASS: all test acquisitions are present in reference table\n')];
     end
 
 
@@ -85,7 +85,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('\n')];
         passedAllTests=false;
     else
-        reportString = [reportString, sprintf('PASS: No acquisitions see an increase in the number of unprocessed sections.\n\n')];
+        reportString = [reportString, sprintf('PASS: No acquisitions see an increase in the number of unprocessed sections.\n')];
     end
 
 
@@ -109,7 +109,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('\n')];
         passedAllTests=false;
     else
-        reportString = [reportString, sprintf('PASS: No acquisitions saw an increase in non-imaged sq mm of >%d.\n\n', maxToleratedSqMMIncrease)];
+        reportString = [reportString, sprintf('PASS: No acquisitions saw an increase in non-imaged sq mm of >%d.\n', maxToleratedSqMMIncrease)];
     end
 
 
@@ -133,7 +133,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('\n')];
         passedAllTests=false;
     else
-        reportString = [reportString, sprintf('PASS: No acquisitions have >%d sq mm of non-imaged tissue.\n\n', maxToleratedSqMMLoss)];
+        reportString = [reportString, sprintf('PASS: No acquisitions have >%d sq mm of non-imaged tissue.\n', maxToleratedSqMMLoss)];
     end
 
 
@@ -157,9 +157,20 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('\n')];
         passedAllTests=false;
     else
-        reportString = [reportString, sprintf('PASS: No acquisitions see an increase in the number of over-flowing sections.\n\n')];
+        reportString = [reportString, sprintf('PASS: No acquisitions see an increase in the number of over-flowing sections.\n')];
     end
 
+
+    % FINALLY: are the reference test acquisition results identical? 
+    % This isn't a failure point, as changing parameter will result in things not 
+    % being the same. But after some changes we make to the code we will expect things
+    % to stay indentical, so we need to know this. 
+
+    if sum(cTable.d_totalNonImagedSqMM)==0
+        reportString = [reportString, sprintf('\nThe test and reference results *ARE* identical\n')];
+    else
+        reportString = [reportString, sprintf('\nThe test and reference results are *NOT* identical\n')];
+    end
 
     % Show results to screen
     disp(reportString)
