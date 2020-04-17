@@ -18,8 +18,7 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     % verbose - false by default
     %
     % The following optional parameters take default values from boundingBoxesFromLastSection.readSettings
-    % removeNoise - If true, uses morphological filtering to remove electrical noise from the binarized image. 
-    % doExpansion - If true, we expand the image area by a value listed in the settings file.
+
     % settings - Settings structure from .readSettings. If missing, the settings file is read.
     %
     %
@@ -40,22 +39,22 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     params.addParameter('showImages', false, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('verbose', false, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('settings', boundingBoxesFromLastSection.readSettings, @(x) isstruct(x))
-    params.addParameter('removeNoise', [], @(x) islogical(x) || x==1 || x==0 || isempty(x))
-    params.addParameter('doExpansion', [], @(x) islogical(x) || x==1 || x==0 || isempty(x))
+
+
 
     params.parse(varargin{:})
     showImages = params.Results.showImages;
     verbose = params.Results.verbose;
     settings = params.Results.settings;
-    removeNoise = params.Results.removeNoise;
-    doExpansion = params.Results.doExpansion;
 
-    if isempty(removeNoise)
-        removeNoise = settings.mainBin.removeNoise;
-    end
-    if isempty(doExpansion)
-        doExpansion = settings.mainBin.doExpansion;
-    end
+
+
+    % removeNoise - If true, uses morphological filtering to remove electrical noise from the binarized image. 
+    removeNoise = settings.mainBin.removeNoise;
+
+    % doExpansion - If true, we expand the image area by a value listed in the settings file.
+    doExpansion = settings.mainBin.doExpansion;
+
 
 
 

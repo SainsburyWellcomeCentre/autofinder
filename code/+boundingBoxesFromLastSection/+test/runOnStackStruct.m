@@ -23,10 +23,6 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % Outputs
     % stats structure
     %
-    % Extras:
-    % To over-ride the defaul threshold:
-    % pStack.tThreshSD=3;
-    % boundingBoxesFromLastSection.test.runOnStackStruct(pStack)
     %
     %
     % Rob Campbell - 2020 SWC
@@ -46,6 +42,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
     pauseBetweenSections=false;
 
+    % Ensure we start at section 1
+    pStack.sectionNumber = 1;
+
     % Step one: process the initial image (first section) and find the bounding boxes
     % for tissue within it. This is the only point where we don't use the ROIs from the
     % previous section to constrain ROI choice on then next section. Hence we are not
@@ -53,36 +52,23 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
 
     % These are in the input arguments for boundingBoxesFromLastSection
-    boundingBoxArgIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
-                    'tileSize', pStack.tileSizeInMicrons, ...
-                    'doPlot', ~noPlot, ...
+    boundingBoxArgIn = {'doPlot', ~noPlot, ...
                     'settings', settings};
 
 
-    fprintf('\n ** GETTING A THRESHOLD\n')
-    if isfield(pStack,'tThreshSD')
-        % Start with a threshold hard-coded into the pStack file
-        tThreshSD = pStack.tThreshSD;
-        fprintf('%s is starting with a custom SD threshold of %0.1f\n', ...
-            mfilename, tThreshSD)
-            fprintf('**** NOT PERFORMING AUTO-THRESH: pStack has a tThreshSD field. USING THAT INSTEAD!\n\n')
-            pause(0.75)
-        doAutoThreshold=false;
-    else
-        % Determine the threshold automatically
-        doAutoThreshold=true;
-        fprintf('%s is running auto-thresh\n', mfilename)
-        [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack, false, settings);
-    end
 
+    fprintf('\n ** GETTING A THRESHOLD\n')
+    fprintf('%s is running auto-thresh\n', mfilename)
+    [tThreshSD,at_stats]=boundingBoxesFromLastSection.autothresh.run(pStack, false, settings);
     fprintf('\nTHRESHOLD OBTAINED!\n')
     fprintf('%s\n\n',repmat('-',1,100))
+
 
     % In the first section the user should have acquired a preview that captures the whole sample
     % and has a generous border area. We therefore extract the ROIs from the whole of the first section.
     fprintf('\nDoing section %d/%d\n', 1, size(pStack.imStack,3))
     fprintf('Finding bounding box in first section\n')
-    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), boundingBoxArgIn{:},'tThreshSD',tThreshSD);
+    stats = boundingBoxesFromLastSection(pStack, boundingBoxArgIn{:},'tThreshSD',tThreshSD);
     drawnow
 
     if pauseBetweenSections
@@ -98,6 +84,8 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % Enter main for loop in which we process each section one at a time using the ROIs from the previous section
     for ii=2:size(pStack.imStack,3)
         fprintf('\nDoing section %d/%d\n', ii, size(pStack.imStack,3))
+        pStack.sectionNumber=ii;
+
         % Use a rolling threshold based on the last nImages to drive sample/background
         % segmentation in the next image. If set to zero it uses the preceeding section.
         nImages=5;
@@ -119,7 +107,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
         % boundingBoxesFromLastSection is fed the ROI structure from the **previous section**
         % It runs the sample-detection code within these ROIs only and returns the results.
-        tmp = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
+        tmp = boundingBoxesFromLastSection(pStack, ...
             boundingBoxArgIn{:}, ...
             'tThreshSD',tThreshSD, ...
             'tThresh',thresh,...
@@ -175,13 +163,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % Add a text report to the first element
     stats(1).report = boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats,pStack);
 
-    if doAutoThreshold
-        stats(1).autothreshStats = at_stats;
-        stats(1).autothresh=true;
-    else
-        stats(1).autothresh=false;
-    end
 
+    stats(1).autothreshStats = at_stats;
+    stats(1).autothresh=true;
 
     % Tidy
     if noPlot, fprintf('\n'), end

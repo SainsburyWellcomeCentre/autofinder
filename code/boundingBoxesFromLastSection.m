@@ -1,7 +1,7 @@
-function varargout=boundingBoxesFromLastSection(im, varargin)
+function varargout=boundingBoxesFromLastSection(pStack, varargin)
     % boundingBoxesFromLastSection
     %
-    % function varargout=boundingBoxesFromLastSection(im, 'param',val, ... )
+    % function varargout=boundingBoxesFromLastSection(pStack, 'param',val, ... )
     % 
     % Purpose
     % Automatically detect regions in the current section where there is
@@ -15,11 +15,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     %
     % 
     % Inputs (Required)
-    % im - downsampled 2D image.
+    % pStack - The pStack structure. From this we extract key information such as pixel size.
     %
     % Inputs (Optional param/val pairs)
-    % pixelSize - 7 (microns/pixel) by default
-    % tileSize - 1000 (microns) by default. Size of tile FOV in microns.
     % tThresh - Threshold for tissue/no tissue. By default this is auto-calculated
     % tThreshSD - Used to do the auto-calculation of tThresh.
     % doPlot - if true, display image and overlay boxes. false by default
@@ -27,12 +25,9 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % lastSectionStats - By default the whole image is used. If this argument is 
     %               present it should be the output of image2boundingBoxes from a
     %               previous sectionl
-    % borderPixSize - number of pixels from border to user for background calc. 4 by default
     % skipMergeNROIThresh - If more than this number of ROIs is found, do not attempt
     %                         to merge. Just return them. Used to speed up auto-finding.
     %                         By default this is infinity, so we always try to merge.
-    % rescaleTo - number of microns per pixel to which we will re-scale. By default 
-    %             uses value from settings file.
     % showBinaryImages - shows results from the binarization step
     % doBinaryExpansion - default from setings file. If true, run the expansion of 
     %                     binarized image routine. 
@@ -47,67 +42,79 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     % Rob Campbell - SWC, 2019
 
 
-    if ~isnumeric(im)
-        fprintf('%s - First input argument must be an image.\n',mfilename)
+    if ~isstruct(pStack)
+        fprintf('%s - First input argument must be a structure.\n',mfilename)
         return
     end
 
-    % Parse input arguments
+    %TODO -- temp code until we overhaul all the pStacks
+    if ~isfield(pStack,'sectionNumber')
+        fprintf('%s - Creating sectionNumber field and setting to 1.\n',mfilename)
+        pStack.sectionNumber=1;
+    end
+
+    % Extract the image we will work with
+    im = pStack.imStack(:,:,pStack.sectionNumber);
+
+
+    % Get size settings from pStack structure
+    pixelSize = pStack.voxelSizeInMicrons;
+    tileSize = pStack.tileSizeInMicrons;
+
+
+
     params = inputParser;
     params.CaseSensitive = false;
 
-    params.addParameter('pixelSize', 20, @(x) isnumeric(x) && isscalar(x))
-    params.addParameter('tileSize', 1000, @(x) isnumeric(x) && isscalar(x))
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
-    params.addParameter('showBinaryImages', false, @(x) islogical(x) || x==1 || x==0)
-    params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
-    params.addParameter('borderPixSize',4, @(x) isnumeric(x) )
-    params.addParameter('skipMergeNROIThresh',inf, @(x) isnumeric(x) )
-
-    params.addParameter('settings',boundingBoxesFromLastSection.readSettings, @(x) isstruct(x) )
-
     params.addParameter('tThreshSD',[], @(x) isnumeric(x) && isscalar(x) || isempty(x))
+    params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
+    params.addParameter('skipMergeNROIThresh',inf, @(x) isnumeric(x) )
+    params.addParameter('showBinaryImages', false, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('doBinaryExpansion', [], @(x) islogical(x) || x==1 || x==0 || isempty(x))
-    params.addParameter('rescaleTo',[], @(x) isnumeric(x) || isempty(x))
+    params.addParameter('settings',boundingBoxesFromLastSection.readSettings, @(x) isstruct(x) )
 
 
     params.parse(varargin{:})
-    pixelSize = params.Results.pixelSize;
-    tileSize = params.Results.tileSize;
     doPlot = params.Results.doPlot;
     doTiledRoi=params.Results.doTiledRoi;
     tThresh = params.Results.tThresh;
     tThreshSD = params.Results.tThreshSD;
-    borderPixSize = params.Results.borderPixSize;
     lastSectionStats = params.Results.lastSectionStats;
     skipMergeNROIThresh = params.Results.skipMergeNROIThresh;
-    settings = params.Results.settings;
-    rescaleTo = params.Results.rescaleTo;
     showBinaryImages = params.Results.showBinaryImages;
     doBinaryExpansion = params.Results.doBinaryExpansion;
+    settings = params.Results.settings;
+
+
 
     % Get defaults from settings file if needed
     if isempty(tThreshSD)
         fprintf('%s is using a default threshold of %0.2f\n',mfilename,tThreshSD)
         tThreshSD = settings.main.defaultThreshSD;
     end
+
     if isempty(doBinaryExpansion)
         doBinaryExpansion = settings.mainBin.doExpansion;
     end
-    if isempty(rescaleTo)
-        rescaleTo = settings.stackStr.rescaleTo;
-    end
+
+    % Extract settings from setting structure
+    borderPixSize = settings.main.borderPixSize;
+
+    rescaleTo = settings.stackStr.rescaleTo;
+
 
 
     % These are the arguments we feed into the binarization function
-    binArgs = {'showImages',showBinaryImages,'doExpansion',doBinaryExpansion,'settings',settings};
+    binArgs = {'showImages',showBinaryImages,'settings',settings};
 
     if size(im,3)>1
         fprintf('%s requires a single image not a stack\n',mfilename)
         return
     end
+
 
     if rescaleTo>1
         fprintf('%s is rescaling image to %d mic/pix from %0.2f mic/pix\n', ...

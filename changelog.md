@@ -71,3 +71,4 @@ Remove meanForeground and meanBackground stats from boundingBoxesFromLastSection
 Remove not needed second expansion step in mergeOverlapping and remove the associated setting. 
 
 Improve reporting of evaluation results and fix a bug that was causing the file list to be in the wrong order.
+

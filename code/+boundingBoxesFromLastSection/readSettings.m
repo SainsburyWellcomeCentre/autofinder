@@ -52,6 +52,7 @@ function settings = readSettings(readFromYaml)
 
     function settings = returnSettings
         % The following are used in boundingBoxesFromLastSection
+        settings.main.borderPixSize = 4;  % How many pixels from the edge to use for background pixel estimation
         settings.main.medFiltRawImage = 5; 
         settings.main.doTiledMerge=true; %Mainly for debugging
         settings.main.tiledMergeThresh=1.05;

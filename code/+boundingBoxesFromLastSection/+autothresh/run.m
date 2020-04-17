@@ -38,7 +38,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings,BBstats,ind
 
     tileSize = pStack.tileSizeInMicrons;
     voxSize = pStack.voxelSizeInMicrons;
-    BB_argIn = {'tileSize',tileSize,'pixelSize',voxSize,'doPlot',false,...
+    BB_argIn = {'doPlot',false,...
     'skipMergeNROIThresh',settings.autoThresh.skipMergeNROIThresh,...
     'doBinaryExpansion',settings.autoThresh.doBinaryExpansion};
 
@@ -53,7 +53,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings,BBstats,ind
                 [tThreshSD(ii),stats{ii}] = boundingBoxesFromLastSection.autothresh.run(pStack,false,settings);
             end
             tThreshSD = mean(tThreshSD);
-            out=boundingBoxesFromLastSection(origIM, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+            out=boundingBoxesFromLastSection(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
             tThresh = out.tThresh;
             stats=[];
             fprintf('DID SUB-ROIS!\n')
@@ -96,13 +96,13 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings,BBstats,ind
     [tThreshSD,stats] = getThreshAlg(stats,maxThresh);
 
 
-    out=boundingBoxesFromLastSection(imTMP, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+    out=boundingBoxesFromLastSection(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
     tThresh = out.tThresh;
 
     % Nested functions follow
     function stats = calcStatsFromThreshold(tThreshSD)
         % Calculate a bunch of stats from a threshold
-        [OUT,bwStats] = boundingBoxesFromLastSection(imTMP, BB_argIn{:},'tThreshSD',tThreshSD);
+        [OUT,bwStats] = boundingBoxesFromLastSection(pStack, BB_argIn{:},'tThreshSD',tThreshSD);
 
         if isempty(OUT)
             stats.nRois=nan;
