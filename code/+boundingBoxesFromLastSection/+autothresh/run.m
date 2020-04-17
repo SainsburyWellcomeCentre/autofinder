@@ -43,22 +43,29 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     'doBinaryExpansion',settings.autoThresh.doBinaryExpansion};
 
 
-    if nargin>4 && ~isempty(BBstats) && length(BBstats)==1
-        if isstruct(BBstats) && isfield(BBstats,'BoundingBoxes')
-            origIM = pStack.imStack(:,:, pStack.sectionNumber);
-            BB = BBstats.BoundingBoxes;
-            for ii=1:length(BB)
-                tmpIm=boundingBoxesFromLastSection.getSubImageUsingBoundingBox(origIM,BB{ii});
-                pStack.imStack = tmpIm;
-                [tThreshSD(ii),stats{ii}] = boundingBoxesFromLastSection.autothresh.run(pStack,false,settings);
-            end
-            tThreshSD = mean(tThreshSD);
-            out=boundingBoxesFromLastSection(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
-            tThresh = out.tThresh;
-            stats=[];
-            fprintf('DID SUB-ROIS!\n')
-            return
+    if nargin>3 && ~isempty(BBstats) && length(BBstats)==1
+        origIM = pStack.imStack(:,:, pStack.sectionNumber); % Make a backup of the original image
+        BB = BBstats.BoundingBoxes;
+        pStack.sectionNumber=1; % We will use just one plane
+
+        for ii=1:length(BB)
+            % Get the sub-image using this ROI
+            tmpIm=boundingBoxesFromLastSection.getSubImageUsingBoundingBox(origIM,BB{ii});
+            pStack.imStack = tmpIm;
+            % Run the autothresh with this sub-image
+            [tThreshSD(ii),stats{ii}] = boundingBoxesFromLastSection.autothresh.run(pStack,false,settings);
         end
+        % Get the thrshold
+        tThreshSD = mean(tThreshSD);
+
+        % Re-run boundingBoxesFromLastSection to obtain a tThresh
+        pStack.imStack=origIM;
+        out=boundingBoxesFromLastSection(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+        tThresh = out.tThresh;
+        stats=[];
+        fprintf('DID SUB-ROIS!\n')
+        return
+
     end
 
 

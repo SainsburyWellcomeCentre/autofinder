@@ -177,10 +177,17 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     % being the same. But after some changes we make to the code we will expect things
     % to stay indentical, so we need to know this. 
     if sum(cTable.d_totalNonImagedSqMM)==0
-        reportString = [reportString, sprintf('\nThe test and reference results *ARE* identical\n')];
+        reportString = [reportString, sprintf('\nThe test and reference results have *IDENTICAL* non imaged areas.\n')];
     else
-        reportString = [reportString, sprintf('\nThe test and reference results are *NOT* identical\n')];
+        reportString = [reportString, sprintf('\nThe test and reference results *DO NOT* have identical non imaged areas.\n')];
     end
+
+    if sum(cTable.d_medPropPixelsInRoiThatAreTissue)==0
+        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* proportions of sample pixels in ROIs.\n')];
+    else
+        reportString = [reportString, sprintf('The test and reference results *DO NOT* identical proportions of sample pixels in ROIs.\n')];
+    end
+
 
     % Show results to screen
     disp(reportString)
