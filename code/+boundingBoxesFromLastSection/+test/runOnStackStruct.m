@@ -124,6 +124,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
             % Responds to laser being turned up. In general to higher SNR. 
             if (FG_ratio_this_section / FG_ratio_previous_section)>10
                 fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
+                pStack
                 [tThreshSD,~,thresh]=boundingBoxesFromLastSection.autothresh.run(pStack,[],[],tmp);
                 tmp = boundingBoxesFromLastSection(pStack, boundingBoxArgIn{:}, ...
                     'tThreshSD',tThreshSD, ...

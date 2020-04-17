@@ -64,7 +64,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
 
 
     % This is the image we will use to obtain the threshold
-    imTMP = pStack.imStack(:,:,1);
+    imTMP = pStack.imStack(:,:,pStack.sectionNumber);
 
 
     minThresh=settings.autoThresh.minThreshold;
