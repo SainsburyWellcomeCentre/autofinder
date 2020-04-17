@@ -176,23 +176,30 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     % This isn't a failure point, as changing parameter will result in things not 
     % being the same. But after some changes we make to the code we will expect things
     % to stay indentical, so we need to know this. 
-    if sum(cTable.d_totalNonImagedSqMM)==0
+    if sum(abs(cTable.d_totalNonImagedSqMM))==0
         reportString = [reportString, sprintf('\nThe test and reference results have *IDENTICAL* non imaged areas.\n')];
     else
         reportString = [reportString, sprintf('\nThe test and reference results *DO NOT* have identical non imaged areas.\n')];
     end
 
-    if sum(cTable.d_medPropPixelsInRoiThatAreTissue)==0
+    if sum(abs(cTable.d_medPropPixelsInRoiThatAreTissue))==0
         reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* proportions of sample pixels in ROIs.\n')];
     else
         reportString = [reportString, sprintf('The test and reference results *DO NOT* identical proportions of sample pixels in ROIs.\n')];
     end
 
-    if sum(refTable.autothresh_tThreshSD-testTable.autothresh_tThreshSD)==0
-        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* auto-thresh tThreshSD values for all samples.\n')];
+    if sum(abs(refTable.autothresh_tThreshSD-testTable.autothresh_tThreshSD))==0
+        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* initial auto-thresh tThreshSD values for all samples.\n')];
     else
-        reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical auto-thresh tThreshSD values for all samples.\n')];
+        reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical initial auto-thresh tThreshSD values for all samples.\n')];
     end
+
+    if sum(abs(refTable.mean_tThresh-testTable.mean_tThresh))
+        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* mean thresholds for all samples.\n')];
+    else
+        reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical mean thresholds for all samples.\n')];
+    end
+
     % Show results to screen
     disp(reportString)
 

@@ -39,6 +39,7 @@ n=length(tLogs);
 fileName = {tLogs.name}';
 pStackFname = cell(n,1);
 tThreshSD = zeros(n,1);
+mean_tThresh = zeros(n,1); %Mean over all elements of log structure
 rollingThreshold = zeros(n,1);
 autoThreshold = zeros(n,1);
 numSectionsWithHighCoverage = zeros(n,1); %See evluateBoundingBoxes. Should be with coverage of over 0.99
@@ -75,6 +76,7 @@ for ii=1:n
     % Populate variables
     pStackFname{ii} = testLog(1).stackFname;
     tThreshSD(ii) = testLog(1).tThreshSD;
+    mean_tThresh(ii) = mean([testLog.tThresh]);
     rollingThreshold(ii) = testLog(1).rollingThreshold;
     autoThreshold(ii) = testLog(1).autothresh;
     numSectionsWithHighCoverage(ii) = testLog(1).report.numSectionsWithHighCoverage;
@@ -113,7 +115,7 @@ fprintf('\nBuilding table\n')
 isProblemCase = logical(isProblemCase);
 autothresh_thinksAgarIsAROI = logical(autothresh_thinksAgarIsAROI);
 summaryTable = table(fileName, tThreshSD, rollingThreshold, autoThreshold, numSectionsWithHighCoverage, ...
-    numSectionsWithOverFlowingCoverage, medPropPixelsInRoiThatAreTissue, totalImagedSqMM, ... 
+    mean_tThresh, numSectionsWithOverFlowingCoverage, medPropPixelsInRoiThatAreTissue, totalImagedSqMM, ... 
     propImagedArea, nSamples, isProblemCase, numUnprocessedSections, autothresh_notes, autothresh_tThreshSD, ...
     autothresh_SNR, autothresh_thinksAgarIsAROI, totalNonImagedTiles, totalNonImagedSqMM, totalExtraSqMM, ...
     maxNonImagedTiles, maxNonImagedSqMM, maxExtraSqMM,nPlanesWithMissingTissue, ...
