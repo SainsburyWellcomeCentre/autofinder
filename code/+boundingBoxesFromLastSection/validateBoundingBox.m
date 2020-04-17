@@ -1,8 +1,9 @@
 function BoundingBox = validateROIrestrict(BoundingBox,imSize)
-    % Ensure bounding box is valid before proceeding. 
+    % Ensure bounding box remains within the image FOV before proceeding. 
     %
     % imSize is the output of size(im) from the image where the bounding box was determined. 
-
+    %
+    % 
 
     verbose=false;
 
