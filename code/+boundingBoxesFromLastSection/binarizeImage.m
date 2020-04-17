@@ -18,7 +18,7 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     % verbose - false by default
     %
     % The following optional parameters take default values from boundingBoxesFromLastSection.readSettings
-
+    % doBinaryExpansion - empty by default. If so, uses value from settings file.
     % settings - Settings structure from .readSettings. If missing, the settings file is read.
     %
     %
@@ -39,12 +39,14 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     params.addParameter('showImages', false, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('verbose', false, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('settings', boundingBoxesFromLastSection.readSettings, @(x) isstruct(x))
+    params.addParameter('doBinaryExpansion', [], @(x) islogical(x) || x==1 || x==0 || isempty(x))
 
 
 
     params.parse(varargin{:})
     showImages = params.Results.showImages;
     verbose = params.Results.verbose;
+    doBinaryExpansion = params.Results.doBinaryExpansion;
     settings = params.Results.settings;
 
 
@@ -53,7 +55,9 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     removeNoise = settings.mainBin.removeNoise;
 
     % doExpansion - If true, we expand the image area by a value listed in the settings file.
-    doExpansion = settings.mainBin.doExpansion;
+    if isempty(doBinaryExpansion)
+        doBinaryExpansion = settings.mainBin.doExpansion;
+    end
 
 
 
@@ -122,14 +126,14 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
 
 
     % STEP FOUR: expansion of the binarized area by adding a border around it
-    if doExpansion
+    if doBinaryExpansion
         SE = strel(settings.mainBin.expansionShape, ...
             round(settings.mainBin.expansionSize/pixelSize));
         BW = imdilate(BW,SE);
         if nargout>1
             stats.step_four = getStatsFromBW(BW);
         end
-    elseif doExpansion==false && nargout>1
+    elseif doBinaryExpansion==false && nargout>1
         % Just copy data from three as step four never happened
         stats.step_four = stats.step_three;
     end
@@ -138,7 +142,7 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
         subplot(2,2,4)
         imagesc(BW)
         drawnow
-        if doExpansion
+        if doBinaryExpansion
             title('After expansion')
         else
             title('No expansion performed')

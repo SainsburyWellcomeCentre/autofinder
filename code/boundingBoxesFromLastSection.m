@@ -108,7 +108,9 @@ function varargout=boundingBoxesFromLastSection(pStack, varargin)
 
 
     % These are the arguments we feed into the binarization function
-    binArgs = {'showImages',showBinaryImages,'settings',settings};
+    binArgs = {'doBinaryExpansion', doBinaryExpansion, ...
+                'showImages',showBinaryImages, ...
+                'settings',settings};
 
     if size(im,3)>1
         fprintf('%s requires a single image not a stack\n',mfilename)
