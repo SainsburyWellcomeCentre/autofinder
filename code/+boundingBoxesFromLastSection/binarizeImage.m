@@ -1,11 +1,11 @@
 function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
-    % Binarize, morph filter, and clearn a single image using a fixed threshold.
+    % Binarize, morph filter, and clean a single image using a fixed threshold.
     %
     % function BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,...)
     %
     % Purpose
     % This function is called by boundingBoxFromLastSection and is a critical point in
-    % the auto-finder. It binarizes and tidies images.
+    % the auto-ROI finder. It binarizes and tidies images.
     %
     %
     % Inputs (required)
@@ -28,9 +28,8 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     % stats - An optional structure containing stats describing the number of ROIs, their sizes, etc
     %         this is only calculated if requested. 
     %
-
-
-    % Read settings from settings file
+    %
+    % Rob Campbell - SWC 2020
 
 
 
@@ -147,11 +146,7 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
         end
     end
 
-    if verbose
-        fprintf('Binarized size after dilation: %d by %d\n',size(BW));
-            [~,tmp] = boundingBoxesFromLastSection.boundingBoxAreaFromImage(BW);
-        fprintf('ROI size within binarized image: %d by %d\n',tmp);
-    end
+
 
     if nargout>0
         varargout{1}=BW;

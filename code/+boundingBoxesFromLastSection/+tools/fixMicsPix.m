@@ -1,6 +1,9 @@
 function fixMixPix
     % Correct the number of microns per pixel
-
+    %
+    % Purpose
+    % This function can be used to correct the number of microns per pixel in preview stacks
+    % It's a bit of a hacky/throwaway function but we keep it for now. 
 
 
 runDir='stacks';

@@ -1,14 +1,27 @@
 function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSizeInMicrons,tileOverlapProportion)
+% Rounds up the size of a bounding box to the nearest full tile 
+%
 % function tiledBox = boundingBoxesFromLastSection.boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSizeInMicrons,tileOverlapProportion)
-%%
-% Takes a BoundingBox of a certain size and converts to the smallest bounding box
-% that would be possible on a tiled acquisition system. 
+%
+% Purpose
+% BoundingBoxes are of arbitrary sizes. In practice we will image using tiles. This function
+% rounds up the size of the bounding box so that it's to the nearest number of tiles. It
+% takes into account tile overlap. The bounding box position is shifted so it remains
+% centered in the same location despite the increase in size. This function is called by
+% boundingBoxesFromLastSection
 %
 % Inputs
-% BoundingBox - 1 by 4 vector
-% pixelSizeInMicrons
-% tileSizeInMicrons - FOV of microscope (length of tile on a side)
+% BoundingBox - 1 by 4 vector [x,y,xSize,ySize]
+% pixelSizeInMicrons -
+% tileSizeInMicrons - i.e. this is the FOV of microscope (length of tile on a side)
 % tileOverlapProportion - 0.1 means tiles overlap by 10%
+% 
+%
+% Outputs
+% tiledBox - a bounding box vector with the updated coords and size
+%
+%
+% Rob Campbell - SWC 2020
 
     verbose=false;
 

@@ -169,7 +169,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
     end
 
-    %Log aspects of the run in the first element
+
+
+    % Log aspects of the run in the first element
     stats(1).rollingThreshold=rollingThreshold;
     stats(1).runOnStackStructArgs = argIn;
     stats(1).settings = settings;
@@ -186,11 +188,15 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         stats(1).autothresh=false;
     end
 
+
+    % Tidy
     if noPlot, fprintf('\n'), end
 
     % Reset the figure name
     set(gcf,'Name','')
 
+
+    % Return optional outputs
     if nargout>0
         varargout{1}=stats;
     end
