@@ -147,7 +147,7 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,DD,im)
         % Determine by how much we will increase the total imaged area if we merge these ROIs
         areaOfROI1 = sum( tmpIm(:,:,combosToTest(ind,1)), 'all' );
         areaOfROI2 = sum( tmpIm(:,:,combosToTest(ind,2)), 'all' );
-        areaOfMergedROI = boundingBoxesFromLastSection.boundingBoxAreaFromImage(tCombo);
+        areaOfMergedROI = boundingBoxAreaFromImage(tCombo); % Function local to file
 
         % The following is the proportion increase in imaged pixels. It also reflects
         % whether a much larger bounding box will be needed to accomodate an usual ROI shape. 
@@ -346,5 +346,33 @@ function [BW,propChange] = expandROItoBoundingBox(BW,expandThresh)
         end
 
     end
+
+
+
+function [tArea,boundingBoxSize] = boundingBoxAreaFromImage(BW)
+    % Determine the area of a bounding box required to fit all non-zero pixels in a binary image.
+    %
+    % function [tArea,boundingBoxSize] = boundingBoxFromLastSection.boundingBoxAreaFromImage(BW)
+    %
+    % Purpose
+    % Returns the area in pixels of a bounding box required to fit all non-zero pixels.
+    %
+    %
+    % Inputs
+    % BW - binarised image
+    %
+    % Outputs
+    % tArea - total area of bounding box
+    % boundingBoxSize - length of each side of the bounding box
+    %
+    tmp = BW>0;
+
+    %Rows and columns that have at least one non-zero pixel
+    a = find(sum(tmp,1)>1);
+    b = find(sum(tmp,2)>1);
+    tArea = length(min(a):max(a)) * length(min(b):max(b));
+
+    boundingBoxSize=[length(b),length(a)];
+
 
 

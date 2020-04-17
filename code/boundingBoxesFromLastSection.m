@@ -298,15 +298,13 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
     for ii=1:length(out.BoundingBoxes)
         tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,out.BoundingBoxes{ii});
         tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,out.BoundingBoxes{ii});
-        imStats(ii) = boundingBoxesFromLastSection.getImageStats(tIm,pixelSize,borderPixSize,tThresh,tBW);
+        imStats(ii) = boundingBoxesFromLastSection.getForegroundBackgroundPixels(tIm,pixelSize,borderPixSize,tThresh,tBW);
     end
 
     % Get the foreground and background pixel stats from the ROIs (not the whole image)
-    out.meanBackground = mean([imStats.backgroundPix]);
     out.medianBackground = median([imStats.backgroundPix]);
     out.stdBackground = std([imStats.backgroundPix]);
 
-    out.meanForeground = mean([imStats.foregroundPix]);
     out.medianForeground = median([imStats.foregroundPix]);
     out.stdForeground = std([imStats.foregroundPix]);
 
