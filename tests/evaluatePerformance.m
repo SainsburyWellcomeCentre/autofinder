@@ -72,7 +72,6 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     % Now get the result data without any missing files. i.e. only files common to the two
     % test directories will be processsed from now on.
     [cTable,refTable,testTable] = boundingBoxesFromLastSection.evaluate.genComparisonTable(referenceDir,testDir,true);
-
     if isempty(cTable)
         reportString = [reportString, sprintf('FAILED to get comparison table. Quitting.\n')]
         passedAllTests=false;
@@ -177,7 +176,6 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     % This isn't a failure point, as changing parameter will result in things not 
     % being the same. But after some changes we make to the code we will expect things
     % to stay indentical, so we need to know this. 
-
     if sum(cTable.d_totalNonImagedSqMM)==0
         reportString = [reportString, sprintf('\nThe test and reference results *ARE* identical\n')];
     else

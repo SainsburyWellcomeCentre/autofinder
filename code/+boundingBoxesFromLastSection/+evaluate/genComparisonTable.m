@@ -89,15 +89,6 @@ if any(missingFileInds)
 end
 
 
-%report to screen the file name and index of each recording.
-%the weirdness below is because we make a two-column list.
-if ~quiet
-    boundingBoxesFromLastSection.evaluate.printFileNamesAsDoubleColumnTable(refTable.fileName)
-
-    if acquisitionsExcluded
-        fprintf('\nSome acquisitions were excluded. See text above acquisition list.\n\n')
-    end
-end
 
 %Sort both tables alphabetically so we have data from the same sample on each row
 %Then sort by sqmm missed in ref table once they share index values.
@@ -109,6 +100,15 @@ testTable = testTable(ind,:);
 refTable = refTable(ind,:);
 testTable = testTable(ind,:);
 
+%report to screen the file name and index of each recording.
+%the weirdness below is because we make a two-column list.
+if ~quiet
+    boundingBoxesFromLastSection.evaluate.printFileNamesAsDoubleColumnTable(refTable.fileName)
+
+    if acquisitionsExcluded
+        fprintf('\nSome acquisitions were excluded. See text above acquisition list.\n\n')
+    end
+end
 
 
 
