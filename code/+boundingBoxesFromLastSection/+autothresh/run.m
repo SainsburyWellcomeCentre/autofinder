@@ -1,7 +1,7 @@
-function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings,BBstats,ind)
+function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     % Search a range of thresholds and find the best one. 
     %
-    % function [tThreshSD,stats,tThresh] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries)
+    % function [tThreshSD,stats,tThresh] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries, settings, BBstats)
     %
     % Purpose
     % Choose threshold based on the number of ROIs it produces. 
@@ -45,7 +45,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings,BBstats,ind
 
     if nargin>4 && ~isempty(BBstats) && length(BBstats)==1
         if isstruct(BBstats) && isfield(BBstats,'BoundingBoxes')
-            origIM = pStack.imStack(:,:,ind);
+            origIM = pStack.imStack(:,:, pStack.sectionNumber);
             BB = BBstats.BoundingBoxes;
             for ii=1:length(BB)
                 tmpIm=boundingBoxesFromLastSection.getSubImageUsingBoundingBox(origIM,BB{ii});
