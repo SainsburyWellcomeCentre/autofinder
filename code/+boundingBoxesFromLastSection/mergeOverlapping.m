@@ -260,6 +260,8 @@ function [stats,nRoiChange] = mergeOverlapping(stats,imSize,mergeThresh,im)
     end
 
 
+
+
 function [tArea,boundingBoxSize] = boundingBoxAreaFromImage(BW)
     % Determine the area of a bounding box required to fit all non-zero pixels in a binary image.
     %
