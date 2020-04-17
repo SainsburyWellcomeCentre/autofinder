@@ -188,7 +188,11 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('The test and reference results *DO NOT* identical proportions of sample pixels in ROIs.\n')];
     end
 
-
+    if sum(refTable.autothresh_tThreshSD-testTable.autothresh_tThreshSD)==0
+        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* auto-thresh tThreshSD values for all samples.\n')];
+    else
+        reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical auto-thresh tThreshSD values for all samples.\n')];
+    end
     % Show results to screen
     disp(reportString)
 
