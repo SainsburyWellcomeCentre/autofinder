@@ -17,9 +17,9 @@ function varargout = findROIEdgeClipping(im,BoundingBox,verbose)
 
 
 if nargin<3 && nargout==0
-	verbose=true;
+    verbose=true;
 elseif nargin<3
-	verbose=false;
+    verbose=false;
 end
 
 
@@ -45,9 +45,9 @@ end
 clippedEdges = char(unique(clippedEdges));
 
 if verbose && ~isempty(clippedEdges)
-	fprintf('The following sides are clipped because the ROI extends all the way to image edge: %s\n', clippedEdges)
+    fprintf('The following sides are clipped because the ROI extends all the way to image edge: %s\n', clippedEdges)
 end
 
 if nargout>0
-	varargout{1}=clippedEdges;
+    varargout{1}=clippedEdges;
 end
