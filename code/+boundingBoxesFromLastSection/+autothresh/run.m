@@ -11,7 +11,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     % runSeries - Just runs a series of thresholds and plots the result. False by default.
     %             This option runs a finer set of thresholds than the actual thresh finder.
     % settings - optional. The settings structure. If empty or missing, we read from the file itself.
-    %
+    % BBstats - optional. bounding box stats used to run on sub-regions. See runOnStackStruct
     %
     % Outputs
     % tThreshSD - SD threshold value
