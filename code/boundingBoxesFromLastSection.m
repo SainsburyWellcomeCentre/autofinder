@@ -279,16 +279,12 @@ function varargout=boundingBoxesFromLastSection(pStack, varargin)
 
     % Finish up: generate all relevant stats to return as an output argument
     out.BoundingBoxes = {stats.BoundingBox};
-    out.BoundingBox=[]; % TODO -- runOnStackStruct writes to this but I'm not sure why
-    out.notes=''; % Observations and so on can go here
     out.tThresh = tThresh;
     out.tThreshSD = tThreshSD;
 
     % Variables associated with pixel size and the original image
     out.origPixelSize = origPixelSize;
     out.rescaledPixelSize = rescaleTo;
-    out.rescaledRatio = origPixelSize/rescaleTo;
-    out.imSize = sizeIm;
 
 
     % GET STATS OF EACH ROI
