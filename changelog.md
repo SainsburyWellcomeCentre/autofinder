@@ -66,5 +66,7 @@ Now ./+boundingBoxesFromLastSection/boundingBoxAreaFromImage.m is only called by
 we move that to an in-line function and delete the external function file.
 
 Rename getImageStats to getForegroundBackgroundPixels and take out code that calculates things we never need. 
-
 Remove meanForeground and meanBackground stats from boundingBoxesFromLastSection. Never used.
+Remove not needed second expansion step in mergeOverlapping and remove the associated setting. 
+
+Improve reporting of evaluation results and fix a bug that was causing the file list to be in the wrong order.
