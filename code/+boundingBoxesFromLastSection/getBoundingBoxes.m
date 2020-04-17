@@ -70,9 +70,4 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
     end
 
 
-    %Report clipping of ROI edges
-    for ii=1:length(stats)
-       % boundingBoxesFromLastSection.findROIEdgeClipping(BW,stats(ii).BoundingBox)
-    end
-
 
