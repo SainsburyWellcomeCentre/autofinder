@@ -305,6 +305,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % Calculate the number of pixels in the bounding boxes
+    nBoundingBoxPixels = zeros(1,length(out.BoundingBoxes));
     for ii=1:length(out.BoundingBoxes)
         nBoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4)); % Do not return total pixels: they are downsampled
     end
