@@ -36,15 +36,27 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     refTable  = boundingBoxesFromLastSection.evaluate.getSummaryTable(referenceDir);
     testTable = boundingBoxesFromLastSection.evaluate.getSummaryTable(testDir);
 
+
+    % Report whether the two tables are the same size
+    if size(refTable,1) == size(testTable,1)
+        reportString = [reportString, sprintf('PASS: Test and reference tables have the same number of entries.\n')];
+    else
+        reportString = [reportString, ...
+          sprintf('FAIL: Test table has %d entries but reference table has %d entries.\n', ...
+                size(testTable,1), size(refTable,1))];
+          passedAllTests=false;
+    end
+
+    % Report exactly what the differences are
     missingFileInds = cellfun(@(x) isempty(strmatch(x,testTable.fileName)), ...
             refTable.fileName,'UniformOutput',false);
     missingFileInds = find(cell2mat(missingFileInds));
 
     if any(missingFileInds)
         if length(missingFileInds)>1
-            reportString = [reportString, sprintf('FAIL: %d test acquisitions not present in reference table:\n', length(missingFileInds))];
+            reportString = [reportString, sprintf('FAIL: The following %d acquisitions are missing from the test table:\n', length(missingFileInds))];
         else
-            reportString = [reportString, sprintf('FAIL: %d test acquisition not present in reference table:\n', length(missingFileInds))];
+            reportString = [reportString, sprintf('FAIL: The following acquisition is missing from the test table:\n')];
         end
         for ii=1:length(missingFileInds)
             reportString = [reportString, sprintf(' %s\n',refTable.fileName{missingFileInds(ii)})];
@@ -52,7 +64,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         reportString = [reportString, sprintf('\n')];
         passedAllTests=false;
     else
-        reportString = [reportString, sprintf('PASS: all test acquisitions are present in reference table\n')];
+        reportString = [reportString, sprintf('PASS: All test acquisitions are present in reference table.\n')];
     end
 
 
