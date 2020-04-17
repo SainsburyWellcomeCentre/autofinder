@@ -44,8 +44,6 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     end
 
 
-
-
     pauseBetweenSections=false;
 
     % Step one: process the initial image (first section) and find the bounding boxes
@@ -54,16 +52,17 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % in the main for loop yet.
 
 
-    argIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
-             'tileSize', pStack.tileSizeInMicrons, ...
-             'doPlot', ~noPlot, ...
-             'settings', settings};
+    % These are in the input arguments for boundingBoxesFromLastSection
+    boundingBoxArgIn = {'pixelSize', pStack.voxelSizeInMicrons, ...
+                    'tileSize', pStack.tileSizeInMicrons, ...
+                    'doPlot', ~noPlot, ...
+                    'settings', settings};
+
 
     fprintf('\n ** GETTING A THRESHOLD\n')
     if isfield(pStack,'tThreshSD')
         % Start with a threshold hard-coded into the pStack file
         tThreshSD = pStack.tThreshSD;
-        argIn = [argIn,{'tThreshSD',pStack.tThreshSD}];
         fprintf('%s is starting with a custom SD threshold of %0.1f\n', ...
             mfilename, tThreshSD)
             fprintf('**** NOT PERFORMING AUTO-THRESH: pStack has a tThreshSD field. USING THAT INSTEAD!\n\n')
@@ -83,7 +82,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % and has a generous border area. We therefore extract the ROIs from the whole of the first section.
     fprintf('\nDoing section %d/%d\n', 1, size(pStack.imStack,3))
     fprintf('Finding bounding box in first section\n')
-    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), argIn{:},'tThreshSD',tThreshSD);
+    stats = boundingBoxesFromLastSection(pStack.imStack(:,:,1), boundingBoxArgIn{:},'tThreshSD',tThreshSD);
     drawnow
 
     if pauseBetweenSections
@@ -92,12 +91,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         pause
     end
 
-    % Pre-allocate various variables
-    L={};
-    minBoundingBoxCoords=cell(1,size(pStack.imStack,3));
-    tileBoxCoords=cell(1,size(pStack.imStack,3));
-    tB=[];
-
+   
     rollingThreshold=settings.stackStr.rollingThreshold; %If true we base the threshold on the last few slices
 
     stats.tThreshSD_recalc=false; %To signal if we had to re-calc the threshold
@@ -125,8 +119,8 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
         % boundingBoxesFromLastSection is fed the ROI structure from the **previous section**
         % It runs the sample-detection code within these ROIs only and returns the results.
-        [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
-            argIn{:}, ...
+        tmp = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
+            boundingBoxArgIn{:}, ...
             'tThreshSD',tThreshSD, ...
             'tThresh',thresh,...
             'lastSectionStats',stats(ii-1));
@@ -142,8 +136,8 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
             % Responds to laser being turned up. In general to higher SNR. 
             if (FG_ratio_this_section / FG_ratio_previous_section)>10
                 [tThreshSD,~,thresh]=boundingBoxesFromLastSection.autothresh.run(pStack,[],[],tmp,ii);
-                [tmp,H] = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
-                    argIn{:}, ...
+                tmp = boundingBoxesFromLastSection(pStack.imStack(:,:,ii), ...
+                    boundingBoxArgIn{:}, ...
                     'tThreshSD',tThreshSD, ...
                     'tThresh',thresh,...
                     'lastSectionStats',stats(ii-1));
@@ -173,7 +167,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
     % Log aspects of the run in the first element
     stats(1).rollingThreshold=rollingThreshold;
-    stats(1).runOnStackStructArgs = argIn;
+    stats(1).runOnStackStructArgs = boundingBoxArgIn;
     stats(1).settings = settings;
     stats(1).nSamples = pStack.nSamples;
     stats(1).numUnprocessedSections = size(pStack.imStack,3)-length(stats);

@@ -257,16 +257,6 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
             delta_n_ROI=0;
         end
 
-        % If the number of ROIs decreased then we must re-run the tiled box algorithm
-        if delta_n_ROI<0 && settings.main.secondExpansion && settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
-            fprintf('Bounding box number decreased by %d. Recalculating them.\n',delta_n_ROI)
-            for ii=1:length(stats)
-                stats(ii).BoundingBox = ...
-                boundingBoxesFromLastSection.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
-                    pixelSize, tileSize);
-            end % for ii=1:length(stats)
-        end %if delta_n_ROI<0
-
     end % if doTiledRoi
 
 
@@ -315,6 +305,7 @@ function varargout=boundingBoxesFromLastSection(im, varargin)
 
 
     % Calculate the number of pixels in the bounding boxes
+    nBoundingBoxPixels = zeros(1,length(out.BoundingBoxes));
     for ii=1:length(out.BoundingBoxes)
         nBoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4)); % Do not return total pixels: they are downsampled
     end

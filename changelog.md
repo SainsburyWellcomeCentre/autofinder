@@ -55,8 +55,9 @@ To fix that, I think we need to first address [Issue #38](https://github.com/raa
 * v10
 All stacks that are needed now pass criteria! We have 133 acquisitions that are acquired perfectly or "good enough". 120 of them lose no more than two or three tiles of tissue. Three of them lose about thirty tiles. We will now move to Phase 3. The first job will be to tidy the code and refactor so it can be incorporated into BT. 
 
-* v11
-The big clean up. We keep a detailed log of changes here.
+* v11.1
+The big clean up starts!. We keep a detailed log of changes here.
+In v11.1 we clean up the major and very obvious things, ensuring that output is identical and unchanged to reference. 
 17/04/2020
 Delete unused functions:
 +boundingBoxesFromLastSection/growBoundingBoxIfSampleClipped.m
@@ -66,5 +67,7 @@ Now ./+boundingBoxesFromLastSection/boundingBoxAreaFromImage.m is only called by
 we move that to an in-line function and delete the external function file.
 
 Rename getImageStats to getForegroundBackgroundPixels and take out code that calculates things we never need. 
-
 Remove meanForeground and meanBackground stats from boundingBoxesFromLastSection. Never used.
+Remove not needed second expansion step in mergeOverlapping and remove the associated setting. 
+
+Improve reporting of evaluation results and fix a bug that was causing the file list to be in the wrong order.

@@ -121,7 +121,7 @@ parfor ii=1:length(pStack_list)
     % Do not process if the loaded .mat file does not contain a struct
     if ~isstruct(pStack)
         fid = fopen(fullfile(testDirThisSession,['NOT_A_STRUCT_',nameWithoutExtension]),'w');
-        fclose(fid)
+        fclose(fid);
         continue
     end
 
@@ -138,7 +138,7 @@ parfor ii=1:length(pStack_list)
     catch ME
         fid = fopen(fullfile(testDirThisSession,['FAIL_',nameWithoutExtension]),'w');
         fprintf(fid,ME.message);
-        fclose(fid)
+        fclose(fid);
         fprintf('%s FAILED WITH MESSAGE :\n%s\n',nameWithoutExtension, ME.message)
     end
 
@@ -162,7 +162,7 @@ end
 
 % internal functions 
 function pStack=pstack_loader(fname)
-    load(fname)
+    load(fname,'pStack')
 
 function testlog_saver(fname,testLog)
     save(fname,'testLog')
