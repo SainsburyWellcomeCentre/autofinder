@@ -76,7 +76,7 @@ grid on
 hold off
 xlabel('Acquisition #')
 ylabel('ref minus test square mm missed')
-title('Total square mm missed (lower better)')
+title('Total square mm missed (higher better)')
 xlim([1,size(refTable,1)])
 
 subplot(3,2,2)
@@ -97,7 +97,7 @@ grid on
 hold off
 xlabel('Acquisition #')
 ylabel('ref minus test square mm extra')
-title('Total square mm extra (higher better)')
+title('Total square mm extra (lower better)')
 xlim([1,size(cTable,1)])
 
 subplot(3,2,4)
