@@ -74,19 +74,19 @@ for ii=1:n
     load(fname)
 
     % Populate variables
-    pStackFname{ii} = testLog(1).stackFname;
-    tThreshSD(ii) = testLog(1).tThreshSD;
-    mean_tThresh(ii) = mean([testLog.tThresh]);
-    rollingThreshold(ii) = testLog(1).rollingThreshold;
-    autoThreshold(ii) = testLog(1).autothresh;
-    numSectionsWithHighCoverage(ii) = testLog(1).report.numSectionsWithHighCoverage;
-    numSectionsWithOverFlowingCoverage(ii) = testLog(1).report.numSectionsWithOverFlowingCoverage;
-    numUnprocessedSections(ii) = testLog(1).numUnprocessedSections;
+    pStackFname{ii} = testLog.stackFname;
+    tThreshSD(ii) = testLog.roiStats(1).tThreshSD;
+    mean_tThresh(ii) = mean([testLog.roiStats.tThresh]);
+    rollingThreshold(ii) = testLog.rollingThreshold;
+    autoThreshold(ii) = testLog.autothresh;
+    numSectionsWithHighCoverage(ii) = testLog.report.numSectionsWithHighCoverage;
+    numSectionsWithOverFlowingCoverage(ii) = testLog.report.numSectionsWithOverFlowingCoverage;
+    numUnprocessedSections(ii) = testLog.numUnprocessedSections;
 
-    medPropPixelsInRoiThatAreTissue(ii) = testLog(1).report.medPropPixelsInRoiThatAreTissue;
-    totalImagedSqMM(ii) = testLog(1).report.totalImagedSqMM;
-    propImagedArea(ii) = testLog(1).report.propImagedArea;
-    nSamples(ii) = testLog(1).nSamples;
+    medPropPixelsInRoiThatAreTissue(ii) = testLog.report.medPropPixelsInRoiThatAreTissue;
+    totalImagedSqMM(ii) = testLog.report.totalImagedSqMM;
+    propImagedArea(ii) = testLog.report.propImagedArea;
+    nSamples(ii) = testLog.nSamples;
 
     % Get auto-thresh info
     if ~isempty(strfind(pStackFname{ii},'problemCases'))
@@ -98,15 +98,15 @@ for ii=1:n
         autothresh_thinksAgarIsAROI(ii)] = returnAutoThreshSummaryStats(testLog);
 
     % Get more info from report structure
-    totalNonImagedTiles(ii) = sum(testLog(1).report.nonImagedTiles);
-    totalNonImagedSqMM(ii) = sum(testLog(1).report.nonImagedSqMM);
-    totalExtraSqMM(ii) = sum(testLog(1).report.extraSqMM);
+    totalNonImagedTiles(ii) = sum(testLog.report.nonImagedTiles);
+    totalNonImagedSqMM(ii) = sum(testLog.report.nonImagedSqMM);
+    totalExtraSqMM(ii) = sum(testLog.report.extraSqMM);
 
-    maxNonImagedTiles(ii) = max(testLog(1).report.nonImagedTiles);
-    maxNonImagedSqMM(ii) = max(testLog(1).report.nonImagedSqMM);
-    maxExtraSqMM(ii) = max(testLog(1).report.extraSqMM);
+    maxNonImagedTiles(ii) = max(testLog.report.nonImagedTiles);
+    maxNonImagedSqMM(ii) = max(testLog.report.nonImagedSqMM);
+    maxExtraSqMM(ii) = max(testLog.report.extraSqMM);
 
-    nPlanesWithMissingTissue(ii) = max(testLog(1).report.nPlanesWithMissingTissue);
+    nPlanesWithMissingTissue(ii) = max(testLog.report.nPlanesWithMissingTissue);
 end
 
 
@@ -139,18 +139,18 @@ function [notes, tThreshSD, SNR, thinksAgarIsAROI] = returnAutoThreshSummaryStat
     % Get the autoThresh stats from the case that best matches the finally chosen
     % tThreshSD that was returned by the auto-thresholder
 
-    notes = testLog(1).autothreshStats(1).notes;
+    notes = testLog.autothreshStats(1).notes;
     notes = strtrim(notes);
 
-    tThreshSDactual=testLog(1).tThreshSD;
+    tThreshSDactual=testLog.roiStats(1).tThreshSD;
 
     % Find the SNR of the closest tThresh we have
-    tTvec = [testLog(1).autothreshStats.tThreshSD];
-    d = abs(tTvec - testLog(1).tThreshSD);
+    tTvec = [testLog.autothreshStats.tThreshSD];
+    d = abs(tTvec - tThreshSDactual);
     [~,ind] = min(d);
     tThreshSD = tTvec(ind);
-    SNR = testLog(1).autothreshStats(ind).SNR_medThreshRatio;
-    thinksAgarIsAROI = any([testLog(1).autothreshStats(:).thinksAgarIsAROI]);
+    SNR = testLog.autothreshStats(ind).SNR_medThreshRatio;
+    thinksAgarIsAROI = any([testLog.autothreshStats(:).thinksAgarIsAROI]);
 
 
 function checkSize(varargin)
