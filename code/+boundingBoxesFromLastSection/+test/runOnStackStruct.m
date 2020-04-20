@@ -69,6 +69,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     fprintf('\nDoing section %d/%d\n', 1, size(pStack.imStack,3))
     fprintf('Finding bounding box in first section\n')
     stats = boundingBoxesFromLastSection(pStack, boundingBoxArgIn{:},'tThreshSD',tThreshSD);
+    stats.roiStats.tThreshSD_recalc=false; %Flag to signal if we had to re-calc the threshold due to increase in laser power
     drawnow
 
     if pauseBetweenSections
@@ -80,7 +81,6 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
    
     rollingThreshold=settings.stackStr.rollingThreshold; %If true we base the threshold on the last few slices
 
-    stats.tThreshSD_recalc=false; %To signal if we had to re-calc the threshold
     % Enter main for loop in which we process each section one at a time using the ROIs from the previous section
     for ii=2:size(pStack.imStack,3)
         fprintf('\nDoing section %d/%d\n', ii, size(pStack.imStack,3))
@@ -91,17 +91,17 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         nImages=5;
         if rollingThreshold==false
             % Do not update the threshold at all
-            thresh = stats(1).medianBackground + stats(1).stdBackground*tThreshSD;
+            thresh = stats.roiStats(1).medianBackground + stats.roiStats(1).stdBackground*tThreshSD;
         elseif nImages==0
             % Use the threshold from the last section
-            thresh = stats(ii-1).medianBackground + stats(ii-1).stdBackground*tThreshSD;
+            thresh = stats.roiStats(ii-1).medianBackground + stats.roiStats(ii-1).stdBackground*tThreshSD;
         elseif ii<=nImages
             % Attempt to take the median value from the last nImages: take as many as possible 
             % until we have nImages worth of sections 
-            thresh = median( [stats.medianBackground] + [stats.stdBackground]*tThreshSD);
+            thresh = median( [stats.roiStats.medianBackground] + [stats.roiStats.stdBackground]*tThreshSD);
         else
             % Take the median value from the last nImages 
-            thresh = median( [stats(end-nImages+1:end).medianBackground] + [stats(end-nImages+1:end).stdBackground]*tThreshSD);
+            thresh = median( [stats.roiStats(end-nImages+1:end).medianBackground] + [stats.roiStats(end-nImages+1:end).stdBackground]*tThreshSD);
         end
 
 
@@ -111,15 +111,15 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
             boundingBoxArgIn{:}, ...
             'tThreshSD',tThreshSD, ...
             'tThresh',thresh,...
-            'lastSectionStats',stats(ii-1));
+            'lastSectionStats',stats);
 
         % A large and sudden decrease in the background pixels (or haiving none at all)
         % indicates that something like a change in laser power or wavelength has happened.
         % If this happens we need to re-run the finder. For now we place the code for this here
         % but in future it should be in boundingBoxesFromLastSection -- TODO!!
         if ~isempty(tmp)
-            FG_ratio_this_section = tmp.foregroundSqMM/tmp.backgroundSqMM;
-            FG_ratio_previous_section = stats(end).foregroundSqMM/stats(end).backgroundSqMM;
+            FG_ratio_this_section = tmp.roiStats(end).foregroundSqMM/tmp.roiStats(end).backgroundSqMM;
+            FG_ratio_previous_section = stats.roiStats(end).foregroundSqMM/stats.roiStats(end).backgroundSqMM;
 
             % Responds to laser being turned up. In general to higher SNR. 
             if (FG_ratio_this_section / FG_ratio_previous_section)>10
@@ -130,14 +130,14 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
                     'tThreshSD',tThreshSD, ...
                     'tThresh',thresh,...
                     'lastSectionStats',stats(ii-1));
-                tmp.tThreshSD_recalc=true;
+                tmp.roiStats(end).tThreshSD_recalc=true;
             else
-                tmp.tThreshSD_recalc=false;
+                tmp.roiStats(end).tThreshSD_recalc=false;
             end
         end
 
         if ~isempty(tmp)
-            stats(ii)=tmp;
+            stats=tmp;
             if ~noPlot
                 set(gcf,'Name',sprintf('%d/%d',ii,size(pStack.imStack,3)))
                 drawnow
@@ -154,19 +154,19 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
 
 
-    % Log aspects of the run in the first element
-    stats(1).rollingThreshold=rollingThreshold;
-    stats(1).runOnStackStructArgs = boundingBoxArgIn;
-    stats(1).settings = settings;
-    stats(1).nSamples = pStack.nSamples;
-    stats(1).numUnprocessedSections = size(pStack.imStack,3)-length(stats);
+    % Log aspects of the run in the output structure
+    stats.rollingThreshold=rollingThreshold;
+    stats.runOnStackStructArgs = boundingBoxArgIn;
+    stats.settings = settings;
+    stats.nSamples = pStack.nSamples;
+    stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats);
 
     % Add a text report to the first element
-    stats(1).report = boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats,pStack);
+    stats.report = boundingBoxesFromLastSection.test.evaluateBoundingBoxes(stats,pStack);
 
 
-    stats(1).autothreshStats = at_stats;
-    stats(1).autothresh=true;
+    stats.autothreshStats = at_stats;
+    stats.autothresh=true;
 
     % Tidy
     if noPlot, fprintf('\n'), end

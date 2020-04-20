@@ -23,8 +23,8 @@ function varargout=boundingBoxesFromLastSection(pStack, varargin)
     % doPlot - if true, display image and overlay boxes. false by default
     % doTiledRoi - if true (default) return the ROI we would have if tile scanning. 
     % lastSectionStats - By default the whole image is used. If this argument is 
-    %               present it should be the output of image2boundingBoxes from a
-    %               previous sectionl
+    %               present it should be the output of boundingBoxesFromLastSection from a
+    %               previous section;
     % skipMergeNROIThresh - If more than this number of ROIs is found, do not attempt
     %                         to merge. Just return them. Used to speed up auto-finding.
     %                         By default this is infinity, so we always try to merge.
@@ -32,6 +32,7 @@ function varargout=boundingBoxesFromLastSection(pStack, varargin)
     % doBinaryExpansion - default from setings file. If true, run the expansion of 
     %                     binarized image routine. 
     % settings - the settings structure. If empty or missing, we read from the file itself
+    %
     %
     % Outputs
     % stats - borders and so forth
@@ -159,6 +160,7 @@ function varargout=boundingBoxesFromLastSection(pStack, varargin)
     else
         BW = boundingBoxesFromLastSection.binarizeImage(im,pixelSize,tThresh,binArgs{:});
     end
+
     % We run on the whole image
     if showBinaryImages
         disp('Press return')
@@ -173,23 +175,25 @@ function varargout=boundingBoxesFromLastSection(pStack, varargin)
         end
 
     else
-
+        % We have provided bounding box history from previous sections
+        
+        lastROI = lastSectionStats.roiStats(end);
         if rescaleTo>1
-            lastSectionStats.BoundingBoxes = ...
-                cellfun(@(x) round(x/(rescaleTo/origPixelSize)), lastSectionStats.BoundingBoxes,'UniformOutput',false);
+            lastROI.BoundingBoxes = ...
+                cellfun(@(x) round(x/(rescaleTo/origPixelSize)), lastROI.BoundingBoxes,'UniformOutput',false);
         end
 
         % Run within each ROI then afterwards consolidate results
         nT=1;
 
-        for ii = 1:length(lastSectionStats.BoundingBoxes)
+        for ii = 1:length(lastROI.BoundingBoxes)
             % Scale down the bounding boxes
 
-            fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastSectionStats.BoundingBoxes))
+            fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastROI.BoundingBoxes))
             % TODO -- we run binarization each time. Otherwise boundingboxes tha merge don't unmerge for some reason.
             %         see Issue 58. 
-            tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
-            %tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,lastSectionStats.BoundingBoxes{ii},true); % Pull out just this sub-region
+            tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true); % Pull out just this sub-region
+            %tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,lastSectionStats.roiStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             tBW = boundingBoxesFromLastSection.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
             tStats{ii} = boundingBoxesFromLastSection.getBoundingBoxes(tBW,tIm,pixelSize);
             %tStats{ii}}= boundingBoxesFromLastSection.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
@@ -279,57 +283,66 @@ function varargout=boundingBoxesFromLastSection(pStack, varargin)
 
 
 
-    % Finish up: generate all relevant stats to return as an output argument
-    out.BoundingBoxes = {stats.BoundingBox};
-    out.tThresh = tThresh;
-    out.tThreshSD = tThreshSD;
-
-    % Variables associated with pixel size and the original image
-    out.origPixelSize = origPixelSize;
-    out.rescaledPixelSize = rescaleTo;
-
-
-    % GET STATS OF EACH ROI
-    for ii=1:length(out.BoundingBoxes)
-        tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,out.BoundingBoxes{ii});
-        tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,out.BoundingBoxes{ii});
+    % Get the forground and background pixels within each ROI. We will later
+    % use this to calculate stats on all of those pixels. 
+    BoundingBoxes = {stats.BoundingBox};
+    for ii=1:length(BoundingBoxes)
+        tIm = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(im,BoundingBoxes{ii});
+        tBW = boundingBoxesFromLastSection.getSubImageUsingBoundingBox(BW,BoundingBoxes{ii});
         imStats(ii) = boundingBoxesFromLastSection.getForegroundBackgroundPixels(tIm,pixelSize,borderPixSize,tThresh,tBW);
     end
 
-    % Get the foreground and background pixel stats from the ROIs (not the whole image)
-    out.medianBackground = median([imStats.backgroundPix]);
-    out.stdBackground = std([imStats.backgroundPix]);
+    % Calculate the number of pixels in the bounding boxes
+    nBoundingBoxPixels = zeros(1,length(BoundingBoxes));
+    for ii=1:length(BoundingBoxes)
+        nBoundingBoxPixels(ii) = prod(BoundingBoxes{ii}(3:4));
+    end
 
-    out.medianForeground = median([imStats.foregroundPix]);
-    out.stdForeground = std([imStats.foregroundPix]);
+
+    % Make a fresh output structure if no last section stats were 
+    % provided as an input argument
+    n=pStack.sectionNumber;
+    if isempty(lastSectionStats)
+        out.origPixelSize = origPixelSize;
+        out.rescaledPixelSize = rescaleTo;
+    else
+        out = lastSectionStats;
+    end
+
+    % Data from all processed sections goes here
+    out.roiStats(n).BoundingBoxes = {stats.BoundingBox};
+    out.roiStats(n).tThresh = tThresh;
+    out.roiStats(n).tThreshSD = tThreshSD;
+
+    % Get the foreground and background pixel stats from the ROIs (not the whole image)
+    out.roiStats(n).medianBackground = median([imStats.backgroundPix]);
+    out.roiStats(n).stdBackground = std([imStats.backgroundPix]);
+
+    out.roiStats(n).medianForeground = median([imStats.foregroundPix]);
+    out.roiStats(n).stdForeground = std([imStats.foregroundPix]);
 
 
     % Calculate area of background and foreground in sq mm from the above ROIs
-    out.backgroundSqMM = length([imStats.backgroundPix]) * (pixelSize*1E-3)^2;
-    out.foregroundSqMM = length([imStats.foregroundPix]) * (pixelSize*1E-3)^2;
+    out.roiStats(n).backgroundSqMM = length([imStats.backgroundPix]) * (pixelSize*1E-3)^2;
+    out.roiStats(n).foregroundSqMM = length([imStats.foregroundPix]) * (pixelSize*1E-3)^2;
 
 
-    % Calculate the number of pixels in the bounding boxes
-    nBoundingBoxPixels = zeros(1,length(out.BoundingBoxes));
-    for ii=1:length(out.BoundingBoxes)
-        nBoundingBoxPixels(ii) = prod(out.BoundingBoxes{ii}(3:4)); % Do not return total pixels: they are downsampled
-    end
     % Convert bounding box sizes to meaningful units and return those.
-    out.BoundingBoxSqMM = nBoundingBoxPixels * (pixelSize*1E-3)^2;
-    out.meanBoundingBoxSqMM = mean(out.BoundingBoxSqMM);
-    out.totalBoundingBoxSqMM = sum(out.BoundingBoxSqMM);
+    out.roiStats(n).BoundingBoxSqMM = nBoundingBoxPixels * (pixelSize*1E-3)^2;
+    out.roiStats(n).meanBoundingBoxSqMM = mean(out.roiStats(n).BoundingBoxSqMM);
+    out.roiStats(n).totalBoundingBoxSqMM = sum(out.roiStats(n).BoundingBoxSqMM);
 
     % What proportion of the whole FOV is covered by the bounding boxes?
     % This number is only available in test datasets. In real acquisitions with the 
     % auto-finder we won't have this number. 
-    out.propImagedAreaCoveredByBoundingBox = sum(nBoundingBoxPixels) / prod(sizeIm);
+    out.roiStats(n).propImagedAreaCoveredByBoundingBox = sum(nBoundingBoxPixels) / prod(sizeIm);
 
 
     % Finally: return bounding boxes to original size
     % If we re-scaled then we need to put the bounding box coords back into the original size
     if rescaleTo>1
-        out.BoundingBoxes = ...
-            cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.BoundingBoxes,'UniformOutput',false);
+        out.roiStats(n).BoundingBoxes = ...
+             cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.roiStats(n).BoundingBoxes,'UniformOutput',false);
     end
 
 

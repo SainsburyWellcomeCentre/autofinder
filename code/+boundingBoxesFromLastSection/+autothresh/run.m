@@ -35,6 +35,9 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
 
 
 
+    if ~isfield(pStack,'sectionNumber')
+        pStack.sectionNumber=1;
+    end
 
     tileSize = pStack.tileSizeInMicrons;
     voxSize = pStack.voxelSizeInMicrons;
@@ -104,13 +107,13 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
 
 
     out=boundingBoxesFromLastSection(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
-    tThresh = out.tThresh;
+    tThresh = out.roiStats(pStack.sectionNumber).tThresh;
 
     % Nested functions follow
     function stats = calcStatsFromThreshold(tThreshSD)
         % Calculate a bunch of stats from a threshold
         [OUT,bwStats] = boundingBoxesFromLastSection(pStack, BB_argIn{:},'tThreshSD',tThreshSD);
-
+        n=pStack.sectionNumber;
         if isempty(OUT)
             stats.nRois=nan;
             stats.totalBoundingBoxSqMM=nan;
@@ -122,15 +125,15 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
             stats.SNR_medThreshRatio=nan;
             stats.bwStats = struct;
         else
-            stats.nRois = length(OUT.BoundingBoxes);
-            stats.totalBoundingBoxSqMM = OUT.totalBoundingBoxSqMM;
-            stats.meanBoundingBoxSqMM = OUT.meanBoundingBoxSqMM;
-            stats.propImagedAreaUnderBoundingBox=OUT.propImagedAreaCoveredByBoundingBox;
+            stats.nRois = length(OUT.roiStats(n).BoundingBoxes);
+            stats.totalBoundingBoxSqMM = OUT.roiStats(n).totalBoundingBoxSqMM;
+            stats.meanBoundingBoxSqMM = OUT.roiStats(n).meanBoundingBoxSqMM;
+            stats.propImagedAreaUnderBoundingBox=OUT.roiStats(n).propImagedAreaCoveredByBoundingBox;
             stats.notes='';
 
             % Extract values related to SNR
-            aboveThresh = imTMP(imTMP>OUT.tThresh);
-            belowThresh = imTMP(imTMP<OUT.tThresh);
+            aboveThresh = imTMP(imTMP>OUT.roiStats(n).tThresh);
+            belowThresh = imTMP(imTMP<OUT.roiStats(n).tThresh);
 
             stats.SNR_medAboveThresh = single(median(aboveThresh));
             stats.SNR_medBelowThresh = single(median(belowThresh));
