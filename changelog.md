@@ -76,3 +76,4 @@ Improve reporting of evaluation results and fix a bug that was causing the file 
 New output structure for functions: se OutputStatistics.md
 Rename boundingBoxesFromLastSection to autoROI
 Rename evaluateBoundingBoxes to evaluateROIs
+Everything now passes the test. At this point we can try integrating this into BT. 

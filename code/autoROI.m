@@ -164,7 +164,6 @@ function varargout=autoROI(pStack, varargin)
         pause
     end
 
-    fprintf('DOING SECTION %d\n', pStack.sectionNumber);
     if isempty(lastSectionStats)
         stats = autoROI.getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = autoROI.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
@@ -174,7 +173,7 @@ function varargout=autoROI(pStack, varargin)
 
     else
         % We have provided bounding box history from previous sections
-        
+
         lastROI = lastSectionStats.roiStats(end);
         if rescaleTo>1
             lastROI.BoundingBoxes = ...
