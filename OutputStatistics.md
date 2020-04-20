@@ -58,10 +58,9 @@ report.numSectionsWithHighCoverage: Number of sections where over 97.5% of the i
 report.numSectionsWithOverFlowingCoverage: Number of sections where over 100% of the imaged area is covered by bounding boxes. i.e. boxes over-flowed. Only meaningful if pStack.fullFOV is true.
 report.medPropPixelsInRoiThatAreTissue: The median of roiStats.foregroundSqMM / totalBoundingBoxSqMM. This tells us what proportion of the ROI area actually contains tissue. This is judged as pixels above threshold *so the statistic is slightly cicrcular*. 
 report.totalImagedSqMM: The total number of sq mm imaged in this sample
-report.propImagedArea: 0.6254
-report.txtReport: 'Median area of ROIs filled with tissue: 0.68 (run at 600 micron border size)....'
-report.nonImagedTiles: [1x199 double]
-report.nonImagedPixels: [1x199 double]
-report.nonImagedSqMM: [1x199 double]
-report.extraSqMM: [1x199 double]
-report.nPlanesWithMissingTissue: 19
+report.propImagedArea: The proportion of the full FOV that was imaged. Only meaningful if pStack.fullFOV is true.
+report.txtReport: A text report that is easily human-readable.
+report.nonImagedTiles: The non imaged area expressed in tiles for each section (a vector).
+report.nonImagedSqMM: The non imaged area expressed in sq mm for each section (a vector).
+report.extraSqMM: The number sq mm imaged more than once (for each section) due to overlapping ROIs. A vector.
+report.nPlanesWithMissingTissue: The number of planes have any missing tissue at all.

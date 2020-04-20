@@ -110,7 +110,6 @@ report.txtReport=txtReport;
 % Now loop through the whole stats structure and extract more information for
 % cases where there are non-imaged pixels, etc
 report.nonImagedTiles=zeros(1,length(stats.roiStats));
-report.nonImagedPixels=zeros(1,length(stats.roiStats));
 report.nonImagedSqMM=zeros(1,length(stats.roiStats));
 report.extraSqMM=zeros(1,length(stats.roiStats));
 
@@ -222,7 +221,6 @@ for ii=1:size(pStack.imStack,3)
 
         % Add to cumulative total
         report.nonImagedTiles(ii)=nonImagedTiles;
-        report.nonImagedPixels(ii)=nonImagedPixels;
         report.nonImagedSqMM(ii)=nonImagedSqMM;
     end
 
