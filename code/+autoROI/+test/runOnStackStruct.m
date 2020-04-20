@@ -155,18 +155,12 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
 
     % Log aspects of the run in the output structure
-    stats.rollingThreshold=rollingThreshold;
-    stats.runOnStackStructArgs = boundingBoxArgIn;
-    stats.settings = settings;
-    stats.nSamples = pStack.nSamples;
-    stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats);
+    stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats.roiStats);
 
     % Add a text report to the first element
     stats.report = autoROI.test.evaluateBoundingBoxes(stats,pStack);
-
-
     stats.autothreshStats = at_stats;
-    stats.autothresh=true;
+
 
     % Tidy
     if noPlot, fprintf('\n'), end

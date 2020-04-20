@@ -305,6 +305,8 @@ function varargout=autoROI(pStack, varargin)
     if isempty(lastSectionStats)
         out.origPixelSize = origPixelSize;
         out.rescaledPixelSize = rescaleTo;
+        out.nSamples = pStack.nSamples;
+        out.settings = settings;
     else
         out = lastSectionStats;
     end
