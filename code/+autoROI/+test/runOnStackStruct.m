@@ -113,30 +113,6 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
             'tThresh',thresh,...
             'lastSectionStats',stats);
 
-        % A large and sudden decrease in the background pixels (or haiving none at all)
-        % indicates that something like a change in laser power or wavelength has happened.
-        % If this happens we need to re-run the finder. For now we place the code for this here
-        % but in future it should be in autoROI -- TODO!!
-        if ~isempty(tmp)
-            FG_ratio_this_section = tmp.roiStats(end).foregroundSqMM/tmp.roiStats(end).backgroundSqMM;
-            FG_ratio_previous_section = stats.roiStats(end).foregroundSqMM/stats.roiStats(end).backgroundSqMM;
-
-            % Responds to laser being turned up. In general to higher SNR. 
-            if (FG_ratio_this_section / FG_ratio_previous_section)>settings.main.reCalcThreshSD_threshold
-                fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
-
-                [tThreshSD,~,thresh]=autoROI.autothresh.run(pStack,[],[],tmp);
-
-                tmp = autoROI(pStack, boundingBoxArgIn{:}, ...
-                    'tThreshSD',tThreshSD, ...
-                    'tThresh',thresh,...
-                    'lastSectionStats',stats);
-                tmp.roiStats(end).tThreshSD_recalc=true;
-            else
-                tmp.roiStats(end).tThreshSD_recalc=false;
-            end
-        end
-
         if ~isempty(tmp)
             stats=tmp;
             if ~noPlot

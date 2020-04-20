@@ -21,7 +21,6 @@ function varargout=autoROI(pStack, varargin)
     % tThresh - Threshold for tissue/no tissue. By default this is auto-calculated
     % tThreshSD - Used to do the auto-calculation of tThresh.
     % doPlot - if true, display image and overlay boxes. false by default
-    % doTiledRoi - if true (default) return the ROI we would have if tile scanning. 
     % lastSectionStats - By default the whole image is used. If this argument is 
     %               present it should be the output of autoROI from a
     %               previous section;
@@ -68,7 +67,6 @@ function varargout=autoROI(pStack, varargin)
     params.CaseSensitive = false;
 
     params.addParameter('doPlot', true, @(x) islogical(x) || x==1 || x==0)
-    params.addParameter('doTiledRoi', true, @(x) islogical(x) || x==1 || x==0)
     params.addParameter('tThresh',[], @(x) isnumeric(x) && isscalar(x))
     params.addParameter('tThreshSD',[], @(x) isnumeric(x) && isscalar(x) || isempty(x))
     params.addParameter('lastSectionStats',[], @(x) isstruct(x) || isempty(x))
@@ -80,7 +78,6 @@ function varargout=autoROI(pStack, varargin)
 
     params.parse(varargin{:})
     doPlot = params.Results.doPlot;
-    doTiledRoi=params.Results.doTiledRoi;
     tThresh = params.Results.tThresh;
     tThreshSD = params.Results.tThreshSD;
     lastSectionStats = params.Results.lastSectionStats;
@@ -251,27 +248,22 @@ function varargout=autoROI(pStack, varargin)
 
 
     % We now expand the tight bounding boxes to larger ones that correspond to a tiled acquisition
-    if doTiledRoi
+    fprintf('\n -> Creating tiled bounding boxes\n');
+    %Convert to a tiled ROI size 
+    for ii=1:length(stats)
+        stats(ii).BoundingBox = ...
+        autoROI.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
+            pixelSize, tileSize);
+    end
 
-        fprintf('\n -> Creating tiled bounding boxes\n');
-        %Convert to a tiled ROI size 
-        for ii=1:length(stats)
-            stats(ii).BoundingBox = ...
-            autoROI.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
-                pixelSize, tileSize);
-        end
-
-        if settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
-            fprintf('* Doing merge of tiled bounding boxes\n')
-            [stats,delta_n_ROI] = ...
-                autoROI.mergeOverlapping(stats, size(im), ...
-                    settings.main.tiledMergeThresh);
-        else
-            delta_n_ROI=0;
-        end
-
-    end % if doTiledRoi
-
+    if settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
+        fprintf('* Doing merge of tiled bounding boxes\n')
+        [stats,delta_n_ROI] = ...
+            autoROI.mergeOverlapping(stats, size(im), ...
+            settings.main.tiledMergeThresh);
+    else
+        delta_n_ROI=0;
+    end
 
     if doPlot
         clf
@@ -347,6 +339,34 @@ function varargout=autoROI(pStack, varargin)
              cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.roiStats(n).BoundingBoxes,'UniformOutput',false);
     end
 
+
+    % Before finishing, check if there is a large and sudden decrease in the background pixels (or having none at all)
+    % compared to the section preceeding this one. If so, this indicates that something like a change in laser power 
+    % or wavelength has happened. i.e. that SNR has gone up a lot. If this happens we need to *re-run* autoROI after
+    % first re-calculating the tThreshSD.
+    out.roiStats(n).tThreshSD_recalc=false; 
+    if length(out.roiStats)>1
+        FG_ratio_this_section = out.roiStats(end).foregroundSqMM/out.roiStats(end).backgroundSqMM;
+        FG_ratio_previous_section = out.roiStats(end-1).foregroundSqMM/out.roiStats(end-1).backgroundSqMM;
+        if (FG_ratio_this_section / FG_ratio_previous_section)>settings.main.reCalcThreshSD_threshold
+            fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
+            % re-run autothresh
+            [tThreshSD,~,thresh]=autoROI.autothresh.run(pStack,[],[],out);
+
+            %re-run autoROI with this new threshold
+            out.roiStats(end)=[]; %remove the data we just added
+            out = autoROI(pStack, ...
+                    'doPlot', doPlot, ...
+                    'skipMergeNROIThresh', skipMergeNROIThresh, ...
+                    'showBinaryImages', showBinaryImages, ...
+                    'doBinaryExpansion', doBinaryExpansion, ...
+                    'settings', settings, ...
+                    'tThreshSD',tThreshSD, ...
+                    'tThresh',thresh,...
+                    'lastSectionStats',out);
+            out.roiStats(n).tThreshSD_recalc=true;
+        end
+    end
 
 
     % Optionally return coords of each box
