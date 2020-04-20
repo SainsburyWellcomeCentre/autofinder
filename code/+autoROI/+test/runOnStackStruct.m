@@ -126,10 +126,11 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
                 fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
 
                 [tThreshSD,~,thresh]=autoROI.autothresh.run(pStack,[],[],tmp);
+
                 tmp = autoROI(pStack, boundingBoxArgIn{:}, ...
                     'tThreshSD',tThreshSD, ...
                     'tThresh',thresh,...
-                    'lastSectionStats',stats(ii-1));
+                    'lastSectionStats',stats);
                 tmp.roiStats(end).tThreshSD_recalc=true;
             else
                 tmp.roiStats(end).tThreshSD_recalc=false;

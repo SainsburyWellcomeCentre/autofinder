@@ -48,7 +48,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
 
     if nargin>3 && ~isempty(BBstats) && length(BBstats)==1
         origIM = pStack.imStack(:,:, pStack.sectionNumber); % Make a backup of the original image
-        BB = BBstats.BoundingBoxes;
+        BB = BBstats.roiStats(pStack.sectionNumber).BoundingBoxes;
         pStack.sectionNumber=1; % We will use just one plane
 
         for ii=1:length(BB)
@@ -64,7 +64,8 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
         % Re-run autoROI to obtain a tThresh
         pStack.imStack=origIM;
         out=autoROI(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
-        tThresh = out.tThresh;
+
+        tThresh = out.roiStats.tThresh;
         stats=[];
         fprintf('DID SUB-ROIS!\n')
         return
@@ -341,6 +342,7 @@ function ind = findLowestThreshStretch(nR,thresh)
     if verbose
         fprintf('Running findLowestThreshStretch with a thresh of %d\n\n', thresh)
     end
+
     while length(dF)>thresh
 
         % Turn into a word and split it with strsplit
