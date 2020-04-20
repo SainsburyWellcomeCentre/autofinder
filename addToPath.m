@@ -12,9 +12,9 @@ function addToPath
 
 currentPath=fullfile(pwd,'code');
 
-if exist('boundingBoxesFromLastSection','file')
+if exist('autoROI','file')
     % It's already somewhere in the path and needs to be removed
-    pathToRepo = which('boundingBoxesFromLastSection');
+    pathToRepo = which('autoROI');
     tok=regexp(pathToRepo,'(.*code)','tokens');
 
     pathToRepo=tok{1}{1};
@@ -30,7 +30,7 @@ if exist('boundingBoxesFromLastSection','file')
     end
 
 
-    if exist('boundingBoxesFromLastSection','file')
+    if exist('autoROI','file')
         fprintf('Failed to remove existing repo. Quitting\n')
         return
     end

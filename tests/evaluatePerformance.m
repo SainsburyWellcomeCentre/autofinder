@@ -33,8 +33,8 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     reportString = [reportString, sprintf('Test directory:\n%s\n', readLogFile(testDir))];
 
     % TEST ONE: are there missing files in the test table?
-    refTable  = boundingBoxesFromLastSection.evaluate.getSummaryTable(referenceDir);
-    testTable = boundingBoxesFromLastSection.evaluate.getSummaryTable(testDir);
+    refTable  = autoROI.evaluate.getSummaryTable(referenceDir);
+    testTable = autoROI.evaluate.getSummaryTable(testDir);
 
 
     % Report whether the two tables are the same size
@@ -71,7 +71,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
 
     % Now get the result data without any missing files. i.e. only files common to the two
     % test directories will be processsed from now on.
-    [cTable,refTable,testTable] = boundingBoxesFromLastSection.evaluate.genComparisonTable(referenceDir,testDir,true);
+    [cTable,refTable,testTable] = autoROI.evaluate.genComparisonTable(referenceDir,testDir,true);
     if isempty(cTable)
         reportString = [reportString, sprintf('FAILED to get comparison table. Quitting.\n')]
         passedAllTests=false;
