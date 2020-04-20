@@ -33,8 +33,8 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     reportString = [reportString, sprintf('Test directory:\n%s\n', readLogFile(testDir))];
 
     % TEST ONE: are there missing files in the test table?
-    refTable  = boundingBoxesFromLastSection.evaluate.getSummaryTable(referenceDir);
-    testTable = boundingBoxesFromLastSection.evaluate.getSummaryTable(testDir);
+    refTable  = autoROI.evaluate.getSummaryTable(referenceDir);
+    testTable = autoROI.evaluate.getSummaryTable(testDir);
 
 
     % Report whether the two tables are the same size
@@ -71,7 +71,7 @@ function varargout = evaluatePerformance(referenceDir,testDir)
 
     % Now get the result data without any missing files. i.e. only files common to the two
     % test directories will be processsed from now on.
-    [cTable,refTable,testTable] = boundingBoxesFromLastSection.evaluate.genComparisonTable(referenceDir,testDir,true);
+    [cTable,refTable,testTable] = autoROI.evaluate.genComparisonTable(referenceDir,testDir,true);
     if isempty(cTable)
         reportString = [reportString, sprintf('FAILED to get comparison table. Quitting.\n')]
         passedAllTests=false;
@@ -176,10 +176,28 @@ function varargout = evaluatePerformance(referenceDir,testDir)
     % This isn't a failure point, as changing parameter will result in things not 
     % being the same. But after some changes we make to the code we will expect things
     % to stay indentical, so we need to know this. 
-    if sum(cTable.d_totalNonImagedSqMM)==0
-        reportString = [reportString, sprintf('\nThe test and reference results *ARE* identical\n')];
+    if sum(abs(cTable.d_totalNonImagedSqMM))==0
+        reportString = [reportString, sprintf('\nThe test and reference results have *IDENTICAL* non imaged areas.\n')];
     else
-        reportString = [reportString, sprintf('\nThe test and reference results are *NOT* identical\n')];
+        reportString = [reportString, sprintf('\nThe test and reference results *DO NOT* have identical non imaged areas.\n')];
+    end
+
+    if sum(abs(cTable.d_medPropPixelsInRoiThatAreTissue))==0
+        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* proportions of sample pixels in ROIs.\n')];
+    else
+        reportString = [reportString, sprintf('The test and reference results *DO NOT* identical proportions of sample pixels in ROIs.\n')];
+    end
+
+    if sum(abs(refTable.autothresh_tThreshSD-testTable.autothresh_tThreshSD))==0
+        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* initial auto-thresh tThreshSD values for all samples.\n')];
+    else
+        reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical initial auto-thresh tThreshSD values for all samples.\n')];
+    end
+
+    if sum(abs(refTable.mean_tThresh-testTable.mean_tThresh))==0
+        reportString = [reportString, sprintf('The test and reference results have *IDENTICAL* mean thresholds for all samples.\n')];
+    else
+        reportString = [reportString, sprintf('The test and reference results *DO NOT* have identical mean thresholds for all samples.\n')];
     end
 
     % Show results to screen
@@ -191,6 +209,10 @@ function varargout = evaluatePerformance(referenceDir,testDir)
 
     if nargout>1
         varargout{2}=reportString;
+    end
+
+    if nargout>2
+        varargout{3}=cTable;
     end
 
 

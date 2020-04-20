@@ -52,7 +52,7 @@ function runEvaluation(dataPath)
 
     load(pathToSummaryTable)
     % Make an output similar to dir, because this is what is expected
-    % by boundingBoxesFromLastSection.tests.runOnAllInDir, which will get
+    % by autoROI.tests.runOnAllInDir, which will get
     % this sturcture as input
     for ii=1:size(summaryTable)
         [folder,name,extension] = fileparts(summaryTable.pStackFname{ii});
@@ -65,10 +65,10 @@ function runEvaluation(dataPath)
     % We will run in a temporary directory
     testDir = tempdir;
     fprintf('Running test in temporary folder with:\n');
-    fprintf('boundingBoxesFromLastSection.test.runOnAllInDir(pStackDirStruct,''%s'')\n\n', ...
+    fprintf('autoROI.test.runOnAllInDir(pStackDirStruct,''%s'')\n\n', ...
             testDir)
 
-    testDirThisSession = boundingBoxesFromLastSection.test.runOnAllInDir(pStackDirStruct,testDir);
+    testDirThisSession = autoROI.test.runOnAllInDir(pStackDirStruct,testDir);
 
 
     % Now evaluate results
