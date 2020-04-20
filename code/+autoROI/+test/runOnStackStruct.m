@@ -155,6 +155,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
 
     % Log aspects of the run in the output structure
+    pStack.fullFOV=true;
     stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats.roiStats);
 
     % Add a text report to the first element

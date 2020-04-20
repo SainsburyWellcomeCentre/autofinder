@@ -10,7 +10,7 @@ pStack.imStack: The last plane or a 3D stack of planes. The stack we use if we a
 pStack.recipe: The acquisition recipe structure
 pStack.voxelSizeInMicrons: Number of microns per pixel in x/y of pStack.imStack
 pStack.tileSizeInMicrons: The size of a single tile. We assume tiles are square!
-pStack.fullFOV: NOT_IMPLEMENTED_YET (TODO)
+pStack.fullFOV: If true, the data are a full rectangular FOV. i.e. no non-imaged areas. NOTE: this is set as true by runOnStackStruct.
 pStack.sectionNumber: The index of the section. e.g. if this was that 10th section this should equal 10.
             For ground-truth data, this is automatically filled in. 
 
