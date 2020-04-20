@@ -159,7 +159,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats.roiStats);
 
     % Add a text report to the first element
-    stats.report = autoROI.test.evaluateBoundingBoxes(stats,pStack);
+    stats.report = autoROI.test.evaluateROIs(stats,pStack);
     stats.autothreshStats = at_stats;
 
 

@@ -1,7 +1,7 @@
-function report=evaluateBoundingBoxes(stats,pStack)
+function report=evaluateROIs(stats,pStack)
 % Evaluate how well the bounding boxes capture the sample tissue
 %
-%  function txtReport=autoROI.test.evaluateBoundingBoxes(stats)
+%  function txtReport=autoROI.test.evaluateROIs(stats)
 %
 % Purpose
 % Report accuracy of tissue (sample) finding with a text report. Shows images of failed sections
@@ -20,8 +20,8 @@ function report=evaluateBoundingBoxes(stats,pStack)
 %
 % Example
 % testLog  = autoROI.test.runOnStackStruct(testLog)
-% autoROI.test.evaluateBoundingBoxes(testLog)
-% autoROI.test.evaluateBoundingBoxes(testLog,pStack)
+% autoROI.test.evaluateROIs(testLog)
+% autoROI.test.evaluateROIs(testLog,pStack)
 %
 % Outputs
 % report - A structure describing how well this sample registered. 

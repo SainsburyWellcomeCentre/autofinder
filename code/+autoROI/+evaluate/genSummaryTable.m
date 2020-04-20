@@ -34,7 +34,7 @@ end
 
 
 % Pre-allocate the variables that we will later use to build the table
-% Most of these numbers come from evaluateBoundingBoxes. Some from runOnStackStruct or runOnAllInDir.
+% Most of these numbers come from evaluateROIs. Some from runOnStackStruct or runOnAllInDir.
 n=length(tLogs);
 fileName = {tLogs.name}';
 pStackFname = cell(n,1);

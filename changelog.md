@@ -73,5 +73,6 @@ Remove not needed second expansion step in mergeOverlapping and remove the assoc
 Improve reporting of evaluation results and fix a bug that was causing the file list to be in the wrong order.
 
 * v11.1
-New output structure for functions. 
+New output structure for functions: se OutputStatistics.md
 Rename boundingBoxesFromLastSection to autoROI
+Rename evaluateBoundingBoxes to evaluateROIs
