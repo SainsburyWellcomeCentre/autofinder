@@ -91,9 +91,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         nImages=5;
         if rollingThreshold==false
             % Do not update the threshold at all: use only the values derived from the first section
-            thresh = stats.roiStats(1).medianBackground + stats.roiStats(1).stdBackground * stats.roiStats(1).tThreshSD;
+            thresh = stats.roiStats(1).medianBackground + stats.roiStats(1).stdBackground * stats.roiStats(end).tThreshSD;
         elseif nImages==0
-            % Use the threshold from the last section: TODO shouldn't this be (ii) not (ii-1)
+            % Use the threshold from the last section: TODO shouldn't this be (ii) not (ii-1)?
             thresh = stats.roiStats(ii-1).medianBackground + stats.roiStats(ii-1).stdBackground*stats.roiStats(ii-1).tThreshSD;
         elseif ii<=nImages
             % Attempt to take the median value from the last nImages: take as many as possible 
@@ -109,7 +109,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         % It runs the sample-detection code within these ROIs only and returns the results.
         tmp = autoROI(pStack, ...
             boundingBoxArgIn{:}, ...
-            'tThreshSD',tThreshSD, ...
+            'tThreshSD',stats.roiStats(end).tThreshSD, ...
             'tThresh',thresh,...
             'lastSectionStats',stats);
 
