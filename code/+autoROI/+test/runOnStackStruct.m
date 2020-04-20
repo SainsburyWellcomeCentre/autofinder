@@ -122,7 +122,7 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
             FG_ratio_previous_section = stats.roiStats(end).foregroundSqMM/stats.roiStats(end).backgroundSqMM;
 
             % Responds to laser being turned up. In general to higher SNR. 
-            if (FG_ratio_this_section / FG_ratio_previous_section)>10
+            if (FG_ratio_this_section / FG_ratio_previous_section)>settings.main.reCalcThreshSD_threshold
                 fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
 
                 [tThreshSD,~,thresh]=autoROI.autothresh.run(pStack,[],[],tmp);
