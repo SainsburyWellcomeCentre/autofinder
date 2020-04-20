@@ -28,7 +28,7 @@ function report=evaluateBoundingBoxes(stats,pStack)
 
 % Look for pStack file to load
 if nargin==1
-    pStackFname = stats(1).stackFname;
+    pStackFname = stats.stackFname;
     if ~exist(pStackFname,'file')
         txtReport = sprintf('No pStack file found at %s\n', pStackFname);
         fprintf(txtReport)
@@ -45,15 +45,15 @@ nPlanesWithMissingTissue=0;
 txtReport = '';
 
 
-if length(stats)~=size(pStack.binarized,3)
+if length(stats.roiStats)~=size(pStack.binarized,3)
     msg=sprintf('WARNING -- There are %d sections in the image stack but only %d were processed.\n', ...
-        size(pStack.binarized,3), length(stats));
+        size(pStack.binarized,3), length(stats.roiStats));
     fprintf(msg)
     txtReport = [txtReport,msg];
 end
 
 % Look for cases where the bounding box covers more than 99% of the FOV
-numSectionsWithHighCoverage = sum([stats.propImagedAreaCoveredByBoundingBox]>0.99);
+numSectionsWithHighCoverage = sum([stats.roiStats.propImagedAreaCoveredByBoundingBox]>0.99);
 if numSectionsWithHighCoverage>0
     msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 0.99 in %d sections\n', ...
         numSectionsWithHighCoverage);
@@ -61,7 +61,7 @@ if numSectionsWithHighCoverage>0
     txtReport = [txtReport,msg];
 end
 
-numSectionsWithOverFlowingCoverage = sum([stats.propImagedAreaCoveredByBoundingBox]>1);
+numSectionsWithOverFlowingCoverage = sum([stats.roiStats.propImagedAreaCoveredByBoundingBox]>1);
 if numSectionsWithOverFlowingCoverage>0
     msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 1.0 in %d sections\n', ...
         numSectionsWithOverFlowingCoverage);
@@ -72,14 +72,14 @@ end
 
 
 %Report the average proportion of pixels within a boundingbox that have tissue
-medPropPixelsInRoiThatAreTissue=median(([stats.foregroundSqMM]./[stats.totalBoundingBoxSqMM]));
+medPropPixelsInRoiThatAreTissue=median(([stats.roiStats.foregroundSqMM]./[stats.roiStats.totalBoundingBoxSqMM]));
 msg=sprintf('Median area of ROIs filled with tissue: %0.2f (run at %d micron border size).\n', ...
-    medPropPixelsInRoiThatAreTissue, stats(1).settings.mainBin.expansionSize);
+    medPropPixelsInRoiThatAreTissue, stats.settings.mainBin.expansionSize);
 fprintf(msg)
 txtReport = [txtReport,msg];
 
 %Report the total imaged area, summing over all ROIs
-totalImagedSqMM=sum([stats.totalBoundingBoxSqMM]);
+totalImagedSqMM=sum([stats.roiStats.totalBoundingBoxSqMM]);
 msg=sprintf('Total imaged sq mm in this acquisition: %0.2f\n', ...
     totalImagedSqMM);
 fprintf(msg)
@@ -109,10 +109,10 @@ report.txtReport=txtReport;
 
 % Now loop through the whole stats structure and extract more information for
 % cases where there are non-imaged pixels, etc
-report.nonImagedTiles=zeros(1,length(stats));
-report.nonImagedPixels=zeros(1,length(stats));
-report.nonImagedSqMM=zeros(1,length(stats));
-report.extraSqMM=zeros(1,length(stats));
+report.nonImagedTiles=zeros(1,length(stats.roiStats));
+report.nonImagedPixels=zeros(1,length(stats.roiStats));
+report.nonImagedSqMM=zeros(1,length(stats.roiStats));
+report.extraSqMM=zeros(1,length(stats.roiStats));
 
 
 for ii=1:size(pStack.imStack,3)
@@ -142,15 +142,15 @@ for ii=1:size(pStack.imStack,3)
     % HOWEVER: we get the bounding boxes from the preceeding section for all but
     % the first section
     if ii>1
-        if length(stats)>=ii
-            bBoxes = stats(ii-1).BoundingBoxes;
+        if length(stats.roiStats)>=ii
+            bBoxes = stats.roiStats(ii-1).BoundingBoxes;
         else
             % The auto-finding must have ended prematurely. We make blank data
             bBoxes={};
         end
             
     else
-        bBoxes = stats(ii).BoundingBoxes;
+        bBoxes = stats.roiStats(ii).BoundingBoxes;
     end
 
     for jj=1:length(bBoxes)
@@ -252,7 +252,7 @@ report.nPlanesWithMissingTissue=nPlanesWithMissingTissue;
 
 if nPlanesWithMissingTissue==0
     msg=sprintf('GOOD -- None of the %d evaluated sections have sample which is unimaged.\n', ...
-        length(stats));
+        length(stats.roiStats));
     fprintf(msg)
     txtReport = [txtReport,msg];
 end
