@@ -53,9 +53,9 @@ if length(stats.roiStats)~=size(pStack.binarized,3)
 end
 
 % Look for cases where the bounding box covers more than 99% of the FOV
-numSectionsWithHighCoverage = sum([stats.roiStats.propImagedAreaCoveredByBoundingBox]>0.99);
+numSectionsWithHighCoverage = sum([stats.roiStats.propImagedAreaCoveredByBoundingBox]>0.975);
 if numSectionsWithHighCoverage>0
-    msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 0.99 in %d sections\n', ...
+    msg=sprintf('WARNING -- Proportion of original imaged area has coverage of over 0.975 in %d sections\n', ...
         numSectionsWithHighCoverage);
     fprintf(msg)
     txtReport = [txtReport,msg];
