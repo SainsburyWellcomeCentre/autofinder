@@ -211,6 +211,10 @@ function varargout = evaluatePerformance(referenceDir,testDir)
         varargout{2}=reportString;
     end
 
+    if nargout>2
+        varargout{3}=cTable;
+    end
+
 
 
 function out = readLogFile(testDir)

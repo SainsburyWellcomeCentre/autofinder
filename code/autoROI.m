@@ -164,6 +164,7 @@ function varargout=autoROI(pStack, varargin)
         pause
     end
 
+    fprintf('DOING SECTION %d\n', pStack.sectionNumber);
     if isempty(lastSectionStats)
         stats = autoROI.getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
         %stats = autoROI.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
@@ -350,11 +351,14 @@ function varargout=autoROI(pStack, varargin)
         FG_ratio_previous_section = out.roiStats(end-1).foregroundSqMM/out.roiStats(end-1).backgroundSqMM;
         if (FG_ratio_this_section / FG_ratio_previous_section)>settings.main.reCalcThreshSD_threshold
             fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
-            % re-run autothresh
+            % Re-run autothresh on the current section with the current ROIs
             [tThreshSD,~,thresh]=autoROI.autothresh.run(pStack,[],[],out);
 
-            %re-run autoROI with this new threshold
-            out.roiStats(end)=[]; %remove the data we just added
+            % Re-run autoROI with the new tThreshSD and tThresh on the current section. 
+            % This means we have to remove the roiStats data we just added, because it's 
+            % going to need to be replaced with new numbers
+            out.roiStats(end)=[];
+
             out = autoROI(pStack, ...
                     'doPlot', doPlot, ...
                     'skipMergeNROIThresh', skipMergeNROIThresh, ...
@@ -364,6 +368,8 @@ function varargout=autoROI(pStack, varargin)
                     'tThreshSD',tThreshSD, ...
                     'tThresh',thresh,...
                     'lastSectionStats',out);
+
+            % Log that we re-calculated on this section
             out.roiStats(n).tThreshSD_recalc=true;
         end
     end

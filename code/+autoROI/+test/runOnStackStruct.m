@@ -90,18 +90,18 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         % segmentation in the next image. If set to zero it uses the preceeding section.
         nImages=5;
         if rollingThreshold==false
-            % Do not update the threshold at all
-            thresh = stats.roiStats(1).medianBackground + stats.roiStats(1).stdBackground*tThreshSD;
+            % Do not update the threshold at all: use only the values derived from the first section
+            thresh = stats.roiStats(1).medianBackground + stats.roiStats(1).stdBackground * stats.roiStats(1).tThreshSD;
         elseif nImages==0
-            % Use the threshold from the last section
-            thresh = stats.roiStats(ii-1).medianBackground + stats.roiStats(ii-1).stdBackground*tThreshSD;
+            % Use the threshold from the last section: TODO shouldn't this be (ii) not (ii-1)
+            thresh = stats.roiStats(ii-1).medianBackground + stats.roiStats(ii-1).stdBackground*stats.roiStats(ii-1).tThreshSD;
         elseif ii<=nImages
             % Attempt to take the median value from the last nImages: take as many as possible 
             % until we have nImages worth of sections 
-            thresh = median( [stats.roiStats.medianBackground] + [stats.roiStats.stdBackground]*tThreshSD);
+            thresh = median( [stats.roiStats.medianBackground] + [stats.roiStats.stdBackground]*stats.roiStats(end).tThreshSD);
         else
             % Take the median value from the last nImages 
-            thresh = median( [stats.roiStats(end-nImages+1:end).medianBackground] + [stats.roiStats(end-nImages+1:end).stdBackground]*tThreshSD);
+            thresh = median( [stats.roiStats(end-nImages+1:end).medianBackground] + [stats.roiStats(end-nImages+1:end).stdBackground]*stats.roiStats(end).tThreshSD);
         end
 
 
