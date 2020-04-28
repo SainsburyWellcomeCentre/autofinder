@@ -246,16 +246,7 @@ function varargout=autoROI(pStack, varargin)
 
     end
 
-
-    % We now expand the tight bounding boxes to larger ones that correspond to a tiled acquisition
-    fprintf('\n -> Creating tiled bounding boxes\n');
-    %Convert to a tiled ROI size 
-    for ii=1:length(stats)
-        stats(ii).BoundingBox = ...
-        autoROI.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
-            pixelSize, tileSize);
-    end
-
+    % Merge ROIs that overlap too much
     if settings.main.doTiledMerge && length(stats) < skipMergeNROIThresh
         fprintf('* Doing merge of tiled bounding boxes\n')
         [stats,delta_n_ROI] = ...
@@ -264,6 +255,18 @@ function varargout=autoROI(pStack, varargin)
     else
         delta_n_ROI=0;
     end
+
+
+    % We now expand the tight bounding boxes to larger ones that correspond to a tiled acquisition
+    fprintf('\n -> Creating tiled bounding boxes\n');
+    %Convert to a tiled ROI size 
+    for ii=1:length(stats)
+        [stats(ii).BoundingBox, stats(ii).BoundingBoxDetails] = ...
+        autoROI.boundingBoxToTiledBox(stats(ii).BoundingBox, ...
+            pixelSize, tileSize);
+    end
+
+
 
     if doPlot
         clf
@@ -305,6 +308,8 @@ function varargout=autoROI(pStack, varargin)
 
     % Data from all processed sections goes here
     out.roiStats(n).BoundingBoxes = {stats.BoundingBox};
+    out.roiStats(n).BoundingBoxDetails = [stats.BoundingBoxDetails];
+
     out.roiStats(n).tThresh = tThresh;
     out.roiStats(n).tThreshSD = tThreshSD;
 
