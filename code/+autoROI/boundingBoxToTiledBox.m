@@ -1,4 +1,4 @@
-function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSizeInMicrons,tileOverlapProportion)
+function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSizeInMicrons,tileOverlapProportion)
 % Rounds up the size of a bounding box to the nearest full tile 
 %
 % function tiledBox = autoROI.boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSizeInMicrons,tileOverlapProportion)
@@ -19,7 +19,7 @@ function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSiz
 %
 % Outputs
 % tiledBox - a bounding box vector with the updated coords and size
-%
+% boxDetails - more info on the bounding box. number of tiles along each axis and so on. 
 %
 % Rob Campbell - SWC 2020
 
@@ -51,8 +51,8 @@ function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSiz
 
 
     %Size of tiled area to image 
-    xTilesPix = (n_xTiles * tileSizeInMicrons)/pixelSizeInMicrons; 
-    yTilesPix = (n_yTiles * tileSizeInMicrons)/pixelSizeInMicrons; 
+    xTilesPix = (n_xTiles * tileSizeInMicrons)/pixelSizeInMicrons;
+    yTilesPix = (n_yTiles * tileSizeInMicrons)/pixelSizeInMicrons;
 
     % Correctly position this area, over-writing previous xP and yP vectors
     xP = [mean(xP)-(xTilesPix/2), mean(xP)+(xTilesPix/2) ];
@@ -62,3 +62,21 @@ function tiledBox = boundingBoxToTiledBox(BoundingBox,pixelSizeInMicrons,tileSiz
                      yP(1), ...
                      xP(2)-xP(1), ...
                      yP(2)-yP(1)]);
+
+
+    if nargout>1
+        boxDetails.numTiles.X = n_xTiles;
+        boxDetails.numTiles.Y = n_yTiles;
+
+        % The top-left pixel of each bounding box is that which 
+        % corresponds to the microscope front/left position.
+        boxDetails.frontLeftPixel.X = min(xP);
+        boxDetails.frontLeftPixel.Y = max(yP);
+
+        % These are the front/left X and Y position in mm. This is a 
+        % place-holder and will be filled in by BakingTray as needed.
+        boxDetails.frontLeftMM.X = [];
+        boxDetails.frontLeftMM.Y = [];
+
+        boxDetails.tileOverlapProportion = tileOverlapProportion;
+    end
