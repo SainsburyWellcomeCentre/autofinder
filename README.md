@@ -1,12 +1,14 @@
 # autofinder
 Test of algorithm to image only a sample and not surrounding tissue using serial-section 2-photon imaging. 
-We have over 150 acquisitions, many have multiple samples so in total there are over 300 samples. 
+We have about 150 acquisitions, many have multiple samples so in total there are over 300 samples. 
 Almost all samples are rat or mouse brains.
-Testing proceeds in phases:
+Development of this project is highly test-oriented: changes to the code must be checked against a reference result set. 
+The result set is updated as needed (because a change in the code demands that future results will no longer 100% match the existing reference results).
+Development proceeds in phases:
 
-* **Phase One** is brains that have few or no obvious problems for the auto-ROI and are 100% expected to work without unusual user intervention.
+* **Phase One** is brains that have few or no obvious problems for the auto-ROI and are 100% expected to work without unusual user intervention. **DONE**
 
-* **Phase Two** Are samples which are particularly awkward but we would like to get working before moving on to implementing this in BakingTray. Once Phase Two is complete, we move to the BakingTray implementation. Phase Two includes cases where the  laser intensity changed during acquisition, spinal cord acquisitions, low SNR acquisitions. 
+* **Phase Two** Are samples which are particularly awkward but we would like to get working before moving on to implementing this in BakingTray. Once Phase Two is complete, we move to the BakingTray implementation. Phase Two includes cases where the  laser intensity changed during acquisition, spinal cord acquisitions, low SNR acquisitions. **DONE**
 
 * **Phase Three** samples are those where user intervention of some sort is necessary. This includes acquisitions where one or more samples is not visible at all initially. It also includes acquisitions where the sample legitimately vanishes (e.g. PMT switched off due to user error, sample block unglued, etc). 
 
