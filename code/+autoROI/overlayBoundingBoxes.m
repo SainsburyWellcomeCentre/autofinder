@@ -1,11 +1,11 @@
 function varargout = overlayBoundingBoxes(im,stats)
 % Overlay bounding box on current axes
 %
-% h=autoROI.plotting.overlayBoundingBoxes(im,stats)
+% h=autoROI.overlayBoundingBoxes(im,stats)
 %
 % Purpose
 % Overlays all bounding boxes on top of image im using in a stats structure. 
-% This function calls autoROI.overlayBoundingBox 
+% This function calls autoROI.overlayBoundingBox and is called by autoROI. 
 %
 % Inputs
 % stats
@@ -27,7 +27,7 @@ colormap gray
 axis ij equal tight
 H=[];
 for ii=1:length(stats)
-    H(ii)=autoROI.plotting.overlayBoundingBox(stats(ii).BoundingBox);
+    H(ii)=autoROI.overlayBoundingBox(stats(ii).BoundingBox);
 end
 
 drawnow

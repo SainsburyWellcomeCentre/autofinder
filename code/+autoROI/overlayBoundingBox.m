@@ -1,7 +1,7 @@
 function varargout = overlayBoundingBox(boundingBox)
 % Overlay bounding box on current axes
 %
-% h=autoROI.plotting.overlayBoundingBox(boundingBox)
+% h=autoROI.overlayBoundingBox(boundingBox)
 %
 % Purpose
 % Overlays a bounding box on the current axes. Optionally return the handle

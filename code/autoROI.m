@@ -270,7 +270,7 @@ function varargout=autoROI(pStack, varargin)
 
     if doPlot
         clf
-        H=autoROI.plotting.overlayBoundingBoxes(im,stats);
+        H=autoROI.overlayBoundingBoxes(im,stats);
         title('Final boxes')
     else
         H=[];
