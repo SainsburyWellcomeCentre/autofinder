@@ -266,6 +266,13 @@ function varargout=autoROI(pStack, varargin)
             pixelSize, tileSize);
     end
 
+    % Sort the bounding boxes along the image rows (microscope X axis).
+    % This makes the order in which they will be imaged somewhat better. 
+    % Not optimal, though. 
+    BB = {stats.BoundingBox};
+    t=reshape([BB{:}],4,length(BB))';
+    [~,ind]=sortrows(t,[2,1]);
+    stats = stats(ind);
 
 
     if doPlot
