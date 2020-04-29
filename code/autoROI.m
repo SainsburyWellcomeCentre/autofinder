@@ -340,8 +340,15 @@ function varargout=autoROI(pStack, varargin)
     % Finally: return bounding boxes to original size
     % If we re-scaled then we need to put the bounding box coords back into the original size
     if rescaleTo>1
+        rescaleRatio = rescaleTo/origPixelSize;
         out.roiStats(n).BoundingBoxes = ...
-             cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.roiStats(n).BoundingBoxes,'UniformOutput',false);
+             cellfun(@(x) round(x*rescaleRatio), out.roiStats(n).BoundingBoxes,'UniformOutput',false);
+        for ii=1:length(out.roiStats(n).BoundingBoxDetails)
+            out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X = ...
+                    out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X * rescaleRatio;
+            out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y = ...
+                    out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y * rescaleRatio;
+        end
     end
 
 

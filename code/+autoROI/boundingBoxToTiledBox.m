@@ -73,10 +73,5 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
         boxDetails.frontLeftPixel.X = min(xP);
         boxDetails.frontLeftPixel.Y = max(yP);
 
-        % These are the front/left X and Y position in mm. This is a 
-        % place-holder and will be filled in by BakingTray as needed.
-        boxDetails.frontLeftMM.X = [];
-        boxDetails.frontLeftMM.Y = [];
-
         boxDetails.tileOverlapProportion = tileOverlapProportion;
     end
