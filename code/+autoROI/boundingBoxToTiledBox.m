@@ -65,8 +65,11 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
 
 
     if nargout>1
-        boxDetails.numTiles.X = n_xTiles;
-        boxDetails.numTiles.Y = n_yTiles;
+        % Note: one the right are BakingTray stage positions and on the left
+        %       is x/y position in the image. These are orthogonal, hence the 
+        %       apparent flip. 
+        boxDetails.numTiles.X = n_yTiles;
+        boxDetails.numTiles.Y = n_xTiles;
 
         % The top-left pixel of each bounding box is that which 
         % corresponds to the microscope front/left position.
