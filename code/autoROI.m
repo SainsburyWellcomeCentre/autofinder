@@ -53,9 +53,13 @@ function varargout=autoROI(pStack, varargin)
         pStack.sectionNumber=1;
     end
 
-    % Extract the image we will work with
-    im = pStack.imStack(:,:,pStack.sectionNumber);
-
+    % Extract the image we will work with if imStack has multiple images. 
+    % Otherwise we assume that the only existing image is the last obtained section.
+    if size(pStack.imStack,3)>1
+        im = pStack.imStack(:,:,pStack.sectionNumber);
+    else
+        im = pStack.imStack;
+    end
 
     % Get size settings from pStack structure
     pixelSize = pStack.voxelSizeInMicrons;
