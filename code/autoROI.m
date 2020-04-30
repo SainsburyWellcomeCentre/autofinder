@@ -271,7 +271,7 @@ function varargout=autoROI(pStack, varargin)
     % Not optimal, though. 
     BB = {stats.BoundingBox};
     t=reshape([BB{:}],4,length(BB))';
-    [~,ind]=sortrows(t,[2,1]);
+    [~,ind]=sortrows(t,-1);
     stats = stats(ind);
 
 
