@@ -107,7 +107,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     [tThreshSD,stats] = getThreshAlg(stats,maxThresh);
 
 
-    out=autoROI(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+    out=autoROI(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',false);
     tThresh = out.roiStats(pStack.sectionNumber).tThresh;
 
     % Nested functions follow

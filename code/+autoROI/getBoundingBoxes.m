@@ -19,7 +19,7 @@ function stats = getBoundingBoxes(BW,im,pixelSize)
         stats(ii).BoundingBox(1:2) = round(stats(ii).BoundingBox(1:2));
         stats(ii).BoundingBox(stats(ii).BoundingBox==0)=1;
         if stats(ii).Area < sizeThresh;
-            fprintf('Removing small ROI of size %d\n', stats(ii).Area)
+            %%fprintf('Removing small ROI of size %d\n', stats(ii).Area)
             stats(ii)=[];
         end
     end
