@@ -47,3 +47,23 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
     backgroundPix = im(find(inverseBW));
 
     imStats.backgroundPix = backgroundPix';
+
+
+    % BakingTray marks pixels that have not been imaged by assigning them the value pi. 
+    % We remove any pi here. 
+
+    fB=find(imStats.backgroundPix);
+    fF=find(imStats.foregroundPix);
+    if isempty(fB) || isempty(fF)
+        fprintf('autoROI.getForeGroundBackGroundPixels finds non-imaged BakingTray pixels. Removing them\n')
+
+        if length(fB) == length(imStats.backgroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        if length(fF) == length(imStats.foregroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        imStats.backgroundPix(fB) = [];
+        imStats.backgroundPix(fF) = [];
+    end
+
