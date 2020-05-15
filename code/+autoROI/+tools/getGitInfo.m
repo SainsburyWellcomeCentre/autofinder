@@ -57,14 +57,22 @@ function gitInfo=getGitInfo()
 % or implied, of <copyright holder>.
 
 
-% gitInfo=[];
-%if ~exist('.git','file') || ~exist('.git/HEAD','file')
-%    %Git is not present
-%    return
-%end
+gitInfo=[];
 
-pathToRepo = regexprep(mfilename('fullpath'),'code/\+autoROI.*','');
-pathToDotGit = fullfile(pathToRepo,'.git');
+% Descend dir path until we find the the .git directory
+pathToFile=mfilename('fullpath');
+while length(pathToFile)>1
+    pathToFile = fileparts(pathToFile);
+    pathToDotGit = fullfile(pathToFile,'.git');
+    if exist(pathToDotGit,'dir')
+        break
+    end
+end
+
+% In case nothing was found
+if length(pathToFile)==1
+    return
+end
 
 %Read in the HEAD information, this will tell us the location of the file
 %containing the SHA1
