@@ -19,7 +19,10 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
 %
 % Outputs
 % tiledBox - a bounding box vector with the updated coords and size
-% boxDetails - more info on the bounding box. number of tiles along each axis and so on. 
+% boxDetails - more info on the bounding box in a structure with these fields:
+%         numTiles.X and .Y -- the number of tiles along X and Y that make up the bounding box
+%         frontLeftPixel.X and .Y -- the location of the front/left pixel that BakingTray
+%                           will use in recipe.tilePattern to make the tile pattern.
 %
 % Rob Campbell - SWC 2020
 
@@ -74,7 +77,8 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
         % The top-left pixel of each bounding box is that which 
         % corresponds to the microscope front/left position.
         boxDetails.frontLeftPixel.X = min(xP);
-        boxDetails.frontLeftPixel.Y = max(yP);
+        boxDetails.frontLeftPixel.Y = min(yP);
+
 
         boxDetails.tileOverlapProportion = tileOverlapProportion;
     end

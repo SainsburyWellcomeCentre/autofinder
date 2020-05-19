@@ -19,8 +19,8 @@ function subIm = getSubImageUsingBoundingBox(im,BoundingBox,maintainSize)
         maintainSize=false;
     end
 
-
     BoundingBox = autoROI.validateBoundingBox(BoundingBox,size(im));
+
     subIm = im(BoundingBox(2):BoundingBox(2)+BoundingBox(4), ...
                BoundingBox(1):BoundingBox(1)+BoundingBox(3));
 
