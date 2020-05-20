@@ -170,13 +170,14 @@ function varargout=autoROI(pStack, varargin)
 
     if isempty(lastSectionStats)
         stats = autoROI.getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
-        %stats = autoROI.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
+        %stats = autoROI.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize); % TODO --delete?
         if length(stats) < skipMergeNROIThresh
             stats = autoROI.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
         end
 
     else
-        % We have provided bounding box history from previous sections
+        % We have provided bounding box history from previous sections and so we will pull out these sub-ROIs
+        % and work on them alone
 
         lastROI = lastSectionStats.roiStats(end);
         if rescaleTo>1
@@ -191,8 +192,7 @@ function varargout=autoROI(pStack, varargin)
             % Scale down the bounding boxes
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastROI.BoundingBoxes))
-            % TODO -- we run binarization each time. Otherwise boundingboxes tha merge don't unmerge for some reason.
-            %         see Issue 58. 
+            % TODO -- we run binarization each time. Otherwise boundingboxes merge don't unmerge for some reason. see Issue 58. 
             tIm = autoROI.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true); % Pull out just this sub-region
             %tBW = autoROI.getSubImageUsingBoundingBox(BW,lastSectionStats.roiStats.BoundingBoxes{ii},true); % Pull out just this sub-region
             tBW = autoROI.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
@@ -203,7 +203,6 @@ function varargout=autoROI(pStack, varargin)
                 tStats{nT} = autoROI.mergeOverlapping(tStats{ii},size(tIm));
                 nT=nT+1;
             end
-
         end
 
         if ~isempty(tStats{1})
@@ -321,6 +320,15 @@ function varargout=autoROI(pStack, varargin)
     out.roiStats(n).BoundingBoxes = {stats.BoundingBox};
     out.roiStats(n).BoundingBoxDetails = [stats.BoundingBoxDetails];
 
+    % If we have access to the front/left stage position for this image, we
+    % add that to the bounding box details. This will be used by BakingTray. 
+    % autoROI itself does not care about this. 
+    if isfield(pStack,'frontLeftStageMM')
+        for ii=1:length(out.roiStats(n).BoundingBoxDetails)
+            out.roiStats(n).BoundingBoxDetails(ii).frontLeftStageMM = pStack.frontLeftStageMM;
+        end
+    end
+
     out.roiStats(n).tThresh = tThresh;
     out.roiStats(n).tThreshSD = tThreshSD;
 
@@ -354,12 +362,17 @@ function varargout=autoROI(pStack, varargin)
         rescaleRatio = rescaleTo/origPixelSize;
         out.roiStats(n).BoundingBoxes = ...
              cellfun(@(x) round(x*rescaleRatio), out.roiStats(n).BoundingBoxes,'UniformOutput',false);
-        for ii=1:length(out.roiStats(n).BoundingBoxDetails)
-            out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X = ...
-                    out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X * rescaleRatio;
-            out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y = ...
-                    out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y * rescaleRatio;
-        end
+        % TODO --- the following is for testing with BT! MAYBE WRONG!
+        if isfield(pStack,'frontLeftStageMM')
+            for ii=1:length(out.roiStats(n).BoundingBoxDetails)
+
+                out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X = ...
+                        out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X * rescaleRatio;
+                out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y = ...
+                        out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y * rescaleRatio;
+
+            end
+        end % isfield
     end
 
 
@@ -367,7 +380,7 @@ function varargout=autoROI(pStack, varargin)
     % compared to the section preceeding this one. If so, this indicates that something like a change in laser power 
     % or wavelength has happened. i.e. that SNR has gone up a lot. If this happens we need to *re-run* autoROI after
     % first re-calculating the tThreshSD.
-    out.roiStats(n).tThreshSD_recalc=false; 
+    out.roiStats(n).tThreshSD_recalc=false;
     if length(out.roiStats)>1
         FG_ratio_this_section = out.roiStats(end).foregroundSqMM/out.roiStats(end).backgroundSqMM;
         FG_ratio_previous_section = out.roiStats(end-1).foregroundSqMM/out.roiStats(end-1).backgroundSqMM;
