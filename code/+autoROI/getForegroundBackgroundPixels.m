@@ -55,7 +55,7 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
     fB=find(imStats.backgroundPix == -42);
     fF=find(imStats.foregroundPix == -42);
     if isempty(fB) || isempty(fF)
-        fprintf('autoROI.getForeGroundBackGroundPixels finds non-imaged BakingTray pixels. Removing them.\n')
+        fprintf('autoROI.getForeGroundBackGroundPixels finds non-imaged test pixels from BakingTray dummyScanner. Removing them.\n')
 
         % Generate warning messages if there are no pixels left. 
         if length(fB) == length(imStats.backgroundPix)
@@ -68,3 +68,20 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
         imStats.backgroundPix(fF) = [];
     end
 
+    % The preview image is constructed with a default value of -123. Remove these if we find them
+    % acquisition this should happen.
+    fB=find(imStats.backgroundPix == -123);
+    fF=find(imStats.foregroundPix == -123);
+    if isempty(fB) || isempty(fF)
+        fprintf('autoROI.getForeGroundBackGroundPixels finds pixels that did not have a tile placed in them. Removing them.\n')
+
+        % Generate warning messages if there are no pixels left. 
+        if length(fB) == length(imStats.backgroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        if length(fF) == length(imStats.foregroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        imStats.backgroundPix(fB) = [];
+        imStats.backgroundPix(fF) = [];
+    end
