@@ -22,8 +22,9 @@ function roiStatsToShift = shiftROIsBasedOnStageFrontLeft(target_FrontLeftStageM
     % roiStatsToShift. - one element from the roiStats structure. This will be modified so that the ROI
     %                   coords will match those acquired at target_FrontLeftStageMM.
 
+    verbose = false;
+
     micsPix = 20;  % TODO - we hard-code here the number of microns per pixel of the preview image stack
-    verbose=true;
 
     FL_prevSection = roiStatsToShift.BoundingBoxDetails(1).frontLeftStageMM;
 
@@ -31,10 +32,13 @@ function roiStatsToShift = shiftROIsBasedOnStageFrontLeft(target_FrontLeftStageM
     dX_pix = (target_FrontLeftStageMM.X - FL_prevSection.X) / (micsPix * 1E-3);
     dY_pix = (target_FrontLeftStageMM.Y - FL_prevSection.Y) / (micsPix * 1E-3);
 
-    fprintf('%s is shifting ROIs of this section.\n', mfilename)
-    fprintf('Previous FL: x=%0.2f y=%0.2f\nTarget FL: x=%0.2f y=%0.2f\n', ...
-        FL_prevSection.X, FL_prevSection.Y, target_FrontLeftStageMM.X, target_FrontLeftStageMM.Y)
-    fprintf('Shift new ROIs by x=%0.1f and y=%0.1f pixels\n', dX_pix, dY_pix)
+
+    if verbose
+        fprintf('%s is shifting ROIs of this section.\n', mfilename)
+        fprintf('Previous FL: x=%0.2f y=%0.2f\nTarget FL: x=%0.2f y=%0.2f\n', ...
+            FL_prevSection.X, FL_prevSection.Y, target_FrontLeftStageMM.X, target_FrontLeftStageMM.Y)
+        fprintf('Shift new ROIs by x=%0.1f and y=%0.1f pixels\n', dX_pix, dY_pix)
+    end
 
     for ii=1:length(roiStatsToShift.BoundingBoxDetails)
 
@@ -57,7 +61,7 @@ function roiStatsToShift = shiftROIsBasedOnStageFrontLeft(target_FrontLeftStageM
             fprintf('Bounding box now at %d/%d and size %d x %d\n', round(roiStatsToShift.BoundingBoxes{ii}))
         end
 
-        if any( roiStatsToShift.BoundingBoxes{ii}(1:2) < 0 )
+        if verbose && any( roiStatsToShift.BoundingBoxes{ii}(1:2) < 0 )
             fprintf('Bounding boxes contain negative corner pixel locations\n')
         end
 
