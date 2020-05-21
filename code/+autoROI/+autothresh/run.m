@@ -1,7 +1,7 @@
 function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     % Search a range of thresholds and find the best one. 
     %
-    % function [tThreshSD,stats,tThresh] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries, settings, BBstats)
+    % function [tThreshSD,stats,tThresh] = autoROI.autoThresh.run(pStack, runSeries, settings, BBstats)
     %
     % Purpose
     % Choose threshold based on the number of ROIs it produces. 

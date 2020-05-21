@@ -203,6 +203,9 @@ function varargout=autoROI(pStack, varargin)
                 tStats{nT} = autoROI.mergeOverlapping(tStats{ii},size(tIm));
                 nT=nT+1;
             end
+
+            % Uncomment the following line for debug purposes
+            %disp('SHOWING tIm in autoROI: PRESS RETURN'), figure(1234),imagesc(tIm), drawnow, pause
         end
 
         if ~isempty(tStats{1})
