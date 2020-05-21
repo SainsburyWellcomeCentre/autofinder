@@ -65,7 +65,7 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
             fprintf('All background pixels are being removed. BAD!\n')
         end
         imStats.backgroundPix(fB) = [];
-        imStats.backgroundPix(fF) = [];
+        imStats.foregroundPix(fF) = [];
     end
 
     % The preview image is constructed with a default value of -123. Remove these if we find them
@@ -83,5 +83,5 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
             fprintf('All background pixels are being removed. BAD!\n')
         end
         imStats.backgroundPix(fB) = [];
-        imStats.backgroundPix(fF) = [];
+        imStats.foregroundPix(fF) = [];
     end
