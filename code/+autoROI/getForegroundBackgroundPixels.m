@@ -49,14 +49,15 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
     imStats.backgroundPix = backgroundPix';
 
 
-    % BakingTray marks pixels that have not been imaged by assigning them the value pi. 
-    % We remove any pi here. 
-
-    fB=find(imStats.backgroundPix);
-    fF=find(imStats.foregroundPix);
+    % The BakingTray dummyScanner marked pixels that were outside of the original imaged area by assigning 
+    % them the value -42. We remove these here. This is only important for analysing test data. During a live
+    % acquisition this should happen.
+    fB=find(imStats.backgroundPix == -42);
+    fF=find(imStats.foregroundPix == -42);
     if isempty(fB) || isempty(fF)
-        fprintf('autoROI.getForeGroundBackGroundPixels finds non-imaged BakingTray pixels. Removing them\n')
+        fprintf('autoROI.getForeGroundBackGroundPixels finds non-imaged BakingTray pixels. Removing them.\n')
 
+        % Generate warning messages if there are no pixels left. 
         if length(fB) == length(imStats.backgroundPix)
             fprintf('All background pixels are being removed. BAD!\n')
         end
