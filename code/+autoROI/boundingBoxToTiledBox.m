@@ -32,35 +32,43 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
         tileOverlapProportion=0.1;
     end
 
-    % Calculate the bounding box built from tiles of a size defined by the user.
-    tileSizeInMicrons = tileSizeInMicrons * (1 - tileOverlapProportion);
-
-    xP = [BoundingBox(1), BoundingBox(3)+BoundingBox(1)];
-    yP = [BoundingBox(2), BoundingBox(4)+BoundingBox(2)];
 
 
-    xSizeInMicrons = diff(xP) * pixelSizeInMicrons;
-    ySizeInMicrons = diff(yP) * pixelSizeInMicrons;
+    %  Calculate the bounding box built from tiles of a size defined by the user.
+
+    % The extent of the imaged area in x and y
+    xSizeInMicrons = BoundingBox(3) * pixelSizeInMicrons;
+    ySizeInMicrons = BoundingBox(4) * pixelSizeInMicrons;
 
 
-    n_xTiles = ceil(xSizeInMicrons / tileSizeInMicrons);
-    n_yTiles = ceil(ySizeInMicrons / tileSizeInMicrons);
+    % The size of a tile in microns and the overlap allow us to determine the step size of the stage
+    tileStepSizeInMicrons = tileSizeInMicrons * (1 - tileOverlapProportion);
+
+
+    % Therefore (given that we round up) we need this many tiles to cover the area
+    n_xTiles = ceil(xSizeInMicrons / tileStepSizeInMicrons);
+    n_yTiles = ceil(ySizeInMicrons / tileStepSizeInMicrons);
 
 
     if verbose
-        fprintf('Bounding box is %0.2f by %0.2f mm: %d by %d tiles\n', ...
+        fprintf('Bounding box is %0.2f by %0.2f mm: %d by %d tiles. \n', ...
          xSizeInMicrons/1E3, ySizeInMicrons/1E3, n_xTiles, n_yTiles)
     end
 
 
-    %Size of tiled area to image 
-    xTilesPix = (n_xTiles * tileSizeInMicrons)/pixelSizeInMicrons;
-    yTilesPix = (n_yTiles * tileSizeInMicrons)/pixelSizeInMicrons;
+    % Determine the extent of the bounding box in pixels
+    xTilesPix = (n_xTiles * tileStepSizeInMicrons)/pixelSizeInMicrons;
+    yTilesPix = (n_yTiles * tileStepSizeInMicrons)/pixelSizeInMicrons;
 
-    % Correctly position this area, over-writing previous xP and yP vectors
+    % Centre this bounding box at the same location as the previous one but expand it accordingly
+    xP = [BoundingBox(1), BoundingBox(3)+BoundingBox(1)];
+    yP = [BoundingBox(2), BoundingBox(4)+BoundingBox(2)];
+
     xP = [mean(xP)-(xTilesPix/2), mean(xP)+(xTilesPix/2) ];
     yP = [mean(yP)-(yTilesPix/2), mean(yP)+(yTilesPix/2) ];
 
+
+    % Convert the vectors xP and yP to to a bounding box: corner pixel and extent
     tiledBox = round([xP(1), ...
                      yP(1), ...
                      xP(2)-xP(1), ...
