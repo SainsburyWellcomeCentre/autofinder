@@ -163,10 +163,9 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
 
     %Nested functions follow
     function out_stats = getStatsFromBW(BW)
-        bw_stats_tmp = regionprops(BW,'Area','Circularity','Centroid');
+        bw_stats_tmp = regionprops(BW,'Area','Centroid');
         out_stats.Area = [bw_stats_tmp.Area];
         out_stats.Centroid = reshape([bw_stats_tmp.Centroid],2,length(bw_stats_tmp))';
-        out_stats.Circularity = [bw_stats_tmp.Circularity];
         out_stats.Area_sqmm = out_stats.Area * (pixelSize*1E-3)^2;
     end
 
