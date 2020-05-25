@@ -135,7 +135,7 @@ function varargout=autoROI(pStack, varargin)
 
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
-    im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage]);
+    im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage],'symmetric');
     im = single(im);
 
     % If no threshold for segregating sample from background was supplied then calculate one
