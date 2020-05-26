@@ -120,6 +120,13 @@ function varargout=autoROI(pStack, varargin)
     end
 
 
+    % Remove sharp edges. This helps with artifacts associated with the 
+    % missing corner tile. TODO: could remove this step in the future. 
+    % However, since it will clean up local very large values it might not
+    % be a bad idea it to leave it in.
+    im = autoROI.removeCornerEdgeArtifacts(im);
+
+
     sizeIm=size(im);
     if rescaleTo>1
         fprintf('%s is rescaling image to %d mic/pix from %0.2f mic/pix\n', ...
