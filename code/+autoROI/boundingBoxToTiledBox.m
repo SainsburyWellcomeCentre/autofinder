@@ -57,8 +57,10 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
 
 
     % Determine the extent of the bounding box in pixels
-    xTilesPix = (n_xTiles * tileStepSizeInMicrons)/pixelSizeInMicrons;
-    yTilesPix = (n_yTiles * tileStepSizeInMicrons)/pixelSizeInMicrons;
+    overlapWidth = floor(tileSizeInMicrons*tileOverlapProportion); % We need to add this on to the end or we will be short
+    xTilesPix = (n_xTiles * tileStepSizeInMicrons + overlapWidth)/pixelSizeInMicrons;
+    yTilesPix = (n_yTiles * tileStepSizeInMicrons + overlapWidth)/pixelSizeInMicrons;
+
 
     % Centre this bounding box at the same location as the previous one but expand it accordingly
     xP = [BoundingBox(1), BoundingBox(3)+BoundingBox(1)];
