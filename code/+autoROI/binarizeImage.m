@@ -81,7 +81,7 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
         BW=bwpropfilt(BW,'Eccentricity',[0,0.99]); 
     end
 
-    BW = medfilt2(BW,[settings.mainBin.medFiltBW,settings.mainBin.medFiltBW]);
+    BW = medfilt2(BW,[settings.mainBin.medFiltBW,settings.mainBin.medFiltBW],'symmetric');
 
     if showImages
         subplot(2,2,2)

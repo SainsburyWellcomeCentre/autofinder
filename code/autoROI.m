@@ -135,17 +135,22 @@ function varargout=autoROI(pStack, varargin)
 
 
 
+
+
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
     im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage],'symmetric');
     im = single(im);
 
+
     % If no threshold for segregating sample from background was supplied then calculate one
-    % based on the pixels around the image border.
+    % based on the pixels around the image border. This is only going to work for cases where
+    % there no ROIs. i.e. the whole FOV was imaged. TODO: have a check for this. 
     if isempty(tThresh)
         %Find pixels within b pixels of the border
         b = borderPixSize;
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
+
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
         fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold of %0.1f based on threshSD of %0.2f\n', ...
          mfilename, tThresh, tThreshSD)
