@@ -120,10 +120,11 @@ function varargout=autoROI(pStack, varargin)
     end
 
 
+    sizeIm=size(im);
     if rescaleTo>1
         fprintf('%s is rescaling image to %d mic/pix from %0.2f mic/pix\n', ...
             mfilename, rescaleTo, pixelSize);
-        sizeIm=size(im);
+
         sizeIm = round( sizeIm / (rescaleTo/pixelSize) );
         im = imresize(im, sizeIm);
         origPixelSize = pixelSize;
