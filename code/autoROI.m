@@ -126,7 +126,7 @@ function varargout=autoROI(pStack, varargin)
             mfilename, rescaleTo, pixelSize);
 
         sizeIm = round( sizeIm / (rescaleTo/pixelSize) );
-        im = imresize(im, sizeIm);
+        im = imresize(im, sizeIm,'nearest');
         origPixelSize = pixelSize;
         pixelSize = rescaleTo;
     else
