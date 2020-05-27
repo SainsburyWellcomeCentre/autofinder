@@ -159,10 +159,16 @@ function varargout=autoROI(pStack, varargin)
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
 
-        tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold:\n  tThresh set to %0.1f based on supplied threshSD of %0.2f\n', ...
-         mfilename, tThresh, tThreshSD)
+        % Remove any non-imaged pixels
+        borderPix(borderPix == -42) = [];
+        borderPix(borderPix == 0) = [];
 
+        tThresh = median(borderPix) + std(borderPix)*tThreshSD;
+        fprintf(['\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold:\n  ', ...
+            'tThresh set to %0.1f based on supplied threshSD of %0.2f\n'], ...
+         mfilename, tThresh, tThreshSD)
+        fprintf('  Median border pix: %0.2f\n  SD border pix: %0.2f\n', ...
+            median(borderPix), std(borderPix))
     else
         fprintf('Running %s with provided threshold of %0.2f\n', mfilename, tThresh)
     end

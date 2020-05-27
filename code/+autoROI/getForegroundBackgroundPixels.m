@@ -69,10 +69,10 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
         imStats.foregroundPix(fF) = [];
     end
 
-    % The preview image is constructed with a default value of -123. Remove these if we find them
+    % The preview image is constructed with a default value of zero. Remove these if we find them
     % acquisition this should happen.
-    fB=find(imStats.backgroundPix == -123);
-    fF=find(imStats.foregroundPix == -123);
+    fB=find(imStats.backgroundPix == 0);
+    fF=find(imStats.foregroundPix == 0);
     if ~isempty(fB) || ~isempty(fF)
         fprintf('*** autoROI.getForeGroundBackGroundPixels finds %d pixels that did not have a tile placed in them. Removing them. ***\n', ...
             sum(length(fB) + length(fF)) )
