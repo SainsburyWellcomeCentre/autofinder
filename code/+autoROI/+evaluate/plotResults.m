@@ -69,7 +69,7 @@ end
 % Report recordings with unprocessed sections
 f=find(summaryTable.numUnprocessedSections>0);
 if ~isempty(f)
-    fprintf('\n\n ** The following recordings have unprocessed sections:\n')
+    fprintf('\n\n ** The following recordings have unprocessed sections that contained data:\n')
     for ii=1:length(f)
             fprintf('%d/%d. %s -- %d unprocessed sections. tThresh SD=%0.2f\n', f(ii), size(summaryTable,1), ...
         summaryTable.fileName{f(ii)}, summaryTable.numUnprocessedSections(f(ii)), ...

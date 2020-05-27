@@ -54,10 +54,8 @@ function [isFindingAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSizeInMi
 
     % TODO: nROIs threshold should be smarter than this. 
     isFindingAgar = nROIs>30  &  propTileSizeROIs>0.5 &  seemsLikeGrid;
-
-    if sum(isFindingAgar)==1;
-        disp('ONLY ONE SITUATION THINKS IT IS AGAR. NOT REMOVING.')
-       % 
+    if sum(isFindingAgar)==1
+        isFindingAgar(:)=0;
     end
     % insert these values into the stats array
     for ii=1:length(stats)
