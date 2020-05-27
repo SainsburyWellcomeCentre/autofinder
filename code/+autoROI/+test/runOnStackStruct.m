@@ -1,7 +1,7 @@
-function varargout=runOnStackStruct(pStack,noPlot,settings)
+function varargout=runOnStackStruct(pStack,noPlot,settings,tThreshSD)
     % Run the ROI-finding algorithm on a stack processed by genGroundTruthBorders
     %
-    % function autoROI.test.runOnStackStruct(pStack,noPlot,settings)
+    % function autoROI.test.runOnStackStruct(pStack,noPlot,settings,tThreshSD)
     %
     % Purpose
     % Simulate the behavior of an imaging system seeking to image only
@@ -19,6 +19,8 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % pStack - preview stack structure
     % noPlot - false by default
     % settings - if empty or missing we get from the file
+    % tThreshSD - if present, we do not run autothresh and use this threshold SD instead.
+    %
     %
     % Outputs
     % stats structure
@@ -39,6 +41,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         settings = autoROI.readSettings;
     end
 
+    if nargin<4
+        tThreshSD=[];
+    end
 
     pauseBetweenSections=false;
 
@@ -56,12 +61,15 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
                     'settings', settings};
 
 
-
-    fprintf('\n ** GETTING A THRESHOLD\n')
-    fprintf('%s is running auto-thresh\n', mfilename)
-    [tThreshSD,at_stats]=autoROI.autothresh.run(pStack, false, settings);
-    fprintf('\nTHRESHOLD OBTAINED!\n')
-    fprintf('%s\n\n',repmat('-',1,100))
+    if isempty(tThreshSD)
+        fprintf('\n ** GETTING A THRESHOLD\n')
+        fprintf('%s is running auto-thresh\n', mfilename)
+        [tThreshSD,at_stats]=autoROI.autothresh.run(pStack, false, settings);
+        fprintf('\nTHRESHOLD OBTAINED!\n')
+        fprintf('%s\n\n',repmat('-',1,100))
+    else
+        at_stats=[];
+    end
 
 
     % In the first section the user should have acquired a preview that captures the whole sample
