@@ -141,11 +141,25 @@ function varargout=runOnStackStruct(pStack,noPlot,settings,tThreshSD)
 
     % Log aspects of the run in the output structure
     pStack.fullFOV=true;
-    stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats.roiStats);
+
+    % Did we get all sections?
+    if isfield(pStack,'lastSliceWithData')
+        stats.numUnprocessedSections = pStack.lastSliceWithData-length(stats.roiStats);
+        if stats.numUnprocessedSections<0
+            stats.numUnprocessedSections=0;
+        end
+        stats.lastSliceWithData=pStack.lastSliceWithData;
+    else
+        stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats.roiStats);
+        stats.lastSliceWithData=size(pStack.imStack,3);
+    end
+
+
 
     % Add a text report to the first element
     stats.report = autoROI.test.evaluateROIs(stats,pStack);
     stats.autothreshStats = at_stats;
+
 
 
     % Tidy
