@@ -145,8 +145,9 @@ function varargout=autoROI(pStack, varargin)
 
 
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
-    im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage],'symmetric');
+    im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage]);
     im = single(im);
+
 
 
     % If no threshold for segregating sample from background was supplied then calculate one
@@ -159,7 +160,7 @@ function varargout=autoROI(pStack, varargin)
         borderPix = borderPix(:);
 
         tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold of %0.1f based on threshSD of %0.2f\n', ...
+        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold:\n  tThresh set to %0.1f based on supplied threshSD of %0.2f\n', ...
          mfilename, tThresh, tThreshSD)
 
     else

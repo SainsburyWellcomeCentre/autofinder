@@ -4,7 +4,7 @@ function varargout = viewStackResult(fname,imRange,noCheating)
 % h=autoROI.plotting.viewStackResult(fname,imRange)
 %
 % Purpose
-% Load data into volView based on a stack result file to see results of an anlysis. 
+% Load data into volView based on a stack result file to see results of an analysis. 
 % Optionally return handle to volView. 
 %
 % Inputs
