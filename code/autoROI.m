@@ -133,7 +133,7 @@ function varargout=autoROI(pStack, varargin)
             mfilename, rescaleTo, pixelSize);
 
         sizeIm = round( sizeIm / (rescaleTo/pixelSize) );
-        im = imresize(im, sizeIm,'nearest');
+        im = imresize(im, sizeIm,'nearest'); %Must use nearest-neighbour to avoid interpolation
         origPixelSize = pixelSize;
         pixelSize = rescaleTo;
     else
@@ -213,8 +213,8 @@ function varargout=autoROI(pStack, varargin)
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastROI.BoundingBoxes))
             % TODO -- we run binarization each time. Otherwise boundingboxes merge don't unmerge for some reason. see Issue 58. 
-            tIm = autoROI.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true); % Pull out just this sub-region
-            %tBW = autoROI.getSubImageUsingBoundingBox(BW,lastSectionStats.roiStats.BoundingBoxes{ii},true); % Pull out just this sub-region
+            tIm = autoROI.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true,min(im(:))); % Pull out just this sub-region
+
             tBW = autoROI.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
             tStats{ii} = autoROI.getBoundingBoxes(tBW,tIm,pixelSize);
             %tStats{ii}}= autoROI.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
@@ -225,7 +225,7 @@ function varargout=autoROI(pStack, varargin)
             end
 
             % Uncomment the following line for debug purposes
-            %disp('SHOWING tIm in autoROI: PRESS RETURN'), figure(1234),imagesc(tIm), drawnow, pause
+            %disp('SHOWING tIm in autoROI: PRESS RETURN'), figure(1234),imagesc(tBW), colorbar, drawnow, pause
         end
 
         if ~isempty(tStats{1})
