@@ -213,7 +213,8 @@ function varargout=autoROI(pStack, varargin)
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastROI.BoundingBoxes))
             % TODO -- we run binarization each time. Otherwise boundingboxes merge don't unmerge for some reason. see Issue 58. 
-            tIm = autoROI.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true,min(im(:))); % Pull out just this sub-region
+            minIm = min(im(:));
+            tIm = autoROI.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true,minIm); % Pull out just this sub-region
 
             tBW = autoROI.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
             tStats{ii} = autoROI.getBoundingBoxes(tBW,tIm,pixelSize);
