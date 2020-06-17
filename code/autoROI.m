@@ -330,7 +330,7 @@ function varargout=autoROI(pStack, varargin)
 
     % Make a fresh output structure if no last section stats were 
     % provided as an input argument
-    n=pStack.sectionNumber;
+
     if isempty(lastSectionStats)
         out.origPixelSize = origPixelSize;
         out.rescaledPixelSize = rescaleTo;
@@ -341,6 +341,17 @@ function varargout=autoROI(pStack, varargin)
     end
 
     % Data from all processed sections goes here
+    n=pStack.sectionNumber;
+    % If this section number already exists, we delete it. This is unlikely to happen.
+    % Otherwise we append.
+    if isfield(out,'roiStats')
+        f=find([out.roiStats.sectionNumber]==n);
+        out.roiStats(f)=[];
+        n=length(out.roiStats)+1;
+    else
+        n=1;
+    end
+
     out.roiStats(n).BoundingBoxes = {stats.BoundingBox};
     out.roiStats(n).BoundingBoxDetails = [stats.BoundingBoxDetails];
 
@@ -408,6 +419,7 @@ function varargout=autoROI(pStack, varargin)
     if length(out.roiStats)>1
         FG_ratio_this_section = out.roiStats(end).foregroundSqMM/out.roiStats(end).backgroundSqMM;
         FG_ratio_previous_section = out.roiStats(end-1).foregroundSqMM/out.roiStats(end-1).backgroundSqMM;
+        disp(1)
         if (FG_ratio_this_section / FG_ratio_previous_section)>settings.main.reCalcThreshSD_threshold
             fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
             % Re-run autothresh on the current section with the current ROIs
