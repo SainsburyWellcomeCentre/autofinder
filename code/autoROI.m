@@ -419,7 +419,7 @@ function varargout=autoROI(pStack, varargin)
     if length(out.roiStats)>1
         FG_ratio_this_section = out.roiStats(end).foregroundSqMM/out.roiStats(end).backgroundSqMM;
         FG_ratio_previous_section = out.roiStats(end-1).foregroundSqMM/out.roiStats(end-1).backgroundSqMM;
-        disp(1)
+
         if (FG_ratio_this_section / FG_ratio_previous_section)>settings.main.reCalcThreshSD_threshold
             fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
             % Re-run autothresh on the current section with the current ROIs
