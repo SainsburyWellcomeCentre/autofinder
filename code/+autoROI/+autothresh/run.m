@@ -45,6 +45,12 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     'skipMergeNROIThresh',settings.autoThresh.skipMergeNROIThresh,...
     'doBinaryExpansion',settings.autoThresh.doBinaryExpansion};
 
+    if size(pStack.imStack,3)>pStack.sectionNumber
+        fprintf('\n\n\nIn autoThresh.run\n\n ***** WARNING PSTACK SLICES: %d. CURRENT SECTION NUMBER: %d', ...
+            size(pStack.imStack,3), pStack.sectionNumber)
+        pStack.sectionNumber = size(pStack.imStack,3);
+        fprintf('Forcing sectionNumber to equal stack length')
+    end
 
     if nargin>3 && ~isempty(BBstats) && length(BBstats)==1
         origIM = pStack.imStack(:,:, pStack.sectionNumber); % Make a backup of the original image
