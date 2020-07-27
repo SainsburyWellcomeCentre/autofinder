@@ -19,7 +19,10 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
 %
 % Outputs
 % tiledBox - a bounding box vector with the updated coords and size
-% boxDetails - more info on the bounding box. number of tiles along each axis and so on. 
+% boxDetails - more info on the bounding box in a structure with these fields:
+%         numTiles.X and .Y -- the number of tiles along X and Y that make up the bounding box
+%         frontLeftPixel.X and .Y -- the location of the front/left pixel that BakingTray
+%                           will use in recipe.tilePattern to make the tile pattern.
 %
 % Rob Campbell - SWC 2020
 
@@ -29,35 +32,45 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
         tileOverlapProportion=0.1;
     end
 
-    % Calculate the bounding box built from tiles of a size defined by the user.
-    tileSizeInMicrons = tileSizeInMicrons * (1 - tileOverlapProportion);
-
-    xP = [BoundingBox(1), BoundingBox(3)+BoundingBox(1)];
-    yP = [BoundingBox(2), BoundingBox(4)+BoundingBox(2)];
 
 
-    xSizeInMicrons = diff(xP) * pixelSizeInMicrons;
-    ySizeInMicrons = diff(yP) * pixelSizeInMicrons;
+    %  Calculate the bounding box built from tiles of a size defined by the user.
+
+    % The extent of the imaged area in x and y
+    xSizeInMicrons = BoundingBox(3) * pixelSizeInMicrons;
+    ySizeInMicrons = BoundingBox(4) * pixelSizeInMicrons;
 
 
-    n_xTiles = ceil(xSizeInMicrons / tileSizeInMicrons);
-    n_yTiles = ceil(ySizeInMicrons / tileSizeInMicrons);
+    % The size of a tile in microns and the overlap allow us to determine the step size of the stage
+    tileStepSizeInMicrons = tileSizeInMicrons * (1 - tileOverlapProportion);
+
+
+    % Therefore (given that we round up) we need this many tiles to cover the area
+    n_xTiles = ceil(xSizeInMicrons / tileStepSizeInMicrons);
+    n_yTiles = ceil(ySizeInMicrons / tileStepSizeInMicrons);
 
 
     if verbose
-        fprintf('Bounding box is %0.2f by %0.2f mm: %d by %d tiles\n', ...
+        fprintf('Bounding box is %0.2f by %0.2f mm: %d by %d tiles. \n', ...
          xSizeInMicrons/1E3, ySizeInMicrons/1E3, n_xTiles, n_yTiles)
     end
 
 
-    %Size of tiled area to image 
-    xTilesPix = (n_xTiles * tileSizeInMicrons)/pixelSizeInMicrons;
-    yTilesPix = (n_yTiles * tileSizeInMicrons)/pixelSizeInMicrons;
+    % Determine the extent of the bounding box in pixels
+    overlapWidth = floor(tileSizeInMicrons*tileOverlapProportion); % We need to add this on to the end or we will be short
+    xTilesPix = (n_xTiles * tileStepSizeInMicrons + overlapWidth)/pixelSizeInMicrons;
+    yTilesPix = (n_yTiles * tileStepSizeInMicrons + overlapWidth)/pixelSizeInMicrons;
 
-    % Correctly position this area, over-writing previous xP and yP vectors
+
+    % Centre this bounding box at the same location as the previous one but expand it accordingly
+    xP = [BoundingBox(1), BoundingBox(3)+BoundingBox(1)];
+    yP = [BoundingBox(2), BoundingBox(4)+BoundingBox(2)];
+
     xP = [mean(xP)-(xTilesPix/2), mean(xP)+(xTilesPix/2) ];
     yP = [mean(yP)-(yTilesPix/2), mean(yP)+(yTilesPix/2) ];
 
+
+    % Convert the vectors xP and yP to to a bounding box: corner pixel and extent
     tiledBox = round([xP(1), ...
                      yP(1), ...
                      xP(2)-xP(1), ...
@@ -65,18 +78,17 @@ function [tiledBox,boxDetails] = boundingBoxToTiledBox(BoundingBox,pixelSizeInMi
 
 
     if nargout>1
-        boxDetails.numTiles.X = n_xTiles;
-        boxDetails.numTiles.Y = n_yTiles;
+        % Note: one the right are BakingTray stage positions and on the left
+        %       is x/y position in the image. These are orthogonal, hence the 
+        %       apparent flip. 
+        boxDetails.numTiles.X = n_yTiles;
+        boxDetails.numTiles.Y = n_xTiles;
 
         % The top-left pixel of each bounding box is that which 
         % corresponds to the microscope front/left position.
         boxDetails.frontLeftPixel.X = min(xP);
-        boxDetails.frontLeftPixel.Y = max(yP);
+        boxDetails.frontLeftPixel.Y = min(yP);
 
-        % These are the front/left X and Y position in mm. This is a 
-        % place-holder and will be filled in by BakingTray as needed.
-        boxDetails.frontLeftMM.X = [];
-        boxDetails.frontLeftMM.Y = [];
 
         boxDetails.tileOverlapProportion = tileOverlapProportion;
     end

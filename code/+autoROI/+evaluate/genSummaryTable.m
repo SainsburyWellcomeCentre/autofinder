@@ -61,7 +61,6 @@ nPlanesWithMissingTissue = zeros(n,1);
 autothresh_notes = cell(n,1);
 autothresh_SNR = zeros(n,1);
 autothresh_tThreshSD = zeros(n,1);
-autothresh_thinksAgarIsAROI = zeros(n,1);
 
 
 % Loop through the testLog files. Load each in turn and 
@@ -92,8 +91,7 @@ for ii=1:n
     end
     [autothresh_notes{ii}, ...
         autothresh_tThreshSD(ii), ...
-        autothresh_SNR(ii), ...
-        autothresh_thinksAgarIsAROI(ii)] = returnAutoThreshSummaryStats(testLog);
+        autothresh_SNR(ii)] = returnAutoThreshSummaryStats(testLog);
 
     % Get more info from report structure
     totalNonImagedTiles(ii) = sum(testLog.report.nonImagedTiles);
@@ -111,11 +109,10 @@ end
 % Construct table
 fprintf('\nBuilding table\n')
 isProblemCase = logical(isProblemCase);
-autothresh_thinksAgarIsAROI = logical(autothresh_thinksAgarIsAROI);
 summaryTable = table(fileName, tThreshSD, rollingThreshold, numSectionsWithHighCoverage, ...
     mean_tThresh, numSectionsWithOverFlowingCoverage, medPropPixelsInRoiThatAreTissue, totalImagedSqMM, ... 
     propImagedArea, nSamples, isProblemCase, numUnprocessedSections, autothresh_notes, autothresh_tThreshSD, ...
-    autothresh_SNR, autothresh_thinksAgarIsAROI, totalNonImagedTiles, totalNonImagedSqMM, totalExtraSqMM, ...
+    autothresh_SNR, totalNonImagedTiles, totalNonImagedSqMM, totalExtraSqMM, ...
     maxNonImagedTiles, maxNonImagedSqMM, maxExtraSqMM,nPlanesWithMissingTissue, ...
     pStackFname);
 
@@ -133,7 +130,7 @@ end
 
 
 
-function [notes, tThreshSD, SNR, thinksAgarIsAROI] = returnAutoThreshSummaryStats(testLog)
+function [notes, tThreshSD, SNR] = returnAutoThreshSummaryStats(testLog)
     % Get the autoThresh stats from the case that best matches the finally chosen
     % tThreshSD that was returned by the auto-thresholder
 
@@ -148,7 +145,6 @@ function [notes, tThreshSD, SNR, thinksAgarIsAROI] = returnAutoThreshSummaryStat
     [~,ind] = min(d);
     tThreshSD = tTvec(ind);
     SNR = testLog.autothreshStats(ind).SNR_medThreshRatio;
-    thinksAgarIsAROI = any([testLog.autothreshStats(:).thinksAgarIsAROI]);
 
 
 function checkSize(varargin)

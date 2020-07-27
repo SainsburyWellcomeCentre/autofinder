@@ -1,7 +1,7 @@
 function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     % Search a range of thresholds and find the best one. 
     %
-    % function [tThreshSD,stats,tThresh] = boundingBoxFromLastSection.autoThresh.run(pStack, runSeries, settings, BBstats)
+    % function [tThreshSD,stats,tThresh] = autoROI.autoThresh.run(pStack, runSeries, settings, BBstats)
     %
     % Purpose
     % Choose threshold based on the number of ROIs it produces. 
@@ -45,6 +45,12 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     'skipMergeNROIThresh',settings.autoThresh.skipMergeNROIThresh,...
     'doBinaryExpansion',settings.autoThresh.doBinaryExpansion};
 
+    if size(pStack.imStack,3)>pStack.sectionNumber
+        fprintf('\n\n\nIn autoThresh.run\n\n ***** WARNING PSTACK SLICES: %d. CURRENT SECTION NUMBER: %d', ...
+            size(pStack.imStack,3), pStack.sectionNumber)
+        pStack.sectionNumber = size(pStack.imStack,3);
+        fprintf('Forcing sectionNumber to equal stack length')
+    end
 
     if nargin>3 && ~isempty(BBstats) && length(BBstats)==1
         origIM = pStack.imStack(:,:, pStack.sectionNumber); % Make a backup of the original image
@@ -107,7 +113,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
     [tThreshSD,stats] = getThreshAlg(stats,maxThresh);
 
 
-    out=autoROI(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',true);
+    out=autoROI(pStack, BB_argIn{:},'tThreshSD',tThreshSD,'doPlot',false);
     tThresh = out.roiStats(pStack.sectionNumber).tThresh;
 
     % Nested functions follow
@@ -185,9 +191,8 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
         [tThreshSD_vec,ind] = sort([stats.tThreshSD],'ascend');
         stats = stats(ind);
 
-
-
-        [findsAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSize,voxSize);
+        %[findsAgar,stats] = autoROI.autothresh.isThreshTreatingAgarAsSample(stats,tileSize,voxSize);
+        findsAgar=false;
         if any(findsAgar)
             tF = find(findsAgar);
             fprintf(' ** DELETED FIRST %d entries up to tThreshSD = %0.2f because we see tiling artifacts there. **\n', ...
@@ -200,7 +205,7 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
                 fprintf(' ** VERY BAD: after removing thresholds due to tiling artifacts there are no more threshold values.\n')
             end
 
-            % If we have very threshold values left, we a slightly larger range.
+            % If we have very few threshold values left, we choose a slightly larger range.
             if length(stats)<5 && settings.autoThresh.allowMaxExtensionIfFewThreshLeft
                 newMaxThresh = maxThresh+5;
                 if maxThresh < settings.autoThresh.maxThreshold*4 % to avoid infinite recursion
@@ -209,10 +214,8 @@ function [tThreshSD,stats,tThresh] = run(pStack, runSeries, settings, BBstats)
                     [~,stats]=getThreshAlg(stats,newMaxThresh);
                 end
             end
-            clippedDueToAgar=true;
-        else
-            clippedDueToAgar=false;
         end
+
 
         % If the median SNR is low, we get rid tThresh values above 8
         % This helps with certain low SNR samples
@@ -387,62 +390,3 @@ function ind = findLowestThreshStretch(nR,thresh)
     end %while
 
 end %findLowestThreshStretch
-
-
-function [isFindingAgar,stats] = isThreshTreatingAgarAsSample(stats,tileSizeInMicrons,micsPix)
-    % Examines each threshold in turns and determines whether the is evidence that it's
-    % treating agar as a ROIs. This can happen when the user has a huge ROI that includes
-    % regions outside of the agar.
-    verbose=false;
-
-    propTileSizeROIs = zeros(1,length(stats));
-    nROIs = zeros(1,length(stats));
-    seemsLikeGrid = zeros(1,length(stats));
-
-    tileArea = (tileSizeInMicrons * 1E-3)^2;
-
-    for ii = 1:length(stats)
-
-        if isnan(stats(ii).nRois)
-            if verbose
-                fprintf('isThreshTreatingAgarAsSample loop %d/%d finds NaNs. skipping.\n', ii, length(stats))
-            end
-            continue
-        end
-        tmp=stats(ii).bwStats.step_three.Area_sqmm;
-        % How many ROIs have a size that looks like it could be a single tile?
-        propTileSizeROIs(ii) = mean(tmp>tileArea*0.125 & tmp<tileArea*0.5);
-        nROIs(ii) = length(tmp);
-
-        % Does there seem to be a grid pattern in the centroid locations?
-        c=stats(ii).bwStats.step_two.Centroid;
-        c=round(c/10)*10 ;
-        dx=diff(sort(c(:,1)));
-        dy=diff(sort(c(:,1)));
-        d=[dx;dy];
-
-        if (sum(d==0)/length(d))>0.4
-            seemsLikeGrid(ii)=1;
-        end
-
-    end
-
-    % TODO: nROIs threshold shoudld be smarter than this. 
-
-    isFindingAgar = nROIs>30  &  propTileSizeROIs>0.45 &  seemsLikeGrid;
-    % insert these values into the stats array
-    for ii=1:length(stats)
-        stats(ii).thinksAgarIsAROI = isFindingAgar(ii);
-    end
-
-    if verbose
-        fprintf('\nIs thresh treating agar as sample?\n')
-        disp([stats.tThreshSD])
-        disp(propTileSizeROIs)
-        disp(nROIs)
-        disp(seemsLikeGrid)
-        disp(isFindingAgar)
-    end
-
-end %isThreshTreatingAgarAsSample
-

@@ -47,3 +47,42 @@ function imStats = getForegroundBackgroundPixels(im,pixelSize,borderPixSize,tThr
     backgroundPix = im(find(inverseBW));
 
     imStats.backgroundPix = backgroundPix';
+
+
+    % The BakingTray dummyScanner marked pixels that were outside of the original imaged area by assigning 
+    % them the value -42. We remove these here. This is only important for analysing test data. During a live
+    % acquisition this should happen.
+    fB=find(imStats.backgroundPix == -42);
+    fF=find(imStats.foregroundPix == -42);
+    if ~isempty(fB) || ~isempty(fF)
+        fprintf('autoROI.getForeGroundBackGroundPixels finds %d non-imaged test pixels from BakingTray dummyScanner. Removing them.\n', ...
+            sum(length(fB) + length(fF)) )
+
+        % Generate warning messages if there are no pixels left. 
+        if length(fB) == length(imStats.backgroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        if length(fF) == length(imStats.foregroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        imStats.backgroundPix(fB) = [];
+        imStats.foregroundPix(fF) = [];
+    end
+
+    % The preview image is constructed with a default value of zero. Remove these if we find them
+    % acquisition this should happen.
+    fB=find(imStats.backgroundPix == 0);
+    fF=find(imStats.foregroundPix == 0);
+    if ~isempty(fB) || ~isempty(fF)
+        fprintf('*** autoROI.getForeGroundBackGroundPixels finds %d pixels that did not have a tile placed in them. Removing them. ***\n', ...
+            sum(length(fB) + length(fF)) )
+        % Generate warning messages if there are no pixels left. 
+        if length(fB) == length(imStats.backgroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        if length(fF) == length(imStats.foregroundPix)
+            fprintf('All background pixels are being removed. BAD!\n')
+        end
+        imStats.backgroundPix(fB) = [];
+        imStats.foregroundPix(fF) = [];
+    end

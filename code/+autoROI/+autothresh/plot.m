@@ -1,7 +1,7 @@
 function plot(stats)
     % plot output of run command
     %
-    % function boundingBoxFromLastSection.autoThresh.plot(stats)
+    % function autoROI.autoThresh.plot(stats)
     %
     % Purpose
     % Choose threshold based on the number of ROIs it produces. 

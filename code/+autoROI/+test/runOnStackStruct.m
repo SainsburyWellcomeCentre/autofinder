@@ -1,7 +1,7 @@
-function varargout=runOnStackStruct(pStack,noPlot,settings)
+function varargout=runOnStackStruct(pStack,noPlot,settings,tThreshSD)
     % Run the ROI-finding algorithm on a stack processed by genGroundTruthBorders
     %
-    % function autoROI.test.runOnStackStruct(pStack,noPlot,settings)
+    % function autoROI.test.runOnStackStruct(pStack,noPlot,settings,tThreshSD)
     %
     % Purpose
     % Simulate the behavior of an imaging system seeking to image only
@@ -19,6 +19,8 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
     % pStack - preview stack structure
     % noPlot - false by default
     % settings - if empty or missing we get from the file
+    % tThreshSD - if present, we do not run autothresh and use this threshold SD instead.
+    %
     %
     % Outputs
     % stats structure
@@ -39,6 +41,9 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
         settings = autoROI.readSettings;
     end
 
+    if nargin<4
+        tThreshSD=[];
+    end
 
     pauseBetweenSections=false;
 
@@ -56,12 +61,15 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
                     'settings', settings};
 
 
-
-    fprintf('\n ** GETTING A THRESHOLD\n')
-    fprintf('%s is running auto-thresh\n', mfilename)
-    [tThreshSD,at_stats]=autoROI.autothresh.run(pStack, false, settings);
-    fprintf('\nTHRESHOLD OBTAINED!\n')
-    fprintf('%s\n\n',repmat('-',1,100))
+    if isempty(tThreshSD)
+        fprintf('\n ** GETTING A THRESHOLD\n')
+        fprintf('%s is running auto-thresh\n', mfilename)
+        [tThreshSD,at_stats]=autoROI.autothresh.run(pStack, false, settings);
+        fprintf('\nTHRESHOLD OBTAINED!\n')
+        fprintf('%s\n\n',repmat('-',1,100))
+    else
+        at_stats=[];
+    end
 
 
     % In the first section the user should have acquired a preview that captures the whole sample
@@ -133,11 +141,25 @@ function varargout=runOnStackStruct(pStack,noPlot,settings)
 
     % Log aspects of the run in the output structure
     pStack.fullFOV=true;
-    stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats.roiStats);
+
+    % Did we get all sections?
+    if isfield(pStack,'lastSliceWithData')
+        stats.numUnprocessedSections = pStack.lastSliceWithData-length(stats.roiStats);
+        if stats.numUnprocessedSections<0
+            stats.numUnprocessedSections=0;
+        end
+        stats.lastSliceWithData=pStack.lastSliceWithData;
+    else
+        stats.numUnprocessedSections = size(pStack.imStack,3)-length(stats.roiStats);
+        stats.lastSliceWithData=size(pStack.imStack,3);
+    end
+
+
 
     % Add a text report to the first element
     stats.report = autoROI.test.evaluateROIs(stats,pStack);
     stats.autothreshStats = at_stats;
+
 
 
     % Tidy

@@ -4,7 +4,7 @@ function varargout = viewStackResult(fname,imRange,noCheating)
 % h=autoROI.plotting.viewStackResult(fname,imRange)
 %
 % Purpose
-% Load data into volView based on a stack result file to see results of an anlysis. 
+% Load data into volView based on a stack result file to see results of an analysis. 
 % Optionally return handle to volView. 
 %
 % Inputs
@@ -51,10 +51,15 @@ end
 load(fname)
 
 fprintf('Loading %s\n',testLog(1).stackFname)
+
 load(testLog(1).stackFname)
 
 % Get the bounding boxes 
-b={{testLog.BoundingBoxes},{},{}};;
+if isfield(testLog,'roiStats')
+    b={{testLog.roiStats.BoundingBoxes},{},{}};;
+else
+    b={{testLog.BoundingBoxes},{},{}};;
+end
 
 
 if noCheating

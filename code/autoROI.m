@@ -53,9 +53,13 @@ function varargout=autoROI(pStack, varargin)
         pStack.sectionNumber=1;
     end
 
-    % Extract the image we will work with
-    im = pStack.imStack(:,:,pStack.sectionNumber);
-
+    % Extract the image we will work with if imStack has multiple images. 
+    % Otherwise we assume that the only existing image is the last obtained section.
+    if size(pStack.imStack,3)>1
+        im = pStack.imStack(:,:,pStack.sectionNumber);
+    else
+        im = pStack.imStack;
+    end
 
     % Get size settings from pStack structure
     pixelSize = pStack.voxelSizeInMicrons;
@@ -116,12 +120,20 @@ function varargout=autoROI(pStack, varargin)
     end
 
 
+    % Remove sharp edges. This helps with artifacts associated with the 
+    % missing corner tile. TODO: could remove this step in the future. 
+    % However, since it will clean up local very large values it might not
+    % be a bad idea it to leave it in.
+    im = autoROI.removeCornerEdgeArtifacts(im);
+
+
+    sizeIm=size(im);
     if rescaleTo>1
         fprintf('%s is rescaling image to %d mic/pix from %0.2f mic/pix\n', ...
             mfilename, rescaleTo, pixelSize);
-        sizeIm=size(im);
+
         sizeIm = round( sizeIm / (rescaleTo/pixelSize) );
-        im = imresize(im, sizeIm);
+        im = imresize(im, sizeIm,'nearest'); %Must use nearest-neighbour to avoid interpolation
         origPixelSize = pixelSize;
         pixelSize = rescaleTo;
     else
@@ -130,21 +142,33 @@ function varargout=autoROI(pStack, varargin)
 
 
 
+
+
     % Median filter the image first. This is necessary, otherwise downstream steps may not work.
     im = medfilt2(im,[settings.main.medFiltRawImage,settings.main.medFiltRawImage]);
     im = single(im);
 
+
+
     % If no threshold for segregating sample from background was supplied then calculate one
-    % based on the pixels around the image border.
+    % based on the pixels around the image border. This is only going to work for cases where
+    % there no ROIs. i.e. the whole FOV was imaged. TODO: have a check for this. 
     if isempty(tThresh)
         %Find pixels within b pixels of the border
         b = borderPixSize;
         borderPix = [im(1:b,:), im(:,1:b)', im(end-b+1:end,:), im(:,end-b+1:end)'];
         borderPix = borderPix(:);
-        tThresh = median(borderPix) + std(borderPix)*tThreshSD;
-        fprintf('\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold of %0.1f based on threshSD of %0.2f\n', ...
-         mfilename, tThresh, tThreshSD)
 
+        % Remove any non-imaged pixels
+        borderPix(borderPix == -42) = [];
+        borderPix(borderPix == 0) = [];
+
+        tThresh = median(borderPix) + std(borderPix)*tThreshSD;
+        fprintf(['\n\nNo threshold provided to %s - USING IMAGE BORDER PIXELS to extract a threshold:\n  ', ...
+            'tThresh set to %0.1f based on supplied threshSD of %0.2f\n'], ...
+         mfilename, tThresh, tThreshSD)
+        fprintf('  Median border pix: %0.2f\n  SD border pix: %0.2f\n', ...
+            median(borderPix), std(borderPix))
     else
         fprintf('Running %s with provided threshold of %0.2f\n', mfilename, tThresh)
     end
@@ -166,13 +190,14 @@ function varargout=autoROI(pStack, varargin)
 
     if isempty(lastSectionStats)
         stats = autoROI.getBoundingBoxes(BW,im,pixelSize);  % Find bounding boxes
-        %stats = autoROI.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize);
+        %stats = autoROI.growBoundingBoxIfSampleClipped(im,stats,pixelSize,tileSize); % TODO --delete?
         if length(stats) < skipMergeNROIThresh
             stats = autoROI.mergeOverlapping(stats,size(im)); % Merge partially overlapping ROIs
         end
 
     else
-        % We have provided bounding box history from previous sections
+        % We have provided bounding box history from previous sections and so we will pull out these sub-ROIs
+        % and work on them alone
 
         lastROI = lastSectionStats.roiStats(end);
         if rescaleTo>1
@@ -187,10 +212,10 @@ function varargout=autoROI(pStack, varargin)
             % Scale down the bounding boxes
 
             fprintf('* Analysing ROI %d/%d for sub-ROIs\n', ii, length(lastROI.BoundingBoxes))
-            % TODO -- we run binarization each time. Otherwise boundingboxes tha merge don't unmerge for some reason.
-            %         see Issue 58. 
-            tIm = autoROI.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true); % Pull out just this sub-region
-            %tBW = autoROI.getSubImageUsingBoundingBox(BW,lastSectionStats.roiStats.BoundingBoxes{ii},true); % Pull out just this sub-region
+            % TODO -- we run binarization each time. Otherwise boundingboxes merge don't unmerge for some reason. see Issue 58. 
+            minIm = min(im(:));
+            tIm = autoROI.getSubImageUsingBoundingBox(im,lastROI.BoundingBoxes{ii},true,minIm); % Pull out just this sub-region
+
             tBW = autoROI.binarizeImage(tIm,pixelSize,tThresh,binArgs{:});
             tStats{ii} = autoROI.getBoundingBoxes(tBW,tIm,pixelSize);
             %tStats{ii}}= autoROI.growBoundingBoxIfSampleClipped(im,tStats{ii},pixelSize,tileSize);
@@ -200,6 +225,8 @@ function varargout=autoROI(pStack, varargin)
                 nT=nT+1;
             end
 
+            % Uncomment the following line for debug purposes
+            %disp('SHOWING tIm in autoROI: PRESS RETURN'), figure(1234),imagesc(tBW), colorbar, drawnow, pause
         end
 
         if ~isempty(tStats{1})
@@ -266,11 +293,18 @@ function varargout=autoROI(pStack, varargin)
             pixelSize, tileSize);
     end
 
+    % Sort the bounding boxes along the image rows (microscope X axis).
+    % This makes the order in which they will be imaged somewhat better. 
+    % Not optimal, though. 
+    BB = {stats.BoundingBox};
+    t=reshape([BB{:}],4,length(BB))';
+    [~,ind]=sortrows(t,-1);
+    stats = stats(ind);
 
 
     if doPlot
         clf
-        H=autoROI.plotting.overlayBoundingBoxes(im,stats);
+        H=autoROI.overlayBoundingBoxes(im,stats);
         title('Final boxes')
     else
         H=[];
@@ -296,7 +330,7 @@ function varargout=autoROI(pStack, varargin)
 
     % Make a fresh output structure if no last section stats were 
     % provided as an input argument
-    n=pStack.sectionNumber;
+
     if isempty(lastSectionStats)
         out.origPixelSize = origPixelSize;
         out.rescaledPixelSize = rescaleTo;
@@ -307,8 +341,28 @@ function varargout=autoROI(pStack, varargin)
     end
 
     % Data from all processed sections goes here
+    n=pStack.sectionNumber;
+    % If this section number already exists, we delete it. This is unlikely to happen.
+    % Otherwise we append.
+    if isfield(out,'roiStats')
+        f=find([out.roiStats.sectionNumber]==n);
+        out.roiStats(f)=[];
+        n=length(out.roiStats)+1;
+    else
+        n=1;
+    end
+
     out.roiStats(n).BoundingBoxes = {stats.BoundingBox};
     out.roiStats(n).BoundingBoxDetails = [stats.BoundingBoxDetails];
+
+    % If we have access to the front/left stage position for this image, we
+    % add that to the bounding box details. This will be used by BakingTray. 
+    % autoROI itself does not care about this. 
+    if isfield(pStack,'frontLeftStageMM')
+        for ii=1:length(out.roiStats(n).BoundingBoxDetails)
+            out.roiStats(n).BoundingBoxDetails(ii).frontLeftStageMM = pStack.frontLeftStageMM;
+        end
+    end
 
     out.roiStats(n).tThresh = tThresh;
     out.roiStats(n).tThreshSD = tThreshSD;
@@ -340,8 +394,20 @@ function varargout=autoROI(pStack, varargin)
     % Finally: return bounding boxes to original size
     % If we re-scaled then we need to put the bounding box coords back into the original size
     if rescaleTo>1
+        rescaleRatio = rescaleTo/origPixelSize;
         out.roiStats(n).BoundingBoxes = ...
-             cellfun(@(x) round(x*(rescaleTo/origPixelSize)), out.roiStats(n).BoundingBoxes,'UniformOutput',false);
+             cellfun(@(x) round(x*rescaleRatio), out.roiStats(n).BoundingBoxes,'UniformOutput',false);
+        % TODO --- the following is for testing with BT! MAYBE WRONG!
+        if isfield(pStack,'frontLeftStageMM')
+            for ii=1:length(out.roiStats(n).BoundingBoxDetails)
+
+                out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X = ...
+                        out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.X * rescaleRatio;
+                out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y = ...
+                        out.roiStats(n).BoundingBoxDetails(ii).frontLeftPixel.Y * rescaleRatio;
+
+            end
+        end % isfield
     end
 
 
@@ -349,10 +415,11 @@ function varargout=autoROI(pStack, varargin)
     % compared to the section preceeding this one. If so, this indicates that something like a change in laser power 
     % or wavelength has happened. i.e. that SNR has gone up a lot. If this happens we need to *re-run* autoROI after
     % first re-calculating the tThreshSD.
-    out.roiStats(n).tThreshSD_recalc=false; 
+    out.roiStats(n).tThreshSD_recalc=false;
     if length(out.roiStats)>1
         FG_ratio_this_section = out.roiStats(end).foregroundSqMM/out.roiStats(end).backgroundSqMM;
         FG_ratio_previous_section = out.roiStats(end-1).foregroundSqMM/out.roiStats(end-1).backgroundSqMM;
+
         if (FG_ratio_this_section / FG_ratio_previous_section)>settings.main.reCalcThreshSD_threshold
             fprintf('\nTRIGGERING RE-CALC OF tThreshSD due to high F/B ratio.\n')
             % Re-run autothresh on the current section with the current ROIs

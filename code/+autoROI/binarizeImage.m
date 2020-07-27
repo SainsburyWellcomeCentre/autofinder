@@ -31,6 +31,11 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
     % Rob Campbell - SWC 2020
 
 
+    if nargin<3
+        % We do an auto-thresh in this case
+        tThresh=[];
+    end
+
 
 
     % Parse optional input arguments
@@ -64,7 +69,11 @@ function varargout = binarizeImage(im,pixelSize,tThresh,varargin)
 
 
     % STEP ONE: threshold the image to produce a binary image
-    BW = im>tThresh;
+    if ~isempty(tThresh)
+        BW = im>tThresh;
+    else
+        BW = imbinarize(im,graythresh(im));
+    end
     if showImages
         subplot(2,2,1)
         imagesc(BW)

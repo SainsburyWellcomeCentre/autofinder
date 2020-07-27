@@ -1,5 +1,5 @@
 function out = batchDir(runDir)
-    % function [tThresh,stats] = boundingBoxFromLastSection.autoThresh.batchDir(runDir)
+    % function [tThresh,stats] = autoROI.autoThresh.batchDir(runDir)
     %
     % Run on all in directory and retun a structure with the results
 
