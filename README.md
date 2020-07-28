@@ -1,5 +1,6 @@
 # autofinder
 Test of algorithm to image only a sample and not surrounding tissue using serial-section 2-photon imaging. 
+**NOTE: On July 26th 2020 the code was merged into BakingTray. This repo is here for reference purposes only and will no longer be updated**
 We have about 150 acquisitions, many have multiple samples so in total there are over 300 samples. 
 Almost all samples are rat or mouse brains.
 Development of this project is highly test-oriented: changes to the code must be checked against a reference result set. 
